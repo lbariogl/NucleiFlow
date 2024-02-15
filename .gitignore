@@ -1,0 +1,17 @@
+*_C*
+-
+*.root
+!o2_geometry.root
+.vscode
+*.pdf
+*.png
+*.tf
+*.log
+*.pkl
+core*
+.model
+*__pycache__
+*.d
+*.so
+*.pcm
+*/dpl-config.json

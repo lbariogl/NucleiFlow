@@ -1,0 +1,127 @@
+{
+  "internal-dpl-clock": "",
+  "internal-dpl-aod-reader": {
+    "time-limit": "180",
+    "orbit-offset-enumeration": "0",
+    "orbit-multiplier-enumeration": "0",
+    "start-value-enumeration": "0",
+    "end-value-enumeration": "-1",
+    "step-value-enumeration": "1",
+    "aod-file": "/data/lbariogl/flow/LHC23zzh_pass2_small/AO2D.root"
+  },
+  "internal-dpl-injected-dummy-sink": "",
+  "internal-dpl-aod-spawner": "",
+  "internal-dpl-aod-index-builder": "",
+  "timestamp-task": {
+    "verbose": "false",
+    "rct-path": "RCT\/Info\/RunInformation",
+    "orbit-reset-path": "CTP\/Calib\/OrbitReset",
+    "ccdb-url": "http:\/\/alice-ccdb.cern.ch",
+    "isRun2MC": "false"
+  },
+  "nucleiFlow": {
+    "nSigmaBins": {
+      "values": [
+        200,
+        -5,
+        5
+      ]
+    },
+    "ptBins": {
+      "values": [
+        8,
+        0.5,
+        4.5
+      ]
+    },
+    "cfgMomentumScalingBetheBloch": {
+      "values": [
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ]
+    },
+    "cfgBetheBlochParams": {
+      "values": [
+        [
+          -136.71,
+          0.441,
+          0.2269,
+          1.347,
+          0.8035,
+          0.09
+        ],
+        [
+          -136.71,
+          0.441,
+          0.2269,
+          1.347,
+          0.8035,
+          0.09
+        ],
+        [
+          -239.99,
+          0.441,
+          1.099,
+          1.137,
+          1.006,
+          0.09
+        ],
+        [
+          -321.34,
+          0.6539,
+          1.591,
+          0.8225,
+          2.363,
+          0.09
+        ],
+        [
+          -586.66,
+          1.859,
+          4.435,
+          0.282,
+          3.201,
+          0.09
+        ]
+      ]
+    },
+    "centBins": {
+      "values": [
+        111,
+        0,
+        111
+      ]
+    },
+    "cfgQvecDetector": "0",
+    "cfgItsClusSizeCut": "6",
+    "cfgHarmonic": "2",
+    "cfgCentDetector": "3",
+    "cfgSpecies": "3",
+    "spBins": {
+      "values": [
+        100,
+        -1,
+        1
+      ]
+    }
+  },
+  "internal-dpl-aod-global-analysis-file-sink": "",
+  "internal-dpl-aod-writer": ""
+}

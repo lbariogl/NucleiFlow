@@ -25,7 +25,7 @@
     "cfgQvecDetector": "0",
     "cfgSpecies": "3",
     "cfgNclusTPCcut": "70",
-    "cfgDCAxyCut": "0.10000000",
+    "cfgDCAxyCut": "0.100000001",
     "cfgDCAzCut": "1",
     "cfgItsClusSizeCut": "6",
     "nSigmaBins": {

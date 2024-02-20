@@ -74,3 +74,60 @@ def geCanvasWithTwoPanels(canvas_name, histo_1, histo_2, top_panel=None, bottom_
     if bottom_panel:
         histo_2.GetListOfFunctions().Add(bottom_panel)
     return canvas
+
+
+def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_bin_up, output_dir, arr_fit_val, arr_fit_err, qvec_detector_label='FT0C', cent_detector_label='FTOC', suffix = 0):
+
+    output_dir.cd()
+
+    # get axis info
+    pt_axis = hSpvsNsigmaVsPtvsCent.GetAxis(2)
+    pt_low = pt_axis.GetBinLowEdge(pt_bin_low)
+    pt_up = pt_axis.GetBinUpEdge(pt_bin_up)
+
+    cent_axis = hSpvsNsigmaVsPtvsCent.GetAxis(3)
+    cent_bin_low = cent_axis.FindBin(cent_low)
+    cent_bin_up = cent_axis.FindBin(cent_up) - 1
+
+    # system infopanel
+    info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
+    info_panel.SetBorderSize(0)
+    info_panel.SetFillStyle(0)
+    info_panel.SetTextAlign(12)
+    info_panel.SetTextFont(42)
+    info_panel.AddText('ALICE')
+    info_panel.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
+    info_panel.AddText(f'{cent_low} - {cent_up} % {cent_detector_label}')
+    pt_label = f'{pt_low:.1f}' + r' #leq #it{p}_{T} < ' + \
+        f'{pt_up:.1f}' + r' GeV/#it{c}'
+    info_panel.AddText(pt_label)
+
+    # create 1D histograms
+    hSpVsNsigma, hNsigma = getHistos1D(
+        hSpvsNsigmaVsPtvsCent, pt_bin_low, pt_bin_up, 30, 50, f'hNsigma_{suffix}_{qvec_detector_label}', f'hSpVsNsigma_{suffix}_{qvec_detector_label}', n_rebin=4)
+    setHistStyle(hNsigma, ROOT.kRed+1, linewidth=2)
+    setHistStyle(hSpVsNsigma, ROOT.kAzure+1, linewidth=2)
+    hSpVsNsigma.GetYaxis().SetRangeUser(-2., 2.)
+
+    # fit with a pol0
+    fit = ROOT.TF1('fit', 'pol0', -1, 1)
+    hSpVsNsigma.Fit(fit, 'R')
+
+    val = fit.GetParameter(0)
+    arr_fit_val.append(val)
+    err = fit.GetParError(0)
+    arr_fit_err.append(err)
+
+    fit_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
+    fit_panel.SetBorderSize(0)
+    fit_panel.SetFillStyle(0)
+    fit_panel.SetTextAlign(12)
+    fit_panel.SetTextFont(42)
+    fit_panel.AddText(f'p_{{0}} = {val:.3f} #pm {err:.3f}')
+
+    canvas = geCanvasWithTwoPanels(
+        f'cSpVsNsigma_{suffix}_{qvec_detector_label}', hSpVsNsigma, hNsigma, top_panel=fit_panel, bottom_panel=info_panel)
+
+    hSpVsNsigma.Write()
+    hNsigma.Write()
+    canvas.Write()

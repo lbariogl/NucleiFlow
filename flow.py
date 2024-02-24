@@ -1,8 +1,8 @@
-import utils as utils
 import ROOT
 
 import sys
 sys.path.append('utils')
+import utils as utils
 
 
 input_file_name = './run_task/AnalysisResults_small.root'
@@ -33,13 +33,16 @@ hSpFV0AvsNsigmaHe3VsPtvsCent = input_file.Get(
 
 pt_axis = hSpFT0AvsNsigmaHe3VsPtvsCent.GetAxis(2)
 n_pt_bins = pt_axis.GetNbins()
+pt_min = pt_axis.GetBinLowEdge(1)
+pt_max = pt_axis.GetBinUpEdge(n_pt_bins)
 
-v2_ft0c_val = []
-v2_ft0c_err = []
-v2_ft0a_val = []
-v2_ft0a_err = []
-v2_fv0a_val = []
-v2_fv0a_err = []
+hSPvsPT_FT0C = ROOT.TH1F('hSPvsPT_FT0C', r';#it{p}_{T} (GeV/#it{c}) ;\langle #hat{u}_{2} #upoint #vec{Q}_{2}^{FT0C} \rangle', n_pt_bins, pt_min, pt_max)
+utils.setHistStyle(hSPvsPT_FT0C, ROOT.kAzure+2)
+hSPvsPT_FT0A = ROOT.TH1F('hSPvsPT_FT0A', r';#it{p}_{T} (GeV/#it{c}) ;\langle #hat{u}_{2} #upoint #vec{Q}_{2}^{FT0A} \rangle', n_pt_bins, pt_min, pt_max)
+utils.setHistStyle(hSPvsPT_FT0A, ROOT.kRed+1)
+hSPvsPT_FV0A = ROOT.TH1F('hSPvsPT_FV0A', r';#it{p}_{T} (GeV/#it{c}) ;\langle #hat{u}_{2} #upoint #vec{Q}_{2}^{FV0A} \rangle', n_pt_bins, pt_min, pt_max)
+utils.setHistStyle(hSPvsPT_FV0A, ROOT.kGreen+3)
+
 
 for i_pt in range(1, n_pt_bins + 1):
 
@@ -53,10 +56,31 @@ for i_pt in range(1, n_pt_bins + 1):
     pt_up = pt_axis.GetBinUpEdge(i_pt)
 
     utils.getCompleteCanvas(hSpFT0CvsNsigmaHe3VsPtvsCent, cent_low, cent_up, i_pt, i_pt,
-                            pt_dir, v2_ft0c_val, v2_ft0c_err, qvec_detector_label='FT0C', suffix=i_pt)
+                            pt_dir, hSPvsPT_FT0C, qvec_detector_label='FT0C', out_pt_bin=i_pt)
 
     utils.getCompleteCanvas(hSpFT0AvsNsigmaHe3VsPtvsCent, cent_low, cent_up, i_pt, i_pt,
-                            pt_dir, v2_ft0a_val, v2_ft0a_err, qvec_detector_label='FT0A', suffix=i_pt)
+                            pt_dir, hSPvsPT_FT0A, qvec_detector_label='FT0A', out_pt_bin=i_pt)
 
     utils.getCompleteCanvas(hSpFV0AvsNsigmaHe3VsPtvsCent, cent_low, cent_up, i_pt, i_pt,
-                            pt_dir, v2_fv0a_val, v2_fv0a_err, qvec_detector_label='FV0A', suffix=i_pt)
+                            pt_dir, hSPvsPT_FV0A, qvec_detector_label='FV0A', out_pt_bin=i_pt)
+
+output_file.cd()
+hSPvsPT_FT0C.Write()
+hSPvsPT_FT0A.Write()
+hSPvsPT_FV0A.Write()
+
+cSPvsPT= ROOT.TCanvas('cSPvsPT', 'cSPvsPT', 800, 600)
+cSPvsPT.SetLeftMargin(0.13)
+cSPvsPT.SetBottomMargin(0.13)
+frame = cSPvsPT.DrawFrame(0., -2., 6., 2., r';#it{p}_{T} (GeV/#it{c}) ;\langle \vec{u}_{2} \cdot \vec{Q} \rangle')
+hSPvsPT_FT0C.Draw('PE SAME')
+hSPvsPT_FT0A.Draw('PE SAME')
+hSPvsPT_FV0A.Draw('PE SAME')
+frame.GetYaxis().SetTitleOffset(1.1)
+frame.GetXaxis().SetTitleOffset(1.1)
+legend = ROOT.TLegend(0.69, 0.7, 0.88, 0.86, '', 'BRNDC')
+legend.AddEntry(hSPvsPT_FT0C, 'FT0C', 'PE')
+legend.AddEntry(hSPvsPT_FT0A, 'FT0A', 'PE')
+legend.AddEntry(hSPvsPT_FV0A, 'FV0A', 'PE')
+legend.Draw()
+cSPvsPT.Write()

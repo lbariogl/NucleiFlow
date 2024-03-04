@@ -50,8 +50,8 @@ for avgClus in complete_df['fAvgItsClusSize']:
   hAvgItsClusSize.Fill(avgClus)
 
 print('Filling specific energy loss')
-for rig, sig in zip(complete_df['fTPCInnerParam'], complete_df['fTPCsignal']):
-  hTPCsignalVsPoverZ.Fill(rig, sig)
+for rig, sign, signal in zip(complete_df['fTPCInnerParam'], complete_df['fSign'], complete_df['fTPCsignal']):
+  hTPCsignalVsPoverZ.Fill(sign*rig, signal)
 
 print('Done')
 

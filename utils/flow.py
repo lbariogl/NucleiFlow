@@ -1,4 +1,3 @@
-from signal_extraction import SignalExtraction
 import ROOT
 import numpy as np
 
@@ -6,276 +5,105 @@ import sys
 sys.path.append('utils')
 import utils as utils
 
-class SpectraMaker:
+
+class FlowMaker:
 
     def __init__(self):
 
-        # data related members
+        # data frame
         self.data_df = None
 
-        self.n_ev = 0
-
         # variable related members
+        self.cent_limits = [30, 50]
         self.pt_bins = []
-        self.selection_string = ''
+        self.cent_detector = 'FT0C'
+        self.ref_detector = 'FT0C'
 
-        self.n_nsigmaTOC_bins = 30
-        self.n_bins_mass_mc = 80
+        # histograms
+        self.n_nsigmaTPC_bins = 100
+        self.nsigmaTPC_bin_limits = [-5., 5.]
 
-        self.raw_counts = []
-        self.raw_counts_err = []
-        self.chi2 = []
-        self.efficiency = []
+        self.n_SP_bins = 200
+        self.n_SP_bin_limits = [-2., 2.]
 
-        self.corrected_counts = []
-        self.corrected_counts_err = []
+        self.hNigma3He = []
+        self.hSPvsNsigma3He2D = []
+        self.hSPvsNsigma3He = []
+        self.cSPvsNsigma3He = []
 
-        self.inv_mass_signal_func = "dscb"
-        self.inv_mass_bkg_func = "pol1"  # could be either a string or a list of strings
-        self.sigma_range_mc_to_data = [1., 1.5]
-
+        # general
         self.output_dir = None
-
-        self.h_signal_extractions_data = []
-        self.h_signal_extractions_mc = []
-        self.h_raw_counts = None
-        self.h_efficiency = None
-        self.h_corrected_counts = None
-
-        # cuts for systematic uncertainties
-        self.chi2_cut = 1.4
-        self.relative_error_cut = 1.
-        self.outlier_cut = 3
-
-        # fit to the spectrum
-        self.fit_func = None
-        self.fit_options = None
-        self.fit_range = []
-        self.fit_chi2 = None
-        self.fit_NDF = None
-        self.fit_prob = None
-
 
     def _check_members(self):
 
-        var_options = ['fCt', 'fPt']
-        if self.var not in var_options:
-            raise ValueError(
-                f'Invalid var option: {self.var}. Expected one of: {var_options}')
+        if self.data_df is None:
+            raise ValueError(f'data frame not correctly set')
 
-        if not self.data_hdl:
-            raise ValueError(f'data_hdl not correctly set')
+        if not self.cent_limits:
+            raise ValueError(f'centrality limits not set')
 
-        if not self.mc_hdl:
-            raise ValueError(f'mc_hdl not correctly set')
+        if not self.pt_bins:
+            raise ValueError(f'pt bins not set')
 
-        if not self.mc_reco_hdl:
-            raise ValueError(f'mc_reco_hdl not correctly set')
-
-    def make_spectra(self):
+    def make_flow(self):
 
         self._check_members()
 
-        for ibin in range(0, len(self.bins) - 1):
-            bin = [self.bins[ibin], self.bins[ibin + 1]]
-            bin_sel = f'{self.var} > {bin[0]} & {self.var} < {bin[1]}'
+        for ibin in range(0, len(self.pt_bins) - 1):
+            pt_bin = [self.pt_bins[ibin], self.pt_bins[ibin + 1]]
+            bin_sel = f'abs(fPt) > {pt_bin[0]} and abs(fPt) < {pt_bin[1]}'
+            pt_label = f'{pt_bin[0]:.2f} ' + r'#leq #it{p}_{T} < ' + \
+                f'{pt_bin[1]:.2f}' + r' GeV/#it{c}'
 
-            if self.var == 'fCt':
-                mc_bin_sel = f'fGenCt > {bin[0]} & fGenCt < {bin[1]}'
-            else:
-                mc_bin_sel = f'abs(fGenPt) > {bin[0]} & abs(fGenPt) < {bin[1]}'
+            # select the correct pt bin
+            bin_df = self.data_df.query(bin_sel)
 
-            # count generated per ct bin
-            bin_mc_hdl = self.mc_hdl.apply_preselections(
-                mc_bin_sel, inplace=False)
+            # crate and fill histograms
+            hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_{ibin}', r';n#sigma^{TPC} (a.u.);',
+                                       self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
+            hNsigma3He_tmp.SetTitle(pt_label)
+            utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
+            histo_title = pt_label + r';n#sigma^{TPC} (a.u.); #hat{u}_{2} #upoint #vec{Q}_{2}' + '^{}'.format(
+                self.ref_detector)
+            hSPvsNsigma3He2D_tmp = ROOT.TH2F(f'hSp{self.ref_detector}vsNsigma3He2D_{ibin}', histo_title,
+                                             self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
 
-            if isinstance(self.selection_string, list):
-                bin_sel = f'{bin_sel} and {self.selection_string[ibin]}'
-                mc_bin_sel = f'{mc_bin_sel} and {self.selection_string[ibin]}'
-            else:
-                bin_sel = f'{bin_sel} and {self.selection_string}'
-                mc_bin_sel = f'{mc_bin_sel} and {self.selection_string}'
+            for nSigmaTPC, sp in zip(self.data_df['fNsigmaTPC3He'], self.data_df[f'fSp{self.ref_detector}']):
+                hNsigma3He_tmp.Fill(nSigmaTPC)
+                hSPvsNsigma3He2D_tmp.Fill(nSigmaTPC, sp)
 
-            # select reconstructed in data and mc
-            bin_data_hdl = self.data_hdl.apply_preselections(
-                bin_sel, inplace=False)
-            bin_mc_reco_hdl = self.mc_reco_hdl.apply_preselections(
-                mc_bin_sel, inplace=False)
+            hSPvsNsigma3He_tmp = utils.getAverage2D(
+                hSPvsNsigma3He2D_tmp, f'hSp{self.ref_detector}vsNsigma3He_{ibin}')
+            utils.setHistStyle(hSPvsNsigma3He_tmp, ROOT.kAzure+1, linewidth=2)
 
-            # compute efficiency
-            eff = len(bin_mc_reco_hdl) / len(bin_mc_hdl)
-            self.efficiency.append(eff)
+            self.hNigma3He.append(hNsigma3He_tmp)
+            self.hSPvsNsigma3He2D.append(hSPvsNsigma3He2D_tmp)
+            self.hSPvsNsigma3He.append(hSPvsNsigma3He_tmp)
 
-            signal_extraction = SignalExtraction(bin_data_hdl, bin_mc_hdl)
+            # system infopanel
+            info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
+            info_panel.SetBorderSize(0)
+            info_panel.SetFillStyle(0)
+            info_panel.SetTextAlign(12)
+            info_panel.SetTextFont(42)
+            info_panel.AddText('ALICE')
+            info_panel.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
+            info_panel.AddText(
+                f'{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}')
+            info_panel.AddText(pt_label)
 
-            bkg_mass_fit_func = None
-            if isinstance(self.inv_mass_bkg_func, list):
-                bkg_mass_fit_func = self.inv_mass_bkg_func[ibin]
-            else:
-                bkg_mass_fit_func = self.inv_mass_bkg_func
+            canvas = utils.getCanvasWithTwoPanels(
+                f'cSp{self.ref_detector}vsNsigma_{ibin}', hSPvsNsigma3He2D_tmp, hNsigma3He_tmp, bottom_panel=info_panel)
 
-            sgn_mass_fit_func = None
-            if isinstance(self.inv_mass_signal_func, list):
-                sgn_mass_fit_func = self.inv_mass_signal_func[ibin]
-            else:
-                sgn_mass_fit_func = self.inv_mass_signal_func
-
-            signal_extraction.bkg_fit_func = bkg_mass_fit_func
-            signal_extraction.signal_fit_func = sgn_mass_fit_func
-            signal_extraction.n_bins_data = self.n_bins_mass_data
-            signal_extraction.n_bins_mc = self.n_bins_mass_mc
-            n_ev_plot = round(self.n_ev / 1e9, 0)
-            signal_extraction.n_evts = n_ev_plot
-            signal_extraction.matter_type = self.is_matter
-            signal_extraction.performance = False
-            signal_extraction.is_3lh = True
-
-            if isinstance(self.sigma_range_mc_to_data[0], list):
-                signal_extraction.sigma_range_mc_to_data = self.sigma_range_mc_to_data[ibin]
-            else:
-                signal_extraction.sigma_range_mc_to_data = self.sigma_range_mc_to_data
-
-            fit_stats = signal_extraction.process_fit()
-
-            if self.var == 'fPt':
-                bin_label = f'{bin[0]} #leq #it{{p}}_{{T}} < {bin[1]} GeV/#it{{c}}'
-            else:
-                bin_label = f'{bin[0]} #leq #it{{ct}} < {bin[1]} cm'
-
-            signal_extraction.additional_pave_text = bin_label
-
-            self.h_signal_extractions_data.append(
-                signal_extraction.data_frame_fit)
-            self.h_signal_extractions_mc.append(signal_extraction.mc_frame_fit)
-            self.raw_counts.append(fit_stats['signal'][0])
-            self.raw_counts_err.append(fit_stats['signal'][1])
-            self.chi2.append(fit_stats['chi2'])
-
-    def make_histos(self):
-
-        self._check_members()
-
-        if not self.raw_counts:
-            raise RuntimeError(
-                'raw_counts is empty. You must run make_spectra first.')
-
-        if self.var == 'fCt':
-            x_label = r'#it{ct} (cm)'
-            y_raw_label = r'#it{N}_{raw}'
-            y_eff_label = r'#epsilon #times acc.'
-            y_corr_label = r'#frac{d#it{N}}{d(#it{ct})} (cm^{-1})'
-        else:
-            x_label = r'#it{p}_{T} (GeV/#it{c})'
-            y_raw_label = r'#it{N}_{raw}'
-            y_eff_label = r'#epsilon #times acc.'
-            y_corr_label = r'#frac{d#it{N}}{d#it{p}_{T}} (GeV/#it{c})^{-1}'
-
-        self.h_raw_counts = ROOT.TH1D('h_raw_counts', f';{x_label};{y_raw_label}', len(
-            self.bins) - 1, np.array(self.bins, dtype=np.float64))
-        self.h_efficiency = ROOT.TH1D('h_efficiency', f';{x_label};{y_eff_label}', len(
-            self.bins) - 1, np.array(self.bins, dtype=np.float64))
-
-        self.h_corrected_counts = ROOT.TH1D('h_corrected_counts', f';{x_label};{y_corr_label}', len(
-            self.bins) - 1, np.array(self.bins, dtype=np.float64))
-        self.h_corrected_counts.GetXaxis().SetTitleSize(0.05)
-        self.h_corrected_counts.GetYaxis().SetTitleSize(0.05)
-
-        for ibin in range(0, len(self.bins) - 1):
-            bin_width = self.bins[ibin + 1] - self.bins[ibin]
-
-            self.h_raw_counts.SetBinContent(
-                ibin + 1, self.raw_counts[ibin]/bin_width)
-            self.h_raw_counts.SetBinError(
-                ibin + 1, self.raw_counts_err[ibin]/bin_width)
-            self.h_efficiency.SetBinContent(ibin + 1, self.efficiency[ibin])
-
-            local_corrected_counts = self.raw_counts[ibin] / \
-                self.efficiency[ibin] / bin_width
-            local_corrected_counts_err = self.raw_counts_err[ibin] / \
-                self.efficiency[ibin] / bin_width
-
-            if self.var == 'fPt':
-                local_corrected_counts = local_corrected_counts / \
-                    self.n_ev / self.branching_ratio / self.delta_rap
-                local_corrected_counts_err = local_corrected_counts_err / \
-                    self.n_ev / self.branching_ratio / self.delta_rap
-
-            self.h_corrected_counts.SetBinContent(
-                ibin + 1, local_corrected_counts)
-            self.h_corrected_counts.SetBinError(
-                ibin + 1, local_corrected_counts_err)
-
-            self.corrected_counts.append(local_corrected_counts)
-            self.corrected_counts_err.append(local_corrected_counts_err)
-
-    def fit(self):
-
-        if not self.h_corrected_counts:
-            raise ValueError(
-                'h_corrected_counts not set. Use make_histos first.')
-
-        if not self.fit_func:
-            raise ValueError('Fit function not set.')
-
-        if self.fit_range:
-            self.h_corrected_counts.Fit(
-                self.fit_func, self.fit_options, '', self.fit_range[0], self.fit_range[1])
-        else:
-            self.h_corrected_counts.Fit(self.fit_func, 'R')
-
-        self.fit_chi2 = self.fit_func.GetChisquare()
-        self.fit_NDF = self.fit_func.GetNDF()
-        self.fit_prob = self.fit_func.GetProb()
-
-    def del_dyn_members(self):
-        self.raw_counts = []
-        self.raw_counts_err = []
-        self.efficiency = []
-        self.corrected_counts = []
-        self.corrected_counts_err = []
-        self.h_signal_extractions_data = []
-        self.h_signal_extractions_mc = []
-
-        self.h_raw_counts = None
-        self.h_efficiency = None
-        self.h_corrected_counts = None
+            self.cSPvsNsigma3He.append(canvas)
 
     def dump_to_output_dir(self):
         self.output_dir.cd()
-        self.h_raw_counts.Write()
-        self.h_efficiency.Write()
-        self.h_corrected_counts.Write()
-        for ibin in range(0, len(self.bins) - 1):
-            bin = [self.bins[ibin], self.bins[ibin + 1]]
-            self.output_dir.mkdir(f'{self.var}_{bin[0]}_{bin[1]}')
-            self.output_dir.cd(f'{self.var}_{bin[0]}_{bin[1]}')
-            h_data = self.h_signal_extractions_data[ibin]
-            h_mc = self.h_signal_extractions_mc[ibin]
-            bin_string_data = f'{self.var}_{self.bins[ibin]}_{self.bins[ibin + 1]}_data'
-            bin_string_mc = f'{self.var}_{self.bins[ibin]}_{self.bins[ibin + 1]}_mc'
-            h_data.SetName(bin_string_data)
-            h_mc.SetName(bin_string_mc)
-            h_data.Write()
-            h_mc.Write()
-
-    def chi2_selection(self):
-        for el in self.chi2:
-            if el > self.chi2_cut:
-                return False
-        return True
-
-    def relative_error_selection(self):
-        relative_errors = [
-            err/val for val, err in zip(self.corrected_counts, self.corrected_counts_err)]
-        for el in relative_errors:
-            if el > self.relative_error_cut:
-                return False
-        return True
-
-    def outlier_selection(self, std_corrected_counts, std_corrected_counts_err):
-        for i, counts in enumerate(self.corrected_counts):
-            distance = abs(std_corrected_counts[i] - counts) / np.hypot(
-                self.corrected_counts_err[i], std_corrected_counts_err[i])
-            if distance > self.outlier_cut:
-                return False
-        return True
+        for ibin in range(0, len(self.pt_bins) - 1):
+            bin = [self.pt_bins[ibin], self.pt_bins[ibin + 1]]
+            self.output_dir.mkdir(f'pt_{bin[0]}_{bin[1]}')
+            self.output_dir.cd(f'pt_{bin[0]}_{bin[1]}')
+            self.hNigma3He[ibin].Write()
+            self.hSPvsNsigma3He2D[ibin].Write()
+            self.hSPvsNsigma3He[ibin].Write()
+            self.cSPvsNsigma3He[ibin].Write()

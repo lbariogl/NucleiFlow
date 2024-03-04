@@ -84,15 +84,18 @@ def redifineColumns(complete_df):
     complete_df.eval(
         'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)
     complete_df.drop(columns=['fITSclusterSizes'])
-    complete_df['fTPCInnerParam'] = getSign_vectorised(
-        complete_df['fFlags']) * complete_df['fTPCInnerParam']
+    complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
     complete_df.eval(
         'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
     complete_df.eval(
         'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
-    print(complete_df)
     complete_df.loc[complete_df['fTrackedAsHe'] == True, 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
-
+    # ScalarProducts
+    complete_df.eval('fSpFT0C = fPt*cos(fPhi) * fXQvecFT0C + fPt*sin(fPhi) * fYQvecFT0C', inplace=True)
+    complete_df.eval('fSpFT0A = fPt*cos(fPhi) * fXQvecFT0A + fPt*sin(fPhi) * fYQvecFT0A', inplace=True)
+    complete_df.eval('fSpFV0A = fPt*cos(fPhi) * fXQvecFV0A + fPt*sin(fPhi) * fYQvecFV0A', inplace=True)
+    complete_df.eval('fSpTPCpos = fPt*cos(fPhi) * fXQvecTPCpos + fPt*sin(fPhi) * fYQvecTPCpos', inplace=True)
+    complete_df.eval('fSpTPCneg = fPt*cos(fPhi) * fXQvecTPCneg + fPt*sin(fPhi) * fYQvecTPCneg', inplace=True)
 
 def getBBAfunctions(parameters, resolution, n_sigma=5):
     upper_scale = 1 + resolution * n_sigma
@@ -168,7 +171,7 @@ def getHistos1D(thn_sparse, pt_bin_low, pt_bin_up, cent_low, cent_up, histo1_nam
     return hSPvsNsigma, hNsigma, hSPvsNsigma_tmp
 
 
-def geCanvasWithTwoPanels(canvas_name, histo_1, histo_2, top_panel=None, bottom_panel=None):
+def getCanvasWithTwoPanels(canvas_name, histo_1, histo_2, top_panel=None, bottom_panel=None):
     canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
     pad_top = ROOT.TPad("pad_top", "pad_top", 0.0, 0.5, 1.0, 1.0, 0)
     pad_top.SetLeftMargin(0.15)
@@ -247,7 +250,7 @@ def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_b
     # fit_panel.SetTextFont(42)
     # fit_panel.AddText(f'p_{{0}} = {val:.3f} #pm {err:.3f}')
 
-    canvas = geCanvasWithTwoPanels(
+    canvas = getCanvasWithTwoPanels(
         f'cSpVsNsigma_{out_pt_bin}_{qvec_detector_label}', hSpVsNsigma, hNsigma, bottom_panel=info_panel)
 
     hSpVsNsigma.Write()

@@ -1,4 +1,6 @@
 import ROOT
+from hipe4ml.tree_handler import TreeHandler
+import numpy as np
 
 ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
@@ -11,6 +13,124 @@ def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
     hist.SetMarkerStyle(marker)
     hist.SetFillStyle(fillstyle)
     hist.SetLineWidth(linewidth)
+
+# get average ITS cluster size from its size bitmap
+def getITSClSize(itsSizeBitmap):
+    sum = 0
+    nClus = 0
+    for i_layer in range(0, 7):
+        size = (itsSizeBitmap >> i_layer*4) & 15
+        if size > 0:
+            nClus = nClus+1
+            sum += size
+    return sum / nClus
+
+# vectorised version of getITSClSize
+getITSClSize_vectorised = np.vectorize(getITSClSize)
+
+# get the sign of the track from the flag
+def getSign(flags):
+    if (flags & 256):
+        return 1
+    else:
+        return -1
+
+# vectorised version of getSign
+getSign_vectorised = np.vectorize(getSign)
+
+# get
+def trackedAsHe(flags):
+    pid_flag = (flags >> 12) & 15
+    if (pid_flag == 7 or pid_flag == 8):
+        return True
+    else:
+        return False
+
+# vectorised version of getSign
+trackedAsHe_vectorised = np.vectorize(trackedAsHe)
+
+# Bethe-Bloch-Aleph function as defined in O2
+def BBA(x, p):
+
+    bg = x/2.80839160743
+    # (TMath::Abs(x) / TMath::Sqrt(1 + x*x))
+    beta = abs(bg) / np.sqrt(1 + bg * bg)
+
+    # TMath::Power((TMath::Abs(x) / TMath::Sqrt(1 + x*x)),[3])
+    aa = np.power(beta, p[3])
+    bb = np.power(1 / abs(bg), p[4])  # TMath::Power(1/TMath::Abs(x),[4])
+    # TMath::Log([2] + TMath::Power(1/TMath::Abs(x),[4]))
+    bb = np.log(p[2] + bb)
+
+    # '([1] - TMath::Power((TMath::Abs(x) / TMath::Sqrt(1 + x*x)),[3]) - TMath::Log([2] + TMath::Power(1/TMath::Abs(x),[4]))) * [0] / TMath::Power((TMath::Abs(x) / TMath::Sqrt(1 + x*x)),[3])'
+    return (p[1] - aa - bb) * p[0] / aa
+
+# Literal form of BBA, to be used inside TF1
+func_string = '([1] - TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3]) - TMath::Log([2] + TMath::Power(1/TMath::Abs(2*x/2.80839160743),[4]))) * [0] / TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3])'
+
+default_bb_parameters = p_train = [-321.34, 0.6539, 1.591, 0.8225, 2.363]
+
+# N-sigma TPC at specific rigidity
+def getNsigmaTPC(x, tpc_signal, parameters=default_bb_parameters, resolution_perc=0.09):
+    exp_signal = BBA(x, parameters)
+    resolution = exp_signal * resolution_perc
+    return (tpc_signal - exp_signal) / resolution
+
+# vectorised version of N-sigma TPC at specific rigidity
+getNsigmaTPC_vectorised = np.vectorize(getNsigmaTPC)
+
+# redifine columns in the complete data-frame
+def redifineColumns(complete_df):
+    complete_df.eval(
+        'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)
+    complete_df.drop(columns=['fITSclusterSizes'])
+    complete_df['fTPCInnerParam'] = getSign_vectorised(
+        complete_df['fFlags']) * complete_df['fTPCInnerParam']
+    complete_df.eval(
+        'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
+    complete_df.eval(
+        'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
+    print(complete_df)
+    complete_df.loc[complete_df['fTrackedAsHe'] == True, 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
+
+
+def getBBAfunctions(parameters, resolution, n_sigma=5):
+    upper_scale = 1 + resolution * n_sigma
+    lower_scale = 1 - resolution * n_sigma
+    func_string_up = f'{upper_scale} * ' + func_string
+    func_string_down = f'{lower_scale} * ' + func_string
+
+    func_BB_left = ROOT.TF1('func_BB_left', func_string, -6, -0.5, 5)
+    func_BB_left.SetParameters(parameters[0],parameters[1],parameters[2], parameters[3], parameters[4])
+    func_BB_left.SetLineColor(ROOT.kRed)
+
+    func_BB_left_up = ROOT.TF1('func_BB_left_up', func_string_up, -6, -0.5, 5)
+    func_BB_left_up.SetParameters(parameters[0],parameters[1],parameters[2], parameters[3], parameters[4])
+    func_BB_left_up.SetLineColor(ROOT.kRed)
+    func_BB_left_up.SetLineStyle(ROOT.kDashed)
+
+    func_BB_left_down = ROOT.TF1('func_BB_left_down', func_string_down, -6, -0.5, 5)
+    func_BB_left_down.SetParameters(parameters[0],parameters[1],parameters[2], parameters[3], parameters[4])
+    func_BB_left_down.SetLineColor(ROOT.kRed)
+    func_BB_left_down.SetLineStyle(ROOT.kDashed)
+
+    func_BB_right = ROOT.TF1('func_BB_right', func_string, 0.5, 6., 5)
+    func_BB_right.SetParameters(parameters[0],parameters[1],parameters[2], parameters[3], parameters[4])
+    func_BB_right.SetLineColor(ROOT.kRed)
+
+    func_BB_right_up = ROOT.TF1('func_BB_right_up', func_string_up, 0.5, 6., 5)
+    func_BB_right_up.SetParameters(parameters[0],parameters[1],parameters[2], parameters[3], parameters[4])
+    func_BB_right_up.SetLineColor(ROOT.kRed)
+    func_BB_right_up.SetLineStyle(ROOT.kDashed)
+
+    func_BB_right_down = ROOT.TF1('func_BB_right_down', func_string_down, 0.5, 6., 5)
+    func_BB_right_down.SetParameters(parameters[0],parameters[1],parameters[2], parameters[3], parameters[4])
+    func_BB_right_down.SetLineColor(ROOT.kRed)
+    func_BB_right_down.SetLineStyle(ROOT.kDashed)
+
+    functions = [func_BB_left, func_BB_left_up, func_BB_left_down, func_BB_right, func_BB_right_up, func_BB_right_down]
+
+    return functions
 
 
 def getAverage2D(histo2D, histo_name="histo"):
@@ -39,12 +159,13 @@ def getHistos1D(thn_sparse, pt_bin_low, pt_bin_up, cent_low, cent_up, histo1_nam
     hNsigma.SetName(histo1_name)
     hNsigma.SetTitle('')
     hSPvsNsigma_tmp = thn_sparse.Projection(0, 1)
+    hSPvsNsigma_tmp.SetName(f'{histo2_name}_notAveraged')
     if n_rebin > 1:
         hNsigma.RebinX(n_rebin)
         hSPvsNsigma_tmp.RebinX(n_rebin)
     hSPvsNsigma = getAverage2D(hSPvsNsigma_tmp, histo2_name)
     hSPvsNsigma.SetTitle('')
-    return hSPvsNsigma, hNsigma
+    return hSPvsNsigma, hNsigma, hSPvsNsigma_tmp
 
 
 def geCanvasWithTwoPanels(canvas_name, histo_1, histo_2, top_panel=None, bottom_panel=None):
@@ -76,7 +197,7 @@ def geCanvasWithTwoPanels(canvas_name, histo_1, histo_2, top_panel=None, bottom_
     return canvas
 
 
-def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_bin_up, output_dir, hSPvsPt, qvec_detector_label='FT0C', cent_detector_label='FTOC', out_pt_bin = 0):
+def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_bin_up, output_dir, hSPvsPt, qvec_detector_label='FT0C', cent_detector_label='FTOC', out_pt_bin=0):
 
     output_dir.cd()
 
@@ -103,32 +224,33 @@ def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_b
     info_panel.AddText(pt_label)
 
     # create 1D histograms
-    hSpVsNsigma, hNsigma = getHistos1D(
+    hSpVsNsigma, hNsigma, hSpVsNsigma_notAveraged = getHistos1D(
         hSpvsNsigmaVsPtvsCent, pt_bin_low, pt_bin_up, cent_bin_low, cent_bin_up, f'hNsigma_{out_pt_bin}_{qvec_detector_label}', f'hSpVsNsigma_{out_pt_bin}_{qvec_detector_label}', n_rebin=4)
     setHistStyle(hNsigma, ROOT.kRed+1, linewidth=2)
     setHistStyle(hSpVsNsigma, ROOT.kAzure+1, linewidth=2)
     hSpVsNsigma.GetYaxis().SetRangeUser(-2., 2.)
 
-    # fit with a pol0
-    fit = ROOT.TF1('fit', 'pol0', -1, 1)
-    hSpVsNsigma.Fit(fit, 'R')
+    # # fit with a pol0
+    # fit = ROOT.TF1('fit', 'pol0', -1, 1)
+    # hSpVsNsigma.Fit(fit, 'R')
 
-    val = fit.GetParameter(0)
-    err = fit.GetParError(0)
+    # val = fit.GetParameter(0)
+    # err = fit.GetParError(0)
 
-    hSPvsPt.SetBinContent(out_pt_bin, val)
-    hSPvsPt.SetBinError(out_pt_bin, err)
+    # hSPvsPt.SetBinContent(out_pt_bin, val)
+    # hSPvsPt.SetBinError(out_pt_bin, err)
 
-    fit_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
-    fit_panel.SetBorderSize(0)
-    fit_panel.SetFillStyle(0)
-    fit_panel.SetTextAlign(12)
-    fit_panel.SetTextFont(42)
-    fit_panel.AddText(f'p_{{0}} = {val:.3f} #pm {err:.3f}')
+    # fit_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
+    # fit_panel.SetBorderSize(0)
+    # fit_panel.SetFillStyle(0)
+    # fit_panel.SetTextAlign(12)
+    # fit_panel.SetTextFont(42)
+    # fit_panel.AddText(f'p_{{0}} = {val:.3f} #pm {err:.3f}')
 
     canvas = geCanvasWithTwoPanels(
-        f'cSpVsNsigma_{out_pt_bin}_{qvec_detector_label}', hSpVsNsigma, hNsigma, top_panel=fit_panel, bottom_panel=info_panel)
+        f'cSpVsNsigma_{out_pt_bin}_{qvec_detector_label}', hSpVsNsigma, hNsigma, bottom_panel=info_panel)
 
     hSpVsNsigma.Write()
     hNsigma.Write()
+    hSpVsNsigma_notAveraged.Write()
     canvas.Write()

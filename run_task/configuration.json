@@ -7,7 +7,7 @@
     "start-value-enumeration": "0",
     "end-value-enumeration": "-1",
     "step-value-enumeration": "1",
-    "aod-file": "/data/lbariogl/flow/LHC23zzh_pass2_small/AO2D.root"
+    "aod-file": "~/test_new_format/AnalysisResults_trees.root"
   },
   "internal-dpl-injected-dummy-sink": "",
   "internal-dpl-aod-spawner": "",

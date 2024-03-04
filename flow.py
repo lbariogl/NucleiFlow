@@ -5,7 +5,7 @@ sys.path.append('utils')
 import utils as utils
 
 
-input_file_name = './run_task/AnalysisResults_small.root'
+input_file_name = './run_task/AnalysisResults.root'
 input_dir_name = 'nucleiFlow'
 output_file_name = 'output.root'
 

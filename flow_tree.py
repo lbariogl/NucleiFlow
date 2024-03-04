@@ -7,8 +7,7 @@ sys.path.append('utils')
 import utils as utils
 
 
-input_file_name = '~/debug/AnalysisResults_trees.root'
-input_dir_name = 'nucleiFlow'
+input_file_name = '~/test_new_format/AnalysisResults_trees.root'
 output_file_name = 'output.root'
 
 cent_detector_label = 'FT0C'
@@ -21,9 +20,5 @@ nucleiflow_hdl = TreeHandler(input_file_name, 'O2nucleitableflow', folder_name='
 nucleiflow_df = nucleiflow_hdl._full_data_frame
 
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join='inner')
-
-
-
-
 
 

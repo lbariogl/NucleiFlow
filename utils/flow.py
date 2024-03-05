@@ -61,14 +61,13 @@ class FlowMaker:
             # crate and fill histograms
             hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_{ibin}', r';n#sigma^{TPC} (a.u.);',
                                        self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
-            hNsigma3He_tmp.SetTitle(pt_label)
+            # hNsigma3He_tmp.SetTitle(pt_label)
             utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
-            histo_title = pt_label + r';n#sigma^{TPC} (a.u.); #hat{u}_{2} #upoint #vec{Q}_{2}' + '^{}'.format(
-                self.ref_detector)
+            histo_title = r';n#sigma^{TPC} (a.u.); #hat{u}_{2} #upoint #vec{Q}_{2}'
             hSPvsNsigma3He2D_tmp = ROOT.TH2F(f'hSp{self.ref_detector}vsNsigma3He2D_{ibin}', histo_title,
                                              self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
 
-            for nSigmaTPC, sp in zip(self.data_df['fNsigmaTPC3He'], self.data_df[f'fSp{self.ref_detector}']):
+            for nSigmaTPC, sp in zip(bin_df['fNsigmaTPC3He'], bin_df[f'fSp{self.ref_detector}']):
                 hNsigma3He_tmp.Fill(nSigmaTPC)
                 hSPvsNsigma3He2D_tmp.Fill(nSigmaTPC, sp)
 
@@ -93,7 +92,7 @@ class FlowMaker:
             info_panel.AddText(pt_label)
 
             canvas = utils.getCanvasWithTwoPanels(
-                f'cSp{self.ref_detector}vsNsigma_{ibin}', hSPvsNsigma3He2D_tmp, hNsigma3He_tmp, bottom_panel=info_panel)
+                f'cSp{self.ref_detector}vsNsigma_{ibin}', hSPvsNsigma3He_tmp, hNsigma3He_tmp, bottom_panel=info_panel)
 
             self.cSPvsNsigma3He.append(canvas)
 

@@ -8,7 +8,7 @@ import utils as utils
 from flow import FlowMaker
 
 
-input_file_name = '~/test_new_format/AnalysisResults_trees.root'
+input_file_name = '/data/lbariogl/flow/LHC23zzh_pass2/AO2D.root'
 output_file_name = 'output.root'
 outuput_file = ROOT.TFile(output_file_name, 'recreate')
 

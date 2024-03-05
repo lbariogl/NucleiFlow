@@ -86,10 +86,10 @@ def redifineColumns(complete_df):
     complete_df.drop(columns=['fITSclusterSizes'])
     complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
     complete_df.eval(
-        'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
-    complete_df.eval(
         'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
     complete_df.loc[complete_df['fTrackedAsHe'] == True, 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
+    complete_df.eval(
+        'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
     # ScalarProducts
     complete_df.eval('fSpFT0C = fPt*cos(fPhi) * fXQvecFT0C + fPt*sin(fPhi) * fYQvecFT0C', inplace=True)
     complete_df.eval('fSpFT0A = fPt*cos(fPhi) * fXQvecFT0A + fPt*sin(fPhi) * fYQvecFT0A', inplace=True)
@@ -140,7 +140,7 @@ def getAverage2D(histo2D, histo_name="histo"):
     x_axis = histo2D.GetXaxis()
     nX_bins = x_axis.GetNbins()
     histo2D_y_title = histo2D.GetYaxis().GetTitle()
-    new_title = r'\langle ' + histo2D_y_title + r' \rangle'
+    new_title = r'#LT ' + histo2D_y_title + r' #GT'
     average_histo = histo2D.ProjectionX(histo_name)
     average_histo.Reset()
     average_histo.GetYaxis().SetTitle(new_title)

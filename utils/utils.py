@@ -79,6 +79,15 @@ def getNsigmaTPC(x, tpc_signal, parameters=default_bb_parameters, resolution_per
 # vectorised version of N-sigma TPC at specific rigidity
 getNsigmaTPC_vectorised = np.vectorize(getNsigmaTPC)
 
+# get rapidity
+def getRapidity(pt, eta, phi, mass=2.80839160743):
+    vector = ROOT.TLorentzVector()
+    vector.SetPtEtaPhiM(pt, eta, phi, mass)
+    return vector.Rapidity()
+
+# vectorised version of getRapidity
+getRapidity_vectorised = np.vectorize(getRapidity)
+
 # redifine columns in the complete data-frame
 def redifineColumns(complete_df):
     complete_df.eval(
@@ -90,12 +99,14 @@ def redifineColumns(complete_df):
     complete_df.loc[complete_df['fTrackedAsHe'] == True, 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
     complete_df.eval(
         'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
+    complete_df.eval(
+        'fRapidity = @getRapidity_vectorised(fPt, fEta, fPhi)', inplace=True)
     # ScalarProducts
-    complete_df.eval('fSpFT0C = fPt*cos(fPhi) * fXQvecFT0C + fPt*sin(fPhi) * fYQvecFT0C', inplace=True)
-    complete_df.eval('fSpFT0A = fPt*cos(fPhi) * fXQvecFT0A + fPt*sin(fPhi) * fYQvecFT0A', inplace=True)
-    complete_df.eval('fSpFV0A = fPt*cos(fPhi) * fXQvecFV0A + fPt*sin(fPhi) * fYQvecFV0A', inplace=True)
-    complete_df.eval('fSpTPCpos = fPt*cos(fPhi) * fXQvecTPCpos + fPt*sin(fPhi) * fYQvecTPCpos', inplace=True)
-    complete_df.eval('fSpTPCneg = fPt*cos(fPhi) * fXQvecTPCneg + fPt*sin(fPhi) * fYQvecTPCneg', inplace=True)
+    complete_df.eval('fSpFT0C = cos(fPhi) * fXQvecFT0C + sin(fPhi) * fYQvecFT0C', inplace=True)
+    complete_df.eval('fSpFT0A = cos(fPhi) * fXQvecFT0A + sin(fPhi) * fYQvecFT0A', inplace=True)
+    complete_df.eval('fSpFV0A = cos(fPhi) * fXQvecFV0A + sin(fPhi) * fYQvecFV0A', inplace=True)
+    complete_df.eval('fSpTPCpos = cos(fPhi) * fXQvecTPCpos + sin(fPhi) * fYQvecTPCpos', inplace=True)
+    complete_df.eval('fSpTPCneg = cos(fPhi) * fXQvecTPCneg + sin(fPhi) * fYQvecTPCneg', inplace=True)
 
 def getBBAfunctions(parameters, resolution, n_sigma=5):
     upper_scale = 1 + resolution * n_sigma

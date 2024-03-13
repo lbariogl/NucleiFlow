@@ -20,10 +20,10 @@ class FlowMaker:
         self.ref_detector = 'FT0C'
 
         # histograms
-        self.n_nsigmaTPC_bins = 100
+        self.n_nsigmaTPC_bins = 50
         self.nsigmaTPC_bin_limits = [-5., 5.]
 
-        self.n_SP_bins = 200
+        self.n_SP_bins = 10
         self.n_SP_bin_limits = [-2., 2.]
 
         self.hNigma3He = []

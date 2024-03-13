@@ -28,12 +28,12 @@ utils.redifineColumns(complete_df)
 complete_df.query(f'fCentFT0C > {cent_limits[0]} and fCentFT0C < {cent_limits[1]}')
 
 # other selections
-selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True'
+selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True and abs(fRapidity) < 0.5'
 complete_df.query(selections, inplace=True)
 
 flow_maker = FlowMaker()
 flow_maker.data_df = complete_df
-flow_maker.pt_bins = [1, 1.5, 2., 2.5, 3., 3.5]
+flow_maker.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6, 4]
 flow_maker.output_dir = outuput_file
 
 flow_maker.make_flow()

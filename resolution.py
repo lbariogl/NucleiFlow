@@ -8,7 +8,7 @@ import numpy as np
 
 from itertools import combinations
 
-input_file = ROOT.TFile('/data/lbariogl/flow/LHC23zzh_pass2/AnalysisResults.root')
+input_file = ROOT.TFile('/data/lbariogl/flow/LHC23zzh_pass2/AR_flow.root')
 
 ref_names = ['FT0C', 'FT0A', 'FV0A', 'Bpos', 'Bneg']
 
@@ -28,12 +28,12 @@ def getResolution(histo_resolution, det1_det2_name, det2_det3_name, det1_det3_na
     err2 = hProfile_dict[det2_det3_name].GetBinError(ibin)
     err3 = hProfile_dict[det1_det3_name].GetBinError(ibin)
 
-    if val3 > 0 :
-      val = val1 * val2 / val3
+    if val2 > 0 :
+      val = val1 * val3 / val2
     else :
       val = -999
 
-    if val3 > 0 and val1 > 0 and val2 >0:
+    if val2> 0 and val1 > 0 and val2 >0:
       err = np.sqrt(err1*err1/val1/val1 + err2*err2/val2/val2 + err3*err3/val3/val3) * val
     else:
       err = 0

@@ -23,13 +23,15 @@ class FlowMaker:
         self.n_nsigmaTPC_bins = 50
         self.nsigmaTPC_bin_limits = [-5., 5.]
 
-        self.n_SP_bins = 10
-        self.n_SP_bin_limits = [-2., 2.]
+        self.n_V2_bins = 20
+        self.n_V2_bin_limits = [-1., 1.]
 
         self.hNigma3He = []
-        self.hSPvsNsigma3He2D = []
-        self.hSPvsNsigma3He = []
-        self.cSPvsNsigma3He = []
+        self.hV2vsNsigma3He2D = []
+        self.hV2vsNsigma3He = []
+        self.cV2vsNsigma3He = []
+        self.hV2 = []
+        self.hV2vsPt = None
 
         # general
         self.output_dir = None
@@ -63,21 +65,21 @@ class FlowMaker:
                                        self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
             # hNsigma3He_tmp.SetTitle(pt_label)
             utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
-            histo_title = r';n#sigma^{TPC} (a.u.); #hat{u}_{2} #upoint #vec{Q}_{2}'
-            hSPvsNsigma3He2D_tmp = ROOT.TH2F(f'hSp{self.ref_detector}vsNsigma3He2D_{ibin}', histo_title,
-                                             self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
+            histo_title = r';n#sigma^{TPC} (a.u.); cos(2(#phi - #Psi))'
+            hV2vsNsigma3He2D_tmp = ROOT.TH2F(f'hV2{self.ref_detector}vsNsigma3He2D_{ibin}', histo_title,
+                                             self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
 
-            for nSigmaTPC, sp in zip(bin_df['fNsigmaTPC3He'], bin_df[f'fSp{self.ref_detector}']):
+            for nSigmaTPC, v2 in zip(bin_df['fNsigmaTPC3He'], bin_df[f'fV2{self.ref_detector}']):
                 hNsigma3He_tmp.Fill(nSigmaTPC)
-                hSPvsNsigma3He2D_tmp.Fill(nSigmaTPC, sp)
+                hV2vsNsigma3He2D_tmp.Fill(nSigmaTPC, v2)
 
-            hSPvsNsigma3He_tmp = utils.getAverage2D(
-                hSPvsNsigma3He2D_tmp, f'hSp{self.ref_detector}vsNsigma3He_{ibin}')
-            utils.setHistStyle(hSPvsNsigma3He_tmp, ROOT.kAzure+1, linewidth=2)
+            hV2vsNsigma3He_tmp = utils.getAverage2D(
+                hV2vsNsigma3He2D_tmp, f'hV2{self.ref_detector}vsNsigma3He_{ibin}')
+            utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure+1, linewidth=2)
 
             self.hNigma3He.append(hNsigma3He_tmp)
-            self.hSPvsNsigma3He2D.append(hSPvsNsigma3He2D_tmp)
-            self.hSPvsNsigma3He.append(hSPvsNsigma3He_tmp)
+            self.hV2vsNsigma3He2D.append(hV2vsNsigma3He2D_tmp)
+            self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
 
             # system infopanel
             info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
@@ -92,9 +94,24 @@ class FlowMaker:
             info_panel.AddText(pt_label)
 
             canvas = utils.getCanvasWithTwoPanels(
-                f'cSp{self.ref_detector}vsNsigma_{ibin}', hSPvsNsigma3He_tmp, hNsigma3He_tmp, bottom_panel=info_panel)
+                f'cV2{self.ref_detector}vsNsigma_{ibin}', hV2vsNsigma3He_tmp, hNsigma3He_tmp, bottom_panel=info_panel)
 
-            self.cSPvsNsigma3He.append(canvas)
+            self.cV2vsNsigma3He.append(canvas)
+
+            hV2_tmp = ROOT.TH1F(f'hV2{self.ref_detector}_{ibin}', f'{pt_label}' + r';cos(2(#phi - #Psi))', self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
+            df_bin_3He = bin_df.query('abs(fNsigmaTPC3He) < 2')
+            for v2 in df_bin_3He[f'fV2{self.ref_detector}']:
+                hV2_tmp.Fill(v2)
+
+            self.hV2.append(hV2_tmp)
+
+        pt_bins_arr = np.array(self.pt_bins, dtype=np.float64)
+
+        n_pt_bins = len(self.pt_bins) -1
+        self.hV2vsPt = ROOT.TH1F('hV2vsPt', r'; #it{p}_{T} (GeV/#it{c}); cos(2(#phi - #Psi)', n_pt_bins, pt_bins_arr)
+        for ibin in range(0, len(self.pt_bins) - 1):
+            self.hV2vsPt.SetBinContent(ibin, self.hV2[ibin].GetMean())
+            self.hV2vsPt.SetBinError(ibin, self.hV2[ibin].GetMeanError())
 
     def dump_to_output_dir(self):
         self.output_dir.cd()
@@ -103,6 +120,10 @@ class FlowMaker:
             self.output_dir.mkdir(f'pt_{bin[0]}_{bin[1]}')
             self.output_dir.cd(f'pt_{bin[0]}_{bin[1]}')
             self.hNigma3He[ibin].Write()
-            self.hSPvsNsigma3He2D[ibin].Write()
-            self.hSPvsNsigma3He[ibin].Write()
-            self.cSPvsNsigma3He[ibin].Write()
+            self.hV2vsNsigma3He2D[ibin].Write()
+            self.hV2vsNsigma3He[ibin].Write()
+            self.cV2vsNsigma3He[ibin].Write()
+            self.hV2[ibin].Write()
+        self.output_dir.cd()
+        self.hV2vsPt.Write()
+

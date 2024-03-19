@@ -6,7 +6,6 @@ ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
 ROOT.gStyle.SetOptStat(0)
 
-
 def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
     hist.SetMarkerColor(color)
     hist.SetLineColor(color)
@@ -88,25 +87,55 @@ def getRapidity(pt, eta, phi, mass=2.80839160743):
 # vectorised version of getRapidity
 getRapidity_vectorised = np.vectorize(getRapidity)
 
+# return phi in [-pi, pi]
+def getCorrectPhi(phi):
+    new_phi = np.arctan2(np.sin(phi), np.cos(phi))
+    return new_phi
+
+getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
+
+def getPhiInRange(phi):
+
+    result = phi
+    while (result < 0) :
+      result = result + ROOT.TMath.Pi()
+    while (result > ROOT.TMath.Pi()) :
+      result = result - ROOT.TMath.Pi()
+    return result
+
+getPhiInRange_vectorised = np.vectorize(getPhiInRange)
+
 # redifine columns in the complete data-frame
 def redifineColumns(complete_df):
+    print('Redifining columns')
+    print('fPhi')
+    complete_df['fPhi'] = getCorrectPhi_vectorised(complete_df['fPhi'])
+    print('fAvgItsClusSize')
     complete_df.eval(
         'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)
     complete_df.drop(columns=['fITSclusterSizes'])
+    print('fSign')
     complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
+    print('fTrackedAsHe')
     complete_df.eval(
         'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
+    print('fTPCInnerParam')
     complete_df.loc[complete_df['fTrackedAsHe'] == True, 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
+    print('fNsigmaTPC3He')
     complete_df.eval(
         'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
+    print('fRapidity')
     complete_df.eval(
         'fRapidity = @getRapidity_vectorised(fPt, fEta, fPhi)', inplace=True)
-    # ScalarProducts
-    complete_df.eval('fSpFT0C = cos(fPhi) * fXQvecFT0C + sin(fPhi) * fYQvecFT0C', inplace=True)
-    complete_df.eval('fSpFT0A = cos(fPhi) * fXQvecFT0A + sin(fPhi) * fYQvecFT0A', inplace=True)
-    complete_df.eval('fSpFV0A = cos(fPhi) * fXQvecFV0A + sin(fPhi) * fYQvecFV0A', inplace=True)
-    complete_df.eval('fSpTPCpos = cos(fPhi) * fXQvecTPCpos + sin(fPhi) * fYQvecTPCpos', inplace=True)
-    complete_df.eval('fSpTPCneg = cos(fPhi) * fXQvecTPCneg + sin(fPhi) * fYQvecTPCneg', inplace=True)
+    # v2 with event-plane method
+    print('fV2FT0C')
+    complete_df.eval('fV2FT0C = cos(2 * (fPhi-fPsiFT0C))', inplace=True)
+    print('fV2FT0A')
+    complete_df.eval('fV2FT0A = cos(2 * (fPhi-fPsiFT0A))', inplace=True)
+    print('fV2TPCl')
+    complete_df.eval('fV2TPCl = cos(2 * (fPhi-fPsiTPCl))', inplace=True)
+    print('fV2TPCr')
+    complete_df.eval('fV2TPCr = cos(2 * (fPhi-fPsiTPCr))', inplace=True)
 
 def getBBAfunctions(parameters, resolution, n_sigma=5):
     upper_scale = 1 + resolution * n_sigma
@@ -158,7 +187,7 @@ def getAverage2D(histo2D, histo_name="histo"):
     for i_bin in range(1, nX_bins + 1):
         histo_tmp = histo2D.ProjectionY('histo_tmp', i_bin, i_bin)
         average_histo.SetBinContent(i_bin, histo_tmp.GetMean())
-        average_histo.SetBinContent(i_bin, histo_tmp.GetRMS())
+        average_histo.SetBinError(i_bin, histo_tmp.GetStdDev())
         del histo_tmp
     return average_histo
 

@@ -9,7 +9,7 @@ sys.path.append('utils')
 import utils as utils
 
 
-input_file_name = '/data/lbariogl/HL_data/unmerged/AO2D_out.root'
+input_file_name = '/data/lbariogl/flow/LHC23zzh_pass2_small/AO2D.root'
 output_file_name = 'track_qc.root'
 
 output_file = ROOT.TFile(output_file_name, 'recreate')
@@ -32,18 +32,21 @@ p_train = [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 resolution_train = 0.09
 n_sigma = 5
 
-selections = 'abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True'
-
+complete_df.query(f'fCentFT0C > {cent_limits[0]} and fCentFT0C < {cent_limits[1]}', inplace=True)
+selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True and abs(fRapidity) < 0.5'
 complete_df.query(selections, inplace=True)
 
 hEta = ROOT.TH1F('hEta', ';#eta;', 200, -1., 1.)
 hAvgItsClusSize = ROOT.TH1F('hAvgItsClusSize', ';<ITS cluster size>;', 20, 0, 20)
 hTPCsignalVsPoverZ = ROOT.TH2F('hTPCsignalVsPoverZ', ';#it{p}/z (GeV/#it{c}); d#it{E} / d#it{x} (a.u.)', 600, -6., 6., 1400, 0., 1400.)
+hPhi = ROOT.TH1F('hPhi', ';#phi;', 140, -7., 7.)
+hPsiFT0C = ROOT.TH1F('hPsiFT0C', r';#Psi_{FTOC};', 140, -7., 7.)
+hPhiMinusPsiFT0C = ROOT.TH1F('hPhiMinusPsiFT0C', r';phi - #Psi_{FTOC};', 140, -7., 7.)
+hV2 = ROOT.TH1F('hV2', r';cos(2(#phi - #Psi_{FTOC}))', 100, -1, 1)
 
 print('Filling eta')
 for eta in complete_df['fEta']:
   hEta.Fill(eta)
-
 
 print('Filling cluster size')
 for avgClus in complete_df['fAvgItsClusSize']:
@@ -53,7 +56,14 @@ print('Filling specific energy loss')
 for rig, sign, signal in zip(complete_df['fTPCInnerParam'], complete_df['fSign'], complete_df['fTPCsignal']):
   hTPCsignalVsPoverZ.Fill(sign*rig, signal)
 
-print('Done')
+print('Filling phi')
+for phi, psi_ft0c in zip(complete_df['fPhi'], complete_df['fPsiFT0C']):
+  hPhi.Fill(phi)
+  hPsiFT0C.Fill(psi_ft0c)
+  delta_phi = phi - psi_ft0c
+  hPhiMinusPsiFT0C.Fill(delta_phi)
+  hV2.Fill(ROOT.TMath.Cos(2*delta_phi))
+
 
 functions = utils.getBBAfunctions(parameters=p_train, resolution=resolution_train)
 
@@ -67,7 +77,11 @@ output_file.cd()
 hEta.Write()
 hAvgItsClusSize.Write()
 hTPCsignalVsPoverZ.Write()
+hPhi.Write()
+hPsiFT0C.Write()
+hPhiMinusPsiFT0C.Write()
 cTPC.Write()
+hV2.Write()
 for f in functions:
   f.Write()
 

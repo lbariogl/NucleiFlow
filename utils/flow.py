@@ -34,7 +34,7 @@ class FlowMaker:
         self.hV2vsPt = None
 
         # general
-        self.output_dir = None
+        self.output_file = None
 
     def _check_members(self):
 
@@ -61,7 +61,7 @@ class FlowMaker:
             bin_df = self.data_df.query(bin_sel)
 
             # crate and fill histograms
-            hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_{ibin}', r';n#sigma^{TPC} (a.u.);',
+            hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_{ibin}', pt_label + r';n#sigma^{TPC} (a.u.);',
                                        self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
             # hNsigma3He_tmp.SetTitle(pt_label)
             utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
@@ -103,6 +103,21 @@ class FlowMaker:
             for v2 in df_bin_3He[f'fV2{self.ref_detector}']:
                 hV2_tmp.Fill(v2)
 
+            # system infopanel
+            info_panel_bis = ROOT.TPaveText(0.4, 0.6, 0.6, 0.82, 'NDC')
+            info_panel_bis.SetBorderSize(0)
+            info_panel_bis.SetFillStyle(0)
+            info_panel_bis.SetTextAlign(12)
+            info_panel_bis.SetTextFont(42)
+            info_panel_bis.AddText('ALICE')
+            info_panel_bis.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
+            info_panel_bis.AddText(
+                f'{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}')
+            info_panel_bis.AddText(pt_label)
+
+            hV2_tmp.GetListOfFunctions().Add(info_panel_bis)
+            utils.setHistStyle(hV2_tmp, ROOT.kAzure+1, linewidth=2)
+
             self.hV2.append(hV2_tmp)
 
         pt_bins_arr = np.array(self.pt_bins, dtype=np.float64)
@@ -113,17 +128,18 @@ class FlowMaker:
             self.hV2vsPt.SetBinContent(ibin, self.hV2[ibin].GetMean())
             self.hV2vsPt.SetBinError(ibin, self.hV2[ibin].GetMeanError())
 
-    def dump_to_output_dir(self):
-        self.output_dir.cd()
+    def dump_to_output_file(self):
+        cent_dir = self.output_file.mkdir(f'cent_{self.cent_limits[0]}_{self.cent_limits[1]}')
+        cent_dir.cd()
         for ibin in range(0, len(self.pt_bins) - 1):
             bin = [self.pt_bins[ibin], self.pt_bins[ibin + 1]]
-            self.output_dir.mkdir(f'pt_{bin[0]}_{bin[1]}')
-            self.output_dir.cd(f'pt_{bin[0]}_{bin[1]}')
+            cent_dir.mkdir(f'pt_{bin[0]}_{bin[1]}')
+            cent_dir.cd(f'pt_{bin[0]}_{bin[1]}')
             self.hNigma3He[ibin].Write()
             self.hV2vsNsigma3He2D[ibin].Write()
             self.hV2vsNsigma3He[ibin].Write()
             self.cV2vsNsigma3He[ibin].Write()
             self.hV2[ibin].Write()
-        self.output_dir.cd()
+        cent_dir.cd()
         self.hV2vsPt.Write()
 

@@ -9,7 +9,7 @@ sys.path.append('utils')
 import utils as utils
 
 
-input_file_name = '/data/lbariogl/flow/LHC23zzh_pass2_small/AO2D.root'
+input_file_name = '/data/lbariogl/flow/LHC23_PbPb_pass2_new/AO2D_merged.root'
 output_file_name = 'track_qc.root'
 
 output_file = ROOT.TFile(output_file_name, 'recreate')
@@ -30,10 +30,10 @@ utils.redifineColumns(complete_df)
 #BB parameters
 p_train = [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 resolution_train = 0.09
-n_sigma = 5
+n_sigma = 3
 
-complete_df.query(f'fCentFT0C > {cent_limits[0]} and fCentFT0C < {cent_limits[1]}', inplace=True)
-selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True and abs(fRapidity) < 0.5'
+# complete_df.query(f'fCentFT0C > {cent_limits[0]} and fCentFT0C < {cent_limits[1]}', inplace=True)
+selections = 'abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and abs(fRapidity) < 0.5 and abs(fNsigmaTPC3He) < 3'
 complete_df.query(selections, inplace=True)
 
 hEta = ROOT.TH1F('hEta', ';#eta;', 200, -1., 1.)

@@ -13,7 +13,6 @@ output_file_name = 'output.root'
 output_file = ROOT.TFile(output_file_name, 'recreate')
 
 cent_detector_label = 'FT0C'
-cent_limits = [30, 50]
 
 nuclei_hdl = TreeHandler(input_file_name, 'O2nucleitable', folder_name='DF')
 nuclei_df = nuclei_hdl._full_data_frame
@@ -23,9 +22,6 @@ nucleiflow_df = nucleiflow_hdl._full_data_frame
 
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join='inner')
 utils.redifineColumns(complete_df)
-
-# select centrality
-complete_df.query(f'fCentFT0C > {cent_limits[0]} and fCentFT0C < {cent_limits[1]}', inplace=True)
 
 # other selections
 selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True and abs(fRapidity) < 0.5'
@@ -81,11 +77,44 @@ hPhiMinusPsiFT0C.Write()
 
 # Flow measurement
 output_file.cd()
-flow_maker = FlowMaker()
-flow_maker.data_df = complete_df
-flow_maker.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6, 4]
-flow_maker.output_dir = output_file
 
-flow_maker.make_flow()
-flow_maker.dump_to_output_dir()
+# 0-10%
+flow_maker_0_10 = FlowMaker()
+flow_maker_0_10.data_df = complete_df.query(f'fCentFT0C > {0} and fCentFT0C < {10}')
+flow_maker_0_10.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6]
+flow_maker_0_10.cent_limits = [0, 10]
+flow_maker_0_10.output_file = output_file
+
+flow_maker_0_10.make_flow()
+flow_maker_0_10.dump_to_output_file()
+
+# 10-30%
+flow_maker_10_30 = FlowMaker()
+flow_maker_10_30.data_df = complete_df.query(f'fCentFT0C > {10} and fCentFT0C < {30}')
+flow_maker_10_30.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6, 4]
+flow_maker_10_30.cent_limits = [10, 30]
+flow_maker_10_30.output_file = output_file
+
+flow_maker_10_30.make_flow()
+flow_maker_10_30.dump_to_output_file()
+
+# 30-50%
+flow_maker_30_50 = FlowMaker()
+flow_maker_30_50.data_df = complete_df.query(f'fCentFT0C > {30} and fCentFT0C < {50}')
+flow_maker_30_50.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6, 4]
+flow_maker_30_50.cent_limits = [30, 50]
+flow_maker_30_50.output_file = output_file
+
+flow_maker_30_50.make_flow()
+flow_maker_30_50.dump_to_output_file()
+
+# 50-80%
+flow_maker_50_80 = FlowMaker()
+flow_maker_50_80.data_df = complete_df.query(f'fCentFT0C > {50} and fCentFT0C < {80}')
+flow_maker_50_80.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 3.]
+flow_maker_50_80.cent_limits = [50, 80]
+flow_maker_50_80.output_file = output_file
+
+flow_maker_50_80.make_flow()
+flow_maker_50_80.dump_to_output_file()
 

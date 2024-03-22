@@ -108,6 +108,8 @@ getPhiInRange_vectorised = np.vectorize(getPhiInRange)
 # redifine columns in the complete data-frame
 def redifineColumns(complete_df):
     print('Redifining columns')
+    print('fPt')
+    complete_df['fPt'] = 2 * complete_df['fPt']
     print('fPhi')
     complete_df['fPhi'] = getCorrectPhi_vectorised(complete_df['fPhi'])
     print('fAvgItsClusSize')

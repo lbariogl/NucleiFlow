@@ -81,40 +81,73 @@ output_file.cd()
 # 0-10%
 flow_maker_0_10 = FlowMaker()
 flow_maker_0_10.data_df = complete_df.query(f'fCentFT0C > {0} and fCentFT0C < {10}')
-flow_maker_0_10.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6]
+flow_maker_0_10.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
 flow_maker_0_10.cent_limits = [0, 10]
 flow_maker_0_10.output_file = output_file
 
 flow_maker_0_10.make_flow()
 flow_maker_0_10.dump_to_output_file()
 
-# 10-30%
-flow_maker_10_30 = FlowMaker()
-flow_maker_10_30.data_df = complete_df.query(f'fCentFT0C > {10} and fCentFT0C < {30}')
-flow_maker_10_30.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6, 4]
-flow_maker_10_30.cent_limits = [10, 30]
-flow_maker_10_30.output_file = output_file
+# 10-20%
+flow_maker_10_20 = FlowMaker()
+flow_maker_10_20.data_df = complete_df.query(f'fCentFT0C > {10} and fCentFT0C < {20}')
+flow_maker_10_20.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
+flow_maker_10_20.cent_limits = [10, 20]
+flow_maker_10_20.output_file = output_file
 
-flow_maker_10_30.make_flow()
-flow_maker_10_30.dump_to_output_file()
+flow_maker_10_20.make_flow()
+flow_maker_10_20.dump_to_output_file()
 
-# 30-50%
-flow_maker_30_50 = FlowMaker()
-flow_maker_30_50.data_df = complete_df.query(f'fCentFT0C > {30} and fCentFT0C < {50}')
-flow_maker_30_50.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 2.8, 3.2, 3.6, 4]
-flow_maker_30_50.cent_limits = [30, 50]
-flow_maker_30_50.output_file = output_file
+# 20-40%
+flow_maker_20_40 = FlowMaker()
+flow_maker_20_40.data_df = complete_df.query(f'fCentFT0C > {20} and fCentFT0C < {40}')
+flow_maker_20_40.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
+flow_maker_20_40.cent_limits = [20, 40]
+flow_maker_20_40.output_file = output_file
 
-flow_maker_30_50.make_flow()
-flow_maker_30_50.dump_to_output_file()
+flow_maker_20_40.make_flow()
+flow_maker_20_40.dump_to_output_file()
 
-# 50-80%
-flow_maker_50_80 = FlowMaker()
-flow_maker_50_80.data_df = complete_df.query(f'fCentFT0C > {50} and fCentFT0C < {80}')
-flow_maker_50_80.pt_bins = [1, 1.2, 1.4, 1.6, 2., 2.4, 3.]
-flow_maker_50_80.cent_limits = [50, 80]
-flow_maker_50_80.output_file = output_file
+# 40-60%
+flow_maker_40_60 = FlowMaker()
+flow_maker_40_60.data_df = complete_df.query(f'fCentFT0C > {40} and fCentFT0C < {60}')
+flow_maker_40_60.pt_bins = [2., 2.4, 2.8, 3.2, 4., 4.8, 6.]
+flow_maker_40_60.cent_limits = [40, 60]
+flow_maker_40_60.output_file = output_file
 
-flow_maker_50_80.make_flow()
-flow_maker_50_80.dump_to_output_file()
+flow_maker_40_60.make_flow()
+flow_maker_40_60.dump_to_output_file()
 
+resolution_file = ROOT.TFile('Resolution_FT0C.root')
+hResolution = resolution_file.Get('Resolutuion')
+hResolution.SetDirectory(0)
+
+res_0_10 = hResolution.GetBinContent(1)
+res_10_20 = hResolution.GetBinContent(2)
+res_20_40 = (hResolution.GetBinContent(3) + hResolution.GetBinContent(4)) / 2
+res_40_60 = (hResolution.GetBinContent(5) + hResolution.GetBinContent(6)) / 2
+
+resolution = [res_0_10, res_10_20, res_20_40, res_40_60]
+uncorr_v2 = [flow_maker_0_10.hV2vsPt, flow_maker_10_20.hV2vsPt, flow_maker_20_40.hV2vsPt, flow_maker_40_60.hV2vsPt]
+colors = [ROOT.kAzure+2, ROOT.kGreen+2, ROOT.kOrange-3, ROOT.kRed+1]
+labels = [r'0 - 10%', r'10 - 20%', r'20 - 40%', r'40 - 60%']
+
+cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
+frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
+cV2.SetBottomMargin(0.13)
+cV2.cd()
+legend = ROOT.TLegend(0.53, 0.67, 0.87, 0.87, 'FT0C centrality', 'brNDC')
+legend.SetBorderSize(0)
+legend.SetNColumns(2)
+
+for i, res in enumerate(resolution):
+  print(f'{labels[i]} -> resolution: {res}')
+  uncorr_v2[i].Scale(1/res)
+  utils.setHistStyle(uncorr_v2[i], colors[i])
+  legend.AddEntry(uncorr_v2[i], labels[i], 'PF')
+  uncorr_v2[i].Draw('PE SAME')
+
+legend.Draw()
+
+output_file.cd()
+cV2.Write()

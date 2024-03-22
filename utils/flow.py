@@ -125,8 +125,8 @@ class FlowMaker:
         n_pt_bins = len(self.pt_bins) -1
         self.hV2vsPt = ROOT.TH1F('hV2vsPt', r'; #it{p}_{T} (GeV/#it{c}); cos(2(#phi - #Psi)', n_pt_bins, pt_bins_arr)
         for ibin in range(0, len(self.pt_bins) - 1):
-            self.hV2vsPt.SetBinContent(ibin, self.hV2[ibin].GetMean())
-            self.hV2vsPt.SetBinError(ibin, self.hV2[ibin].GetMeanError())
+            self.hV2vsPt.SetBinContent(ibin+1, self.hV2[ibin].GetMean())
+            self.hV2vsPt.SetBinError(ibin+1, self.hV2[ibin].GetMeanError())
 
     def dump_to_output_file(self):
         cent_dir = self.output_file.mkdir(f'cent_{self.cent_limits[0]}_{self.cent_limits[1]}')

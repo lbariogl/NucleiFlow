@@ -23,10 +23,14 @@ class FlowMaker:
         self.n_nsigmaTPC_bins = 50
         self.nsigmaTPC_bin_limits = [-5., 5.]
 
+        self.n_tofMassSquared_bins = 50
+        self.tofMassSquared_bin_limits = [-5., 5.]
+
         self.n_V2_bins = 20
         self.n_V2_bin_limits = [-1., 1.]
 
         self.hNigma3He = []
+        self.hTOFmassSquared = []
         self.hV2vsNsigma3He2D = []
         self.hV2vsNsigma3He = []
         self.cV2vsNsigma3He = []
@@ -65,19 +69,24 @@ class FlowMaker:
                                        self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
             # hNsigma3He_tmp.SetTitle(pt_label)
             utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
+            hTOFmassSquared_tmp = ROOT.TH1F(f'hTOFmassSquared_{ibin}', pt_label + r';m_{TOF}^{2} - m_{0}^{2} (GeV/#it{c}^{2})^{2};',
+                                       self.n_tofMassSquared_bins, self.tofMassSquared_bin_limits[0], self.tofMassSquared_bin_limits[1])
+            utils.setHistStyle(hTOFmassSquared_tmp, ROOT.kRed+1, linewidth=2)
             histo_title = r';n#sigma^{TPC} (a.u.); cos(2(#phi - #Psi))'
             hV2vsNsigma3He2D_tmp = ROOT.TH2F(f'hV2{self.ref_detector}vsNsigma3He2D_{ibin}', histo_title,
                                              self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
 
-            for nSigmaTPC, v2 in zip(bin_df['fNsigmaTPC3He'], bin_df[f'fV2{self.ref_detector}']):
+            for nSigmaTPC, v2, m2 in zip(bin_df['fNsigmaTPC3He'], bin_df[f'fV2{self.ref_detector}'], bin_df['fTOFmassSquared']):
                 hNsigma3He_tmp.Fill(nSigmaTPC)
                 hV2vsNsigma3He2D_tmp.Fill(nSigmaTPC, v2)
+                hTOFmassSquared_tmp.Fill(m2 - 2.80839160743 * 2.80839160743)
 
             hV2vsNsigma3He_tmp = utils.getAverage2D(
                 hV2vsNsigma3He2D_tmp, f'hV2{self.ref_detector}vsNsigma3He_{ibin}')
             utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure+1, linewidth=2)
 
             self.hNigma3He.append(hNsigma3He_tmp)
+            self.hTOFmassSquared.append(hTOFmassSquared_tmp)
             self.hV2vsNsigma3He2D.append(hV2vsNsigma3He2D_tmp)
             self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
 
@@ -136,6 +145,7 @@ class FlowMaker:
             cent_dir.mkdir(f'pt_{bin[0]}_{bin[1]}')
             cent_dir.cd(f'pt_{bin[0]}_{bin[1]}')
             self.hNigma3He[ibin].Write()
+            self.hTOFmassSquared[ibin].Write()
             self.hV2vsNsigma3He2D[ibin].Write()
             self.hV2vsNsigma3He[ibin].Write()
             self.cV2vsNsigma3He[ibin].Write()

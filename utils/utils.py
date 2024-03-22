@@ -129,6 +129,9 @@ def redifineColumns(complete_df):
     print('fRapidity')
     complete_df.eval(
         'fRapidity = @getRapidity_vectorised(fPt, fEta, fPhi)', inplace=True)
+    print('fTOFmassSquared')
+    complete_df.eval(
+        'fTOFmassSquared = 4 * fTPCInnerParam * fTPCInnerParam * (1/(fBeta * fBeta) - 1)', inplace=True)
     # v2 with event-plane method
     print('fV2FT0C')
     complete_df.eval('fV2FT0C = cos(2 * (fPhi-fPsiFT0C))', inplace=True)

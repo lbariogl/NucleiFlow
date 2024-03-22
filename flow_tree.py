@@ -84,6 +84,7 @@ flow_maker_0_10.data_df = complete_df.query(f'fCentFT0C > {0} and fCentFT0C < {1
 flow_maker_0_10.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
 flow_maker_0_10.cent_limits = [0, 10]
 flow_maker_0_10.output_file = output_file
+flow_maker_0_10.plot_dir = 'plots'
 
 flow_maker_0_10.make_flow()
 flow_maker_0_10.dump_to_output_file()
@@ -94,6 +95,7 @@ flow_maker_10_20.data_df = complete_df.query(f'fCentFT0C > {10} and fCentFT0C < 
 flow_maker_10_20.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
 flow_maker_10_20.cent_limits = [10, 20]
 flow_maker_10_20.output_file = output_file
+flow_maker_10_20.plot_dir = 'plots'
 
 flow_maker_10_20.make_flow()
 flow_maker_10_20.dump_to_output_file()
@@ -104,6 +106,7 @@ flow_maker_20_40.data_df = complete_df.query(f'fCentFT0C > {20} and fCentFT0C < 
 flow_maker_20_40.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
 flow_maker_20_40.cent_limits = [20, 40]
 flow_maker_20_40.output_file = output_file
+flow_maker_20_40.plot_dir = 'plots'
 
 flow_maker_20_40.make_flow()
 flow_maker_20_40.dump_to_output_file()
@@ -114,6 +117,7 @@ flow_maker_40_60.data_df = complete_df.query(f'fCentFT0C > {40} and fCentFT0C < 
 flow_maker_40_60.pt_bins = [2., 2.4, 2.8, 3.2, 4., 4.8, 6.]
 flow_maker_40_60.cent_limits = [40, 60]
 flow_maker_40_60.output_file = output_file
+flow_maker_40_60.plot_dir = 'plots'
 
 flow_maker_40_60.make_flow()
 flow_maker_40_60.dump_to_output_file()

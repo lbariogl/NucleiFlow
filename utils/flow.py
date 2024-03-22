@@ -39,6 +39,7 @@ class FlowMaker:
 
         # general
         self.output_file = None
+        self.plot_dir = None
 
     def _check_members(self):
 
@@ -150,6 +151,21 @@ class FlowMaker:
             self.hV2vsNsigma3He[ibin].Write()
             self.cV2vsNsigma3He[ibin].Write()
             self.hV2[ibin].Write()
+            if self.plot_dir:
+                cNsigma = ROOT.TCanvas(f'cNsigma_{ibin}', f'cNsigma_{ibin}', 800, 600)
+                cNsigma.SetBottomMargin(0.15)
+                self.hNigma3He[ibin].Draw()
+                cNsigma.SaveAs(f'{self.plot_dir}/cNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
+                cTOFmassSquared = ROOT.TCanvas(f'cTOFmassSquared_{ibin}', f'cTOFmassSquared_{ibin}', 800, 600)
+                cTOFmassSquared.SetBottomMargin(0.15)
+                self.hTOFmassSquared[ibin].Draw()
+                cTOFmassSquared.SaveAs(f'{self.plot_dir}/cTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
+                cV2 = ROOT.TCanvas(f'cV2_{ibin}', f'cV2_{ibin}', 800, 600)
+                cV2.SetBottomMargin(0.15)
+                self.hV2[ibin].Draw()
+                cV2.SaveAs(f'{self.plot_dir}/hV2_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
         cent_dir.cd()
         self.hV2vsPt.Write()
+        if self.plot_dir:
+            self.hV2vsPt.SaveAs(f'{self.plot_dir}/hV2vsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}.pdf')
 

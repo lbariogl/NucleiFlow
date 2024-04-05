@@ -89,21 +89,12 @@ getRapidity_vectorised = np.vectorize(getRapidity)
 
 # return phi in [-pi, pi]
 def getCorrectPhi(phi):
-    new_phi = np.arctan2(np.sin(phi), np.cos(phi))
+    new_phi = phi
+    if phi > np.pi:
+        new_phi = new_phi - (2*np.pi)
     return new_phi
 
 getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
-
-def getPhiInRange(phi):
-
-    result = phi
-    while (result < 0) :
-      result = result + ROOT.TMath.Pi()
-    while (result > ROOT.TMath.Pi()) :
-      result = result - ROOT.TMath.Pi()
-    return result
-
-getPhiInRange_vectorised = np.vectorize(getPhiInRange)
 
 # redifine columns in the complete data-frame
 def redifineColumns(complete_df):
@@ -112,9 +103,13 @@ def redifineColumns(complete_df):
     complete_df['fPt'] = 2 * complete_df['fPt']
     print('fPhi')
     complete_df['fPhi'] = getCorrectPhi_vectorised(complete_df['fPhi'])
+    print('fCosLambda')
+    complete_df.eval('fCosLambda = tanh(fEta)', inplace=True)
     print('fAvgItsClusSize')
     complete_df.eval(
         'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)
+    print('fAvgItsClusSize * fCosLambda')
+    complete_df.eval('fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda', inplace=True)
     complete_df.drop(columns=['fITSclusterSizes'])
     print('fSign')
     complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
@@ -302,3 +297,15 @@ def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_b
     hNsigma.Write()
     hSpVsNsigma_notAveraged.Write()
     canvas.Write()
+
+def saveCanvasAsPDF(histo, plots_dir, is2D=False):
+    histo_name = histo.GetName()
+    canvas_name = histo_name.replace('h', 'c', 1)
+    canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
+    canvas.SetBottomMargin(0.13)
+    canvas.SetLeftMargin(0.13)
+    if not is2D:
+        histo.Draw('histo')
+    else:
+        histo.Draw('colz')
+    canvas.SaveAs(f'{plots_dir}/{canvas_name}.pdf')

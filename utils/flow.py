@@ -4,6 +4,7 @@ import numpy as np
 import sys
 sys.path.append('utils')
 import utils as utils
+import os
 
 
 class FlowMaker:
@@ -36,6 +37,7 @@ class FlowMaker:
         self.cV2vsNsigma3He = []
         self.hV2 = []
         self.hV2vsPt = None
+        self.color = ROOT.kBlack
 
         # general
         self.output_file = None
@@ -66,15 +68,15 @@ class FlowMaker:
             bin_df = self.data_df.query(bin_sel)
 
             # crate and fill histograms
-            hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_{ibin}', pt_label + r';n#sigma^{TPC} (a.u.);',
+            hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}', pt_label + r';n#sigma^{TPC} (a.u.);',
                                        self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
             # hNsigma3He_tmp.SetTitle(pt_label)
             utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
             hTOFmassSquared_tmp = ROOT.TH1F(f'hTOFmassSquared_{ibin}', pt_label + r';m_{TOF}^{2} - m_{0}^{2} (GeV/#it{c}^{2})^{2};',
-                                       self.n_tofMassSquared_bins, self.tofMassSquared_bin_limits[0], self.tofMassSquared_bin_limits[1])
+                                            self.n_tofMassSquared_bins, self.tofMassSquared_bin_limits[0], self.tofMassSquared_bin_limits[1])
             utils.setHistStyle(hTOFmassSquared_tmp, ROOT.kRed+1, linewidth=2)
             histo_title = r';n#sigma^{TPC} (a.u.); cos(2(#phi - #Psi))'
-            hV2vsNsigma3He2D_tmp = ROOT.TH2F(f'hV2{self.ref_detector}vsNsigma3He2D_{ibin}', histo_title,
+            hV2vsNsigma3He2D_tmp = ROOT.TH2F(f'hV2{self.ref_detector}vsNsigma3He2D_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}', histo_title,
                                              self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
 
             for nSigmaTPC, v2, m2 in zip(bin_df['fNsigmaTPC3He'], bin_df[f'fV2{self.ref_detector}'], bin_df['fTOFmassSquared']):
@@ -83,7 +85,7 @@ class FlowMaker:
                 hTOFmassSquared_tmp.Fill(m2 - 2.80839160743 * 2.80839160743)
 
             hV2vsNsigma3He_tmp = utils.getAverage2D(
-                hV2vsNsigma3He2D_tmp, f'hV2{self.ref_detector}vsNsigma3He_{ibin}')
+                hV2vsNsigma3He2D_tmp, f'hV2{self.ref_detector}vsNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}')
             utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure+1, linewidth=2)
 
             self.hNigma3He.append(hNsigma3He_tmp)
@@ -104,11 +106,12 @@ class FlowMaker:
             info_panel.AddText(pt_label)
 
             canvas = utils.getCanvasWithTwoPanels(
-                f'cV2{self.ref_detector}vsNsigma_{ibin}', hV2vsNsigma3He_tmp, hNsigma3He_tmp, bottom_panel=info_panel)
+                f'cV2{self.ref_detector}vsNsigma_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}', hV2vsNsigma3He_tmp, hNsigma3He_tmp, bottom_panel=info_panel)
 
             self.cV2vsNsigma3He.append(canvas)
 
-            hV2_tmp = ROOT.TH1F(f'hV2{self.ref_detector}_{ibin}', f'{pt_label}' + r';cos(2(#phi - #Psi))', self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
+            hV2_tmp = ROOT.TH1F(f'hV2{self.ref_detector}_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}', f'{pt_label}' + r';cos(2(#phi - #Psi))',
+                                self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
             df_bin_3He = bin_df.query('abs(fNsigmaTPC3He) < 2')
             for v2 in df_bin_3He[f'fV2{self.ref_detector}']:
                 hV2_tmp.Fill(v2)
@@ -132,14 +135,17 @@ class FlowMaker:
 
         pt_bins_arr = np.array(self.pt_bins, dtype=np.float64)
 
-        n_pt_bins = len(self.pt_bins) -1
-        self.hV2vsPt = ROOT.TH1F('hV2vsPt', r'; #it{p}_{T} (GeV/#it{c}); cos(2(#phi - #Psi)', n_pt_bins, pt_bins_arr)
+        n_pt_bins = len(self.pt_bins) - 1
+        self.hV2vsPt = ROOT.TH1F(
+            f'hV2vsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}', r'; #it{p}_{T} (GeV/#it{c}); cos(2(#phi - #Psi)', n_pt_bins, pt_bins_arr)
+        utils.setHistStyle(self.hV2vsPt, self.color)
         for ibin in range(0, len(self.pt_bins) - 1):
             self.hV2vsPt.SetBinContent(ibin+1, self.hV2[ibin].GetMean())
             self.hV2vsPt.SetBinError(ibin+1, self.hV2[ibin].GetMeanError())
 
     def dump_to_output_file(self):
-        cent_dir = self.output_file.mkdir(f'cent_{self.cent_limits[0]}_{self.cent_limits[1]}')
+        cent_dir = self.output_file.mkdir(
+            f'cent_{self.cent_limits[0]}_{self.cent_limits[1]}')
         cent_dir.cd()
         for ibin in range(0, len(self.pt_bins) - 1):
             bin = [self.pt_bins[ibin], self.pt_bins[ibin + 1]]
@@ -151,21 +157,29 @@ class FlowMaker:
             self.hV2vsNsigma3He[ibin].Write()
             self.cV2vsNsigma3He[ibin].Write()
             self.hV2[ibin].Write()
-            if self.plot_dir:
-                cNsigma = ROOT.TCanvas(f'cNsigma_{ibin}', f'cNsigma_{ibin}', 800, 600)
-                cNsigma.SetBottomMargin(0.15)
-                self.hNigma3He[ibin].Draw()
-                cNsigma.SaveAs(f'{self.plot_dir}/cNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
-                cTOFmassSquared = ROOT.TCanvas(f'cTOFmassSquared_{ibin}', f'cTOFmassSquared_{ibin}', 800, 600)
-                cTOFmassSquared.SetBottomMargin(0.15)
-                self.hTOFmassSquared[ibin].Draw()
-                cTOFmassSquared.SaveAs(f'{self.plot_dir}/cTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
-                cV2 = ROOT.TCanvas(f'cV2_{ibin}', f'cV2_{ibin}', 800, 600)
-                cV2.SetBottomMargin(0.15)
-                self.hV2[ibin].Draw()
-                cV2.SaveAs(f'{self.plot_dir}/hV2_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
         cent_dir.cd()
         self.hV2vsPt.Write()
-        if self.plot_dir:
-            self.hV2vsPt.SaveAs(f'{self.plot_dir}/hV2vsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}.pdf')
 
+    def dump_to_pdf(self):
+        if not self.plot_dir:
+            raise ValueError('plot_dir not set.')
+        if not os.path.exists(self.plot_dir):
+            os.makedirs(self.plot_dir)
+        for ibin in range(0, len(self.pt_bins) - 1):
+            utils.saveCanvasAsPDF(self.hNigma3He[ibin], self.plot_dir)
+            # cNsigma = ROOT.TCanvas(f'cNsigma_{ibin}', f'cNsigma_{ibin}', 800, 600)
+            # cNsigma.SetBottomMargin(0.15)
+            # self.hNigma3He[ibin].Draw()
+            # cNsigma.SaveAs(f'{self.plot_dir}/cNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
+            utils.saveCanvasAsPDF(self.hTOFmassSquared[ibin], self.plot_dir)
+            # cTOFmassSquared = ROOT.TCanvas(f'cTOFmassSquared_{ibin}', f'cTOFmassSquared_{ibin}', 800, 600)
+            # cTOFmassSquared.SetBottomMargin(0.15)
+            # self.hTOFmassSquared[ibin].Draw()
+            # cTOFmassSquared.SaveAs(f'{self.plot_dir}/cTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
+            utils.saveCanvasAsPDF(self.hV2[ibin], self.plot_dir)
+            # cV2 = ROOT.TCanvas(f'cV2_{ibin}', f'cV2_{ibin}', 800, 600)
+            # cV2.SetBottomMargin(0.15)
+            # self.hV2[ibin].Draw()
+            # cV2.SaveAs(f'{self.plot_dir}/hV2_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}.pdf')
+        utils.saveCanvasAsPDF(self.hV2vsPt, self.plot_dir)
+        # self.hV2vsPt.SaveAs(f'{self.plot_dir}/hV2vsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}.pdf')

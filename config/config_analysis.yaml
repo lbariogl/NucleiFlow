@@ -1,0 +1,21 @@
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass2_new/AO2D_merged.root"
+
+output_dir_name: "../results/"
+output_file_name: "flow.root"
+
+nuclei_tree_name: "O2nucleitable"
+ep_tree_name: "O2nucleitableflow"
+
+selections: "fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True and abs(fRapidity) < 0.5"
+
+cent_detector_label: "FT0C"
+
+do_syst: True
+n_trials: 1000
+cut_dict_syst:
+  {
+    "fCosPA": {"cut_greater": True, "cut_list": [0.985, 0.999, 50]},
+    "fNSigmaHe": {"cut_greater": True, "cut_list": [-2.5, -1.5, 15]},
+    "fTPCsignalPi": {"cut_greater": False, "cut_list": [1000, 1000, 1]},
+    #  "fDcaV0Daug": {"cut_greater": False, "cut_list": [0.1, 0.5, 20]}
+  }

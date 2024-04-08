@@ -16,3 +16,5 @@ core*
 *.pcm
 */dpl-config.json
 plots
+ep_plots
+qc_plots

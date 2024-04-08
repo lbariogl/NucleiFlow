@@ -6,7 +6,7 @@ output_file_name: "flow.root"
 nuclei_tree_name: "O2nucleitable"
 ep_tree_name: "O2nucleitableflow"
 
-selections: "fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and fTrackedAsHe == True and abs(fRapidity) < 0.5"
+selections: "fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and abs(fRapidity) < 0.5"
 
 cent_detector_label: "FT0C"
 

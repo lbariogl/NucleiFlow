@@ -16,10 +16,10 @@ input_file = ROOT.TFile(input_file_name)
 
 input_dir = input_file.Get('flow-qc/flow')
 
-if not os.path.exists('ep_plots'):
-  os.makedirs('ep_plots')
+plots_dir = '../results/ep_plots'
 
-plots_dir = 'ep_plots'
+if not os.path.exists(plots_dir):
+  os.makedirs(plots_dir)
 
 hZvtx = input_dir.Get('hRecVtxZData')
 utils.setHistStyle(hZvtx, ROOT.kRed+2)
@@ -56,5 +56,5 @@ utils.setHistStyle(hResolutionFT0C, ROOT.kRed+2)
 cResolutionFT0C = ROOT.TCanvas('cResolutionFT0C', 'cResolutionFT0C', 800, 600)
 cResolutionFT0C.SetBottomMargin(0.15)
 hResolutionFT0C.Draw('PE')
-cResolutionFT0C.SaveAs('ep_plots/cResolutionFT0C.pdf')
+cResolutionFT0C.SaveAs(f'{plots_dir}/cResolutionFT0C.pdf')
 

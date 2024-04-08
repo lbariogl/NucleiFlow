@@ -10,14 +10,14 @@ import utils as utils
 
 
 input_file_name = '/data/lbariogl/flow/LHC23_PbPb_pass2_new/AO2D_merged.root'
-output_file_name = 'track_qc.root'
+output_file_name = '../results/track_qc.root'
 
 output_file = ROOT.TFile(output_file_name, 'recreate')
 
-if not os.path.exists('qc_plots'):
-  os.makedirs('qc_plots')
+plots_dir = '../results/qc_plots'
 
-plots_dir = 'qc_plots'
+if not os.path.exists(plots_dir):
+  os.makedirs(plots_dir)
 
 cent_detector_label = 'FT0C'
 cent_limits = [30, 50]
@@ -37,8 +37,7 @@ p_train = [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 resolution_train = 0.09
 n_sigma = 3
 
-# complete_df.query(f'fCentFT0C > {cent_limits[0]} and fCentFT0C < {cent_limits[1]}', inplace=True)
-selections = 'abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and abs(fRapidity) < 0.5 and abs(fNsigmaTPC3He) < 3'
+selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and abs(fRapidity) < 0.5'
 complete_df.query(selections, inplace=True)
 
 hEta = ROOT.TH1F('hEta', ';#eta;', 200, -1., 1.)

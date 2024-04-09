@@ -32,6 +32,11 @@ selections = config['selections']
 
 cent_detector_label = config['cent_detector_label']
 
+#BB parameters
+p_train = config['p_train']
+resolution_train = config['resolution_train']
+n_sigma_plot = config['n_sigma_plot']
+
 #create output file
 output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
 
@@ -47,6 +52,80 @@ complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join='inner')
 
 # define new columns
 utils.redifineColumns(complete_df)
+
+# apply common selections
+complete_df.query(selections, inplace=True)
+
+selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and abs(fRapidity) < 0.5'
+complete_df.query(selections, inplace=True)
+
+# Create QC histograms
+hEta = ROOT.TH1F('hEta', ';#eta;', 200, -1., 1.)
+utils.setHistStyle(hEta, ROOT.kRed+2)
+hAvgItsClusSize = ROOT.TH1F('hAvgItsClusSize', r';#LT ITS cluster size #GT;', 20, 0, 20)
+utils.setHistStyle(hAvgItsClusSize, ROOT.kRed+2)
+hTPCsignalVsPoverZ = ROOT.TH2F('hTPCsignalVsPoverZ', r';#it{p}/z (GeV/#it{c}); d#it{E} / d#it{x} (a.u.)', 600, -6., 6., 1400, 0., 1400.)
+hPhi = ROOT.TH1F('hPhi', r';#phi;', 140, -7., 7.)
+utils.setHistStyle(hPhi, ROOT.kRed+2)
+hPsiFT0C = ROOT.TH1F('hPsiFT0C', r';#Psi_{FTOC};', 140, -7., 7.)
+utils.setHistStyle(hPsiFT0C, ROOT.kRed+2)
+hPhiMinusPsiFT0C = ROOT.TH1F('hPhiMinusPsiFT0C', r';phi - #Psi_{FTOC};', 140, -7., 7.)
+utils.setHistStyle(hPhiMinusPsiFT0C, ROOT.kRed+2)
+hV2 = ROOT.TH1F('hV2', r';cos(2(#phi - #Psi_{FTOC}))', 100, -1, 1)
+utils.setHistStyle(hV2, ROOT.kRed+2)
+
+# Fill QC histograms
+print('Filling eta')
+for eta in complete_df['fEta']:
+  hEta.Fill(eta)
+
+print('Filling cluster size')
+for avgClus in complete_df['fAvgItsClusSize']:
+  hAvgItsClusSize.Fill(avgClus)
+
+print('Filling specific energy loss')
+for rig, sign, signal in zip(complete_df['fTPCInnerParam'], complete_df['fSign'], complete_df['fTPCsignal']):
+  hTPCsignalVsPoverZ.Fill(sign*rig, signal)
+
+print('Filling phi')
+for phi, psi_ft0c in zip(complete_df['fPhi'], complete_df['fPsiFT0C']):
+  hPhi.Fill(phi)
+  hPsiFT0C.Fill(psi_ft0c)
+  delta_phi = phi - psi_ft0c
+  hPhiMinusPsiFT0C.Fill(delta_phi)
+  hV2.Fill(ROOT.TMath.Cos(2*delta_phi))
+
+functions = utils.getBBAfunctions(parameters=p_train, resolution=resolution_train)
+
+cTPC = ROOT.TCanvas('cTPC', 'cTPC', 800, 600)
+hTPCsignalVsPoverZ.Draw('colz')
+
+for f in functions:
+  f.Draw('L SAME')
+
+# Saving histograms to file
+qc_dir = output_file.mkdir('QC')
+qc_dir.cd()
+hEta.Write()
+hAvgItsClusSize.Write()
+hTPCsignalVsPoverZ.Write()
+hPhi.Write()
+hPsiFT0C.Write()
+hPhiMinusPsiFT0C.Write()
+cTPC.Write()
+hV2.Write()
+for f in functions:
+  f.Write()
+
+# Save histogram as PDF
+utils.saveCanvasAsPDF(hEta, f'{output_dir_name}/qc_plots')
+utils.saveCanvasAsPDF(hAvgItsClusSize, f'{output_dir_name}/qc_plots')
+utils.saveCanvasAsPDF(hAvgItsClusSize, f'{output_dir_name}/qc_plots', is2D=True)
+utils.saveCanvasAsPDF(hPhi, f'{output_dir_name}/qc_plots')
+utils.saveCanvasAsPDF(hPsiFT0C, f'{output_dir_name}/qc_plots')
+utils.saveCanvasAsPDF(hPhiMinusPsiFT0C, f'{output_dir_name}/qc_plots')
+utils.saveCanvasAsPDF(hV2, f'{output_dir_name}/qc_plots')
+cTPC.SaveAs(f'{output_dir_name}/qc_plots/cTPC.pdf')
 
 # Flow measurement
 output_file.cd()
@@ -136,7 +215,7 @@ cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
 cV2.SetBottomMargin(0.13)
 cV2.cd()
-legend = ROOT.TLegend(0.53, 0.62, 0.87, 0.87, 'FT0C centrality', 'brNDC')
+legend = ROOT.TLegend(0.61, 0.58, 0.87,0.81, 'FT0C centrality', 'brNDC')
 legend.SetBorderSize(0)
 legend.SetNColumns(2)
 

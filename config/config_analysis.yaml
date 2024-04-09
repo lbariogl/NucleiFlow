@@ -10,6 +10,10 @@ selections: "fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClus
 
 cent_detector_label: "FT0C"
 
+p_train: [-321.34, 0.6539, 1.591, 0.8225, 2.363]
+resolution_train: 0.09
+n_sigma_plot: 5
+
 do_syst: True
 n_trials: 1000
 cut_dict_syst:

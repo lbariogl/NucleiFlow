@@ -3,6 +3,8 @@ from hipe4ml.tree_handler import TreeHandler
 import pandas as pd
 import yaml
 import argparse
+import numpy as np
+from itertools import product
 
 import sys
 sys.path.append('utils')
@@ -32,6 +34,12 @@ selections = config['selections']
 
 cent_detector_label = config['cent_detector_label']
 
+centrality_classes = config['centrality_classes']
+pt_bins = config['pt_bins']
+cent_colours = config['cent_colours']
+
+do_syst = config['do_syst']
+
 #BB parameters
 p_train = config['p_train']
 resolution_train = config['resolution_train']
@@ -57,7 +65,7 @@ utils.redifineColumns(complete_df)
 complete_df.query(selections, inplace=True)
 
 selections = 'fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and abs(fRapidity) < 0.5'
-complete_df.query(selections, inplace=True)
+# complete_df.query(selections, inplace=True)
 
 # Create QC histograms
 hEta = ROOT.TH1F('hEta', ';#eta;', 200, -1., 1.)
@@ -117,7 +125,7 @@ hV2.Write()
 for f in functions:
   f.Write()
 
-# Save histogram as PDF
+# Save QC histogram as PDF
 utils.saveCanvasAsPDF(hEta, f'{output_dir_name}/qc_plots')
 utils.saveCanvasAsPDF(hAvgItsClusSize, f'{output_dir_name}/qc_plots')
 utils.saveCanvasAsPDF(hAvgItsClusSize, f'{output_dir_name}/qc_plots', is2D=True)
@@ -127,76 +135,7 @@ utils.saveCanvasAsPDF(hPhiMinusPsiFT0C, f'{output_dir_name}/qc_plots')
 utils.saveCanvasAsPDF(hV2, f'{output_dir_name}/qc_plots')
 cTPC.SaveAs(f'{output_dir_name}/qc_plots/cTPC.pdf')
 
-# Flow measurement
-output_file.cd()
-
-# apply common selections
-complete_df.query(selections, inplace=True)
-
-# 0-10%
-flow_maker_0_10 = FlowMaker()
-flow_maker_0_10.data_df = complete_df.query(f'fCentFT0C > {0} and fCentFT0C < {10}')
-flow_maker_0_10.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
-flow_maker_0_10.cent_limits = [0, 10]
-flow_maker_0_10.output_file = output_file
-flow_maker_0_10.plot_dir = '../results/plots/cent_0_10'
-flow_maker_0_10.color = ROOT.kRed+1
-
-flow_maker_0_10.make_flow()
-flow_maker_0_10.dump_to_output_file()
-flow_maker_0_10.dump_to_pdf()
-
-# 10-20%
-flow_maker_10_20 = FlowMaker()
-flow_maker_10_20.data_df = complete_df.query(f'fCentFT0C > {10} and fCentFT0C < {20}')
-flow_maker_10_20.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
-flow_maker_10_20.cent_limits = [10, 20]
-flow_maker_10_20.output_file = output_file
-flow_maker_10_20.plot_dir = '../results/plots/cent_10_20'
-flow_maker_10_20.color = ROOT.kOrange-3
-flow_maker_10_20.make_flow()
-flow_maker_10_20.dump_to_output_file()
-flow_maker_10_20.dump_to_pdf()
-
-# 20-40%
-flow_maker_20_40 = FlowMaker()
-flow_maker_20_40.data_df = complete_df.query(f'fCentFT0C > {20} and fCentFT0C < {40}')
-flow_maker_20_40.pt_bins = [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
-flow_maker_20_40.cent_limits = [20, 40]
-flow_maker_20_40.output_file = output_file
-flow_maker_20_40.plot_dir = '../results/plots/cent_20_40'
-flow_maker_20_40.color = ROOT.kGreen+2
-
-flow_maker_20_40.make_flow()
-flow_maker_20_40.dump_to_output_file()
-flow_maker_20_40.dump_to_pdf()
-
-# 40-60%
-flow_maker_40_60 = FlowMaker()
-flow_maker_40_60.data_df = complete_df.query(f'fCentFT0C > {40} and fCentFT0C < {60}')
-flow_maker_40_60.pt_bins = [2., 2.4, 2.8, 3.2, 4., 4.8, 6.]
-flow_maker_40_60.cent_limits = [40, 60]
-flow_maker_40_60.output_file = output_file
-flow_maker_40_60.plot_dir = '../results/plots/cent_40_60'
-flow_maker_40_60.color = ROOT.kAzure+2
-
-flow_maker_40_60.make_flow()
-flow_maker_40_60.dump_to_output_file()
-flow_maker_40_60.dump_to_pdf()
-
-# 60-80%
-flow_maker_60_80 = FlowMaker()
-flow_maker_60_80.data_df = complete_df.query(f'fCentFT0C > {60} and fCentFT0C < {80}')
-flow_maker_60_80.pt_bins = [2., 2.4, 2.8, 3.2, 4., 4.8, 6.]
-flow_maker_60_80.cent_limits = [60, 80]
-flow_maker_60_80.output_file = output_file
-flow_maker_60_80.plot_dir = '../results/plots/cent_60_80'
-flow_maker_60_80.color = ROOT.kViolet+5
-
-flow_maker_60_80.make_flow()
-flow_maker_60_80.dump_to_output_file()
-flow_maker_60_80.dump_to_pdf()
-
+# Get resolution from file
 resolution_file = ROOT.TFile('Resolution_FT0C.root')
 hResolution = resolution_file.Get('Resolutuion')
 hResolution.SetDirectory(0)
@@ -207,9 +146,36 @@ res_20_40 = (hResolution.GetBinContent(3) + hResolution.GetBinContent(4)) / 2
 res_40_60 = (hResolution.GetBinContent(5) + hResolution.GetBinContent(6)) / 2
 res_60_80 = (hResolution.GetBinContent(7) + hResolution.GetBinContent(8)) / 2
 
-resolution = [res_0_10, res_10_20, res_20_40, res_40_60, res_60_80]
-uncorr_v2 = [flow_maker_0_10.hV2vsPt, flow_maker_10_20.hV2vsPt, flow_maker_20_40.hV2vsPt, flow_maker_40_60.hV2vsPt, flow_maker_60_80.hV2vsPt]
-labels = [r'0 - 10%', r'10 - 20%', r'20 - 40%', r'40 - 60%', r'60 - 80%']
+resolutions = [res_0_10, res_10_20, res_20_40, res_40_60, res_60_80]
+
+# Flow measurement
+output_file.cd()
+
+# apply common selections
+complete_df.query(selections, inplace=True)
+
+n_cent_classes = len(centrality_classes)
+
+flow_makers = []
+
+for i_cent in range(n_cent_classes):
+  flow_maker = FlowMaker()
+  flow_maker.data_df = complete_df
+  flow_maker.selection_string = selections
+  flow_maker.pt_bins = pt_bins[i_cent]
+  flow_maker.cent_limits = centrality_classes[i_cent]
+  flow_maker.resolution = resolutions[i_cent]
+
+  flow_maker.output_file = output_file
+  flow_maker.plot_dir = f'../results/plots/cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}'
+  flow_maker.color = cent_colours[i_cent]
+
+  flow_maker.make_flow()
+  flow_maker.dump_to_output_file()
+  flow_maker.dump_to_pdf()
+
+  flow_makers.append(flow_maker)
+
 
 cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
@@ -219,11 +185,10 @@ legend = ROOT.TLegend(0.61, 0.58, 0.87,0.81, 'FT0C centrality', 'brNDC')
 legend.SetBorderSize(0)
 legend.SetNColumns(2)
 
-for i, res in enumerate(resolution):
-  print(f'{labels[i]} -> resolution: {res}')
-  uncorr_v2[i].Scale(1/res)
-  legend.AddEntry(uncorr_v2[i], labels[i], 'PF')
-  uncorr_v2[i].Draw('PE SAME')
+for i_cent in range(n_cent_classes):
+  cent_label = f'{flow_makers[i_cent].cent_limits[0]} - {flow_makers[i_cent].cent_limits[1]}' + r'%'
+  legend.AddEntry(flow_makers[i_cent].hV2vsPt, cent_label,'PF')
+  flow_makers[i_cent].hV2vsPt.Draw('PE SAME')
 
 legend.Draw()
 

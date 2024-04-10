@@ -309,3 +309,10 @@ def saveCanvasAsPDF(histo, plots_dir, is2D=False):
     else:
         histo.Draw('colz')
     canvas.SaveAs(f'{plots_dir}/{canvas_name}.pdf')
+
+def getValuesFromHisto(histo):
+    n_bins = histo.GetXaxis().GetNbins()
+    histo_content = []
+    for i_bin in range(1, n_bins+1):
+        histo_content.append([histo.GetBinContent(i_bin), histo.GetBinError(i_bin)])
+    return histo_content

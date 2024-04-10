@@ -30,6 +30,7 @@ output_file_name = config['output_file_name']
 nuclei_tree_name = config['nuclei_tree_name']
 ep_tree_name = config['ep_tree_name']
 
+mandatory_selections = config['mandatory_selections']
 selections = config['selections']
 
 cent_detector_label = config['cent_detector_label']
@@ -61,8 +62,8 @@ complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join='inner')
 # define new columns
 utils.redifineColumns(complete_df)
 
-# apply common selections
-complete_df.query(selections, inplace=True)
+# apply mandatory selections
+complete_df.query(mandatory_selections, inplace=True)
 
 # Get resolution from file
 resolution_file = ROOT.TFile('Resolution_FT0C.root')
@@ -82,7 +83,10 @@ output_file.cd()
 
 n_cent_classes = len(centrality_classes)
 
+# Standard selections
 flow_makers = []
+default_values = []
+cent_dirs = []
 
 for i_cent in range(n_cent_classes):
   flow_maker = FlowMaker()
@@ -92,7 +96,12 @@ for i_cent in range(n_cent_classes):
   flow_maker.cent_limits = centrality_classes[i_cent]
   flow_maker.resolution = resolutions[i_cent]
 
-  flow_maker.output_file = output_file
+  # create output_dir
+  cent_dir = output_file.mkdir(f'cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}')
+  cent_dirs.append(cent_dir)
+  default_dir = cent_dir.mkdir('default')
+
+  flow_maker.output_dir = default_dir
   flow_maker.plot_dir = f'../results/plots/cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}'
   flow_maker.color = cent_colours[i_cent]
 
@@ -101,8 +110,100 @@ for i_cent in range(n_cent_classes):
   flow_maker.dump_to_pdf()
 
   flow_makers.append(flow_maker)
+  default_values.append(flow_maker.getFlowValues())
 
+# Systematic uncertainties
+if do_syst:
 
+  print("** Starting systematic variations **")
+  n_trials = config['n_trials']
+  # output_dir_syst = output_file.mkdir('trials')
+
+  # List of trial strings to be printed to a text file
+  trial_strings = []
+  print("----------------------------------")
+  print("** Starting systematics analysis **")
+  print(f'** {n_trials} trials will be tested **')
+  print("----------------------------------")
+
+  cut_dict_syst = config['cut_dict_syst']
+
+  # Create all possible variations (values) fot all the variables of interest (key)
+  cut_string_dict = {}
+  for var in cut_dict_syst:
+    var_dict = cut_dict_syst[var]
+    cut_greater = var_dict['cut_greater']
+    cut_greater_string = " > " if cut_greater else " < "
+    cut_list = var_dict['cut_list']
+    cut_arr = np.linspace(cut_list[0], cut_list[1], cut_list[2])
+    cut_string_dict[var] = []
+    for cut in cut_arr:
+        cut_string_dict[var].append(
+            var + cut_greater_string + str(cut))
+
+  combos = list(product(*list(cut_string_dict.values())))
+
+  if n_trials < len(combos):
+    combo_random_indices = np.random.randint(len(combos), size=n_trials)
+  else:
+    print(
+        f"** Warning: n_trials > n_combinations ({n_trials}, {len(combos)}), taking all the possible combinations **")
+    combo_random_indices = np.arange(len(combos))
+    np.random.shuffle(combo_random_indices)
+
+  # vary selections for each analysis_object, by centrality class
+  for i_cent in range(n_cent_classes):
+
+    histo_v2_syst = []
+    n_pt_bins = len(pt_bins[i_cent]) - 1
+    for i_pt in range(0, n_pt_bins):
+      histo_v2_syst.append(ROOT.TH1F(f'hV2syst_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}',
+                                     ';v_{2}', 100, default_values[i_cent][i_pt][0] - 3*default_values[i_cent][i_pt][1], default_values[i_cent][i_pt][0] + 3*default_values[i_cent][i_pt][1]))
+
+    for i_combo, combo_index in enumerate(combo_random_indices):
+
+      flow_maker_syst = FlowMaker()
+      flow_maker_syst.data_df = complete_df
+      flow_maker_syst.selection_string = selections
+      flow_maker_syst.pt_bins = pt_bins[i_cent]
+      flow_maker_syst.cent_limits = centrality_classes[i_cent]
+      flow_maker_syst.resolution = resolutions[i_cent]
+
+      combo_suffix = f'_combo{i_combo}'
+      trial_strings.append("----------------------------------")
+      trial_num_string = f'Trial: {i_combo} / {len(combo_random_indices)}'
+      trial_strings.append(trial_num_string)
+      print(trial_num_string)
+      combo = combos[combo_index]
+      sel_string = " & ".join(combo)
+      trial_strings.append(str(sel_string))
+
+      flow_maker_syst.selection_string = sel_string
+      print(f'selections: {flow_maker_syst.selection_string}')
+      flow_maker_syst.suffix = combo_suffix
+
+      flow_maker_syst.make_flow()
+      flow_values = flow_maker_syst.getFlowValues()
+
+      # write histograms to file
+      trial_dir = cent_dirs[i_cent].mkdir(f'trial_{i_combo}')
+      flow_maker_syst.output_dir = trial_dir
+      flow_maker_syst.dump_to_output_file()
+
+      print(f'cent: {flow_maker_syst.cent_limits[0]} - {flow_maker_syst.cent_limits[1]}')
+      for i_pt in range(0, flow_maker_syst.nPtBins()):
+        histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+        print(f'pt_bin: {i_pt} -> v2: {flow_values[i_pt][0]} +- {flow_values[i_pt][1]}')
+      print("----------------------------------")
+
+      del flow_maker_syst
+      del flow_values
+
+    output_file.cd(f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}')
+    for i_pt in range(0, n_pt_bins):
+      histo_v2_syst[i_pt].Write()
+
+# Final plots
 cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
 cV2.SetBottomMargin(0.13)

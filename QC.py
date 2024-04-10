@@ -23,11 +23,12 @@ config = yaml.full_load(config_file)
 input_file_name = config['input_file_name']
 input_file_AR_name = config['input_file_AR_name']
 output_dir_name = config['output_dir_name']
-output_file_name = config['output_file_name']
+output_file_name = config['output_file_name_qc']
 
 nuclei_tree_name = config['nuclei_tree_name']
 ep_tree_name = config['ep_tree_name']
 
+mandatory_selections = config['mandatory_selections']
 selections = config['selections']
 
 cent_detector_label = config['cent_detector_label']
@@ -64,13 +65,16 @@ input_dir_AR = input_file_AR.Get('flow-qc/flow')
 utils.redifineColumns(complete_df)
 
 # apply common selections
-complete_df.query(selections, inplace=True)
+complete_df.query(f'{mandatory_selections} and {selections}', inplace=True)
 
 # Create QC histograms
 hEta = ROOT.TH1F('hEta', ';#eta;', 200, -1., 1.)
 utils.setHistStyle(hEta, ROOT.kRed+2)
 hAvgItsClusSize = ROOT.TH1F('hAvgItsClusSize', r';#LT ITS cluster size #GT;', 20, 0, 20)
 utils.setHistStyle(hAvgItsClusSize, ROOT.kRed+2)
+
+hAvgItsClusSizeCosLambda = ROOT.TH1F('hAvgItsClusSizeCosLambda', r';#LT ITS cluster size #GT #times Cos(#lambda);', 20, 0, 20)
+utils.setHistStyle(hAvgItsClusSizeCosLambda, ROOT.kRed+2)
 hTPCsignalVsPoverZ = ROOT.TH2F('hTPCsignalVsPoverZ', r';#it{p}/z (GeV/#it{c}); d#it{E} / d#it{x} (a.u.)', 600, -6., 6., 1400, 0., 1400.)
 hPhi = ROOT.TH1F('hPhi', r';#phi;', 140, -7., 7.)
 utils.setHistStyle(hPhi, ROOT.kRed+2)
@@ -102,6 +106,10 @@ print('Filling cluster size')
 for avgClus in complete_df['fAvgItsClusSize']:
   hAvgItsClusSize.Fill(avgClus)
 
+print('Filling cluster size * cos(lambda)')
+for avgClus in complete_df['fAvgItsClusSizeCosLambda']:
+  hAvgItsClusSizeCosLambda.Fill(avgClus)
+
 print('Filling specific energy loss')
 for rig, sign, signal in zip(complete_df['fTPCInnerParam'], complete_df['fSign'], complete_df['fTPCsignal']):
   hTPCsignalVsPoverZ.Fill(sign*rig, signal)
@@ -127,6 +135,7 @@ qc_dir = output_file.mkdir('QC')
 qc_dir.cd()
 hEta.Write()
 hAvgItsClusSize.Write()
+hAvgItsClusSizeCosLambda.Write()
 hTPCsignalVsPoverZ.Write()
 hPhi.Write()
 hPsiFT0C.Write()
@@ -139,7 +148,8 @@ for f in functions:
 # Save QC histogram as PDF
 utils.saveCanvasAsPDF(hEta, f'{output_dir_name}/qc_plots')
 utils.saveCanvasAsPDF(hAvgItsClusSize, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hAvgItsClusSize, f'{output_dir_name}/qc_plots', is2D=True)
+utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambda, f'{output_dir_name}/qc_plots')
+utils.saveCanvasAsPDF(hTPCsignalVsPoverZ, f'{output_dir_name}/qc_plots', is2D=True)
 utils.saveCanvasAsPDF(hPhi, f'{output_dir_name}/qc_plots')
 utils.saveCanvasAsPDF(hPsiFT0C, f'{output_dir_name}/qc_plots')
 utils.saveCanvasAsPDF(hPhiMinusPsiFT0C, f'{output_dir_name}/qc_plots')

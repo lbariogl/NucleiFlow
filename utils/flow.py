@@ -13,6 +13,8 @@ class FlowMaker:
 
         # data frame
         self.data_df = None
+        self.selection_string = ''
+        self.n_sigma_selection = 2
 
         # variable related members
         self.cent_limits = [30, 50]
@@ -43,6 +45,9 @@ class FlowMaker:
         self.output_file = None
         self.plot_dir = None
 
+        # resolution
+        self.resolution = 1.
+
     def _check_members(self):
 
         if self.data_df is None:
@@ -60,19 +65,22 @@ class FlowMaker:
 
         for ibin in range(0, len(self.pt_bins) - 1):
             pt_bin = [self.pt_bins[ibin], self.pt_bins[ibin + 1]]
-            bin_sel = f'abs(fPt) > {pt_bin[0]} and abs(fPt) < {pt_bin[1]}'
+            pt_sel = f'abs(fPt) > {pt_bin[0]} and abs(fPt) < {pt_bin[1]}'
+            cent_sel = f'fCentFT0C > {self.cent_limits[0]} and fCentFT0C < {self.cent_limits[1]}'
+            bin_sel = f'{cent_sel} and {pt_sel} and {self.selection_string}'
+
             pt_label = f'{pt_bin[0]:.2f} ' + r'#leq #it{p}_{T} < ' + \
                 f'{pt_bin[1]:.2f}' + r' GeV/#it{c}'
 
             # select the correct pt bin
-            bin_df = self.data_df.query(bin_sel)
+            bin_df = self.data_df.query(bin_sel, inplace=False)
 
             # crate and fill histograms
             hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}', pt_label + r';n#sigma^{TPC} (a.u.);',
                                        self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
             # hNsigma3He_tmp.SetTitle(pt_label)
             utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
-            hTOFmassSquared_tmp = ROOT.TH1F(f'hTOFmassSquared_{ibin}', pt_label + r';m_{TOF}^{2} - m_{0}^{2} (GeV/#it{c}^{2})^{2};',
+            hTOFmassSquared_tmp = ROOT.TH1F(f'hTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}', pt_label + r';m_{TOF}^{2} - m_{0}^{2} (GeV/#it{c}^{2})^{2};',
                                             self.n_tofMassSquared_bins, self.tofMassSquared_bin_limits[0], self.tofMassSquared_bin_limits[1])
             utils.setHistStyle(hTOFmassSquared_tmp, ROOT.kRed+1, linewidth=2)
             histo_title = r';n#sigma^{TPC} (a.u.); cos(2(#phi - #Psi))'
@@ -112,7 +120,7 @@ class FlowMaker:
 
             hV2_tmp = ROOT.TH1F(f'hV2{self.ref_detector}_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{ibin}', f'{pt_label}' + r';cos(2(#phi - #Psi))',
                                 self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
-            df_bin_3He = bin_df.query('abs(fNsigmaTPC3He) < 2')
+            df_bin_3He = bin_df.query(f'abs(fNsigmaTPC3He) < {self.n_sigma_selection}')
             for v2 in df_bin_3He[f'fV2{self.ref_detector}']:
                 hV2_tmp.Fill(v2)
 
@@ -143,6 +151,8 @@ class FlowMaker:
             self.hV2vsPt.SetBinContent(ibin+1, self.hV2[ibin].GetMean())
             self.hV2vsPt.SetBinError(ibin+1, self.hV2[ibin].GetMeanError())
 
+        self.hV2vsPt.Scale(1/self.resolution)
+
     def dump_to_output_file(self):
         cent_dir = self.output_file.mkdir(
             f'cent_{self.cent_limits[0]}_{self.cent_limits[1]}')
@@ -170,3 +180,12 @@ class FlowMaker:
             utils.saveCanvasAsPDF(self.hTOFmassSquared[ibin], self.plot_dir)
             utils.saveCanvasAsPDF(self.hV2[ibin], self.plot_dir)
         utils.saveCanvasAsPDF(self.hV2vsPt, self.plot_dir)
+
+    def del_dyn_members(self):
+        self.hNigma3He = []
+        self.hTOFmassSquared = []
+        self.hV2vsNsigma3He2D = []
+        self.hV2vsNsigma3He = []
+        self.cV2vsNsigma3He = []
+        self.hV2 = []
+        self.hV2vsPt = None

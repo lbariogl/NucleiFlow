@@ -8,18 +8,27 @@ ep_tree_name: "O2nucleitableflow"
 
 selections: "fSign < 0 and abs(fEta) < 0.8 and abs(fDCAxy) < 0.1 and fAvgItsClusSize > 4.5 and abs(fRapidity) < 0.5"
 
+centrality_classes: [[0, 10], [10, 20], [20, 40], [40, 60], [60, 80]]
+pt_bins: [
+  [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2],
+  [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2],
+  [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2],
+  [2., 2.4, 2.8, 3.2, 4., 4.8, 6.],
+  [2., 2.4, 2.8, 3.2, 4., 4.8, 6.]
+]
+cent_colours: [633, 797, 418, 862, 885]
+
 cent_detector_label: "FT0C"
 
 p_train: [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 resolution_train: 0.09
 n_sigma_plot: 5
 
-do_syst: True
+do_syst: False
 n_trials: 1000
 cut_dict_syst:
   {
     "fCosPA": {"cut_greater": True, "cut_list": [0.985, 0.999, 50]},
     "fNSigmaHe": {"cut_greater": True, "cut_list": [-2.5, -1.5, 15]},
-    "fTPCsignalPi": {"cut_greater": False, "cut_list": [1000, 1000, 1]},
-    #  "fDcaV0Daug": {"cut_greater": False, "cut_list": [0.1, 0.5, 20]}
+    "fTPCsignalPi": {"cut_greater": False, "cut_list": [1000, 1000, 1]}
   }

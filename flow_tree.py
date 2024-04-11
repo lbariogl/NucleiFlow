@@ -155,10 +155,11 @@ if do_syst:
   for i_cent in range(n_cent_classes):
 
     histo_v2_syst = []
+    canvas_v2_syst = []
     n_pt_bins = len(pt_bins[i_cent]) - 1
     for i_pt in range(0, n_pt_bins):
       histo_v2_syst.append(ROOT.TH1F(f'hV2syst_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}',
-                                     ';v_{2}', 100, default_values[i_cent][i_pt][0] - 3*default_values[i_cent][i_pt][1], default_values[i_cent][i_pt][0] + 3*default_values[i_cent][i_pt][1]))
+                                     ';v_{2}', 20, default_values[i_cent][i_pt][0] - 3*default_values[i_cent][i_pt][1], default_values[i_cent][i_pt][0] + 3*default_values[i_cent][i_pt][1]))
 
     for i_combo, combo_index in enumerate(combo_random_indices):
 
@@ -201,7 +202,32 @@ if do_syst:
 
     output_file.cd(f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}')
     for i_pt in range(0, n_pt_bins):
+
+      # create canvas with the central value
+      histo_name = histo_v2_syst[i_pt].GetName()
+      canvas_name = histo_name.replace('h', 'c', 1)
+      canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
+      canvas.SetBottomMargin(0.13)
+      canvas.SetLeftMargin(0.13)
+
+      std_line = ROOT.TLine(default_values[i_cent][i_pt][0], 0, default_values[i_cent][i_pt][0], 1.05 * histo_v2_syst[i_pt].GetMaximum())
+      std_line.SetLineColor(ROOT.kAzure+2)
+      std_line.SetLineWidth(2)
+      # create box for statistical uncertainty
+      std_errorbox = ROOT.TBox(default_values[i_cent][i_pt][0] - default_values[i_cent][i_pt][1], 0,
+                               default_values[i_cent][i_pt][0] + default_values[i_cent][i_pt][1], 1.05 * histo_v2_syst[i_pt].GetMaximum())
+      std_errorbox.SetFillColorAlpha(ROOT.kAzure+1, 0.5)
+      std_errorbox.SetLineWidth(0)
+
+      canvas.cd()
+      histo_v2_syst[i_pt].Draw()
+      std_errorbox.Draw()
+      std_line.Draw()
+
       histo_v2_syst[i_pt].Write()
+      canvas.Write()
+      canvas.SaveAs(f'{output_dir_name}/plots/{canvas.GetName()}.pdf')
+
 
 # Final plots
 cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)

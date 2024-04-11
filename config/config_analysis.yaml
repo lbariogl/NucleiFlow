@@ -29,7 +29,7 @@ resolution_train: 0.09
 n_sigma_plot: 5
 
 do_syst: True
-n_trials: 200
+n_trials: 300
 cut_dict_syst:
   {
     "abs(fDCAxy)": {"cut_greater": False, "cut_list": [0.75, 1.25, 50]},

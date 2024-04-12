@@ -31,7 +31,9 @@ nuclei_tree_name = config['nuclei_tree_name']
 ep_tree_name = config['ep_tree_name']
 
 mandatory_selections = config['mandatory_selections']
-selections = config['selections']
+selection_dict = config['selection_dict']
+selection_list = selection_dict.values()
+selections = " and ".join(selection_list)
 
 cent_detector_label = config['cent_detector_label']
 
@@ -165,7 +167,6 @@ if do_syst:
 
       flow_maker_syst = FlowMaker()
       flow_maker_syst.data_df = complete_df
-      flow_maker_syst.selection_string = selections
       flow_maker_syst.pt_bins = pt_bins[i_cent]
       flow_maker_syst.cent_limits = centrality_classes[i_cent]
       flow_maker_syst.resolution = resolutions[i_cent]

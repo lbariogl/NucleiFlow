@@ -14,7 +14,7 @@ import utils as utils
 parser = argparse.ArgumentParser(
     description='Configure the parameters of the script.')
 parser.add_argument('--config-file', dest='config_file',
-                    help="path to the YAML file with configuration.", default='')
+                    help="path to the YAML file with configuration.", default='config/config_analysis.yaml')
 args = parser.parse_args()
 if args.config_file == "":
     print('** No config file provided. Exiting. **')
@@ -124,6 +124,7 @@ for var in cut_dict_syst:
     cut_label_dict[var] = []
     for cut in cut_arr:
         sel_string_tmp = var + cut_greater_string + str(cut)
+        sel_string = sel_string_tmp
         for var2 in selection_dict:
             if var2 != var:
                 sel_string = sel_string_tmp + f' and {selection_dict[var2]}'

@@ -9,10 +9,11 @@ output_file_name_qc: "qc.root"
 nuclei_tree_name: "O2nucleitable"
 ep_tree_name: "O2nucleitableflow"
 
-mandatory_selections: "fSign < 0 and abs(fEta) < 0.8 and abs(fRapidity) < 0.5"
+mandatory_selections: "fSign < 0 and abs(fEta) < 0.8"
 selection_dict : {
   "abs(fDCAxy)" : "abs(fDCAxy) < 0.1",
-  "fAvgItsClusSize": "fAvgItsClusSize > 4.5"
+  # "fAvgItsClusSize": "fAvgItsClusSize > 4.5"
+  "fAvgItsClusSizeCosLambda" : "fAvgItsClusSizeCosLambda > 1"
 }
 
 centrality_classes: [[0, 10], [10, 20], [20, 40], [40, 60], [60, 80]]
@@ -36,5 +37,6 @@ n_trials: 300
 
 cut_dict_syst: {
   "abs(fDCAxy)": {"cut_greater": False, "cut_list": [0.75, 1.25, 50]},
-  "fAvgItsClusSize": {"cut_greater": True, "cut_list": [2.5, 6.5, 8]}
+  "fAvgItsClusSize": {"cut_greater": True, "cut_list": [2.5, 6.5, 8]},
+  "fAvgItsClusSizeCosLambda" : {"cut_greater": True, "cut_list": [0, 8, 16]}
 }

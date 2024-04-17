@@ -11,7 +11,7 @@ import utils as utils
 parser = argparse.ArgumentParser(
     description='Configure the parameters of the script.')
 parser.add_argument('--config-file', dest='config_file',
-                    help="path to the YAML file with configuration.", default='')
+                    help="path to the YAML file with configuration.", default='config/config_analysis.yaml')
 args = parser.parse_args()
 if args.config_file == "":
     print('** No config file provided. Exiting. **')
@@ -29,7 +29,9 @@ nuclei_tree_name = config['nuclei_tree_name']
 ep_tree_name = config['ep_tree_name']
 
 mandatory_selections = config['mandatory_selections']
-selections = config['selections']
+selection_dict = config['selection_dict']
+selection_list = selection_dict.values()
+selections = " and ".join(selection_list)
 
 cent_detector_label = config['cent_detector_label']
 

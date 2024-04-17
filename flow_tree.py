@@ -17,8 +17,8 @@ parser.add_argument('--config-file', dest='config_file',
                     help="path to the YAML file with configuration.", default='')
 args = parser.parse_args()
 if args.config_file == "":
-    print('** No config file provided. Exiting. **')
-    exit()
+  print('** No config file provided. Exiting. **')
+  exit()
 
 config_file = open(args.config_file, 'r')
 config = yaml.full_load(config_file)
@@ -195,7 +195,7 @@ if do_syst:
       print(f'cent: {flow_maker_syst.cent_limits[0]} - {flow_maker_syst.cent_limits[1]}')
       for i_pt in range(0, flow_maker_syst.nPtBins()):
         histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
-        print(f'pt_bin: {i_pt} -> v2: {flow_values[i_pt][0]} +- {flow_values[i_pt][1]}')
+        # print(f'pt_bin: {i_pt} -> v2: {flow_values[i_pt][0]} +- {flow_values[i_pt][1]}')
       print("----------------------------------")
 
       del flow_maker_syst

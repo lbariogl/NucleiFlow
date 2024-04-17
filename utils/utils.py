@@ -121,9 +121,9 @@ def redifineColumns(complete_df):
     print('fNsigmaTPC3He')
     complete_df.eval(
         'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
-    print('fRapidity')
-    complete_df.eval(
-        'fRapidity = @getRapidity_vectorised(fPt, fEta, fPhi)', inplace=True)
+    # print('fRapidity')
+    # complete_df.eval(
+    #     'fRapidity = @getRapidity_vectorised(fPt, fEta, fPhi)', inplace=True)
     print('fTOFmassSquared')
     complete_df.eval(
         'fTOFmassSquared = 4 * fTPCInnerParam * fTPCInnerParam * (1/(fBeta * fBeta) - 1)', inplace=True)

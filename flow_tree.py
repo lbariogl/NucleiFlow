@@ -220,17 +220,30 @@ if do_syst:
       std_errorbox.SetFillColorAlpha(ROOT.kAzure+1, 0.5)
       std_errorbox.SetLineWidth(0)
 
+      info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
+      info_panel.SetBorderSize(0)
+      info_panel.SetFillStyle(0)
+      info_panel.SetTextAlign(12)
+      info_panel.SetTextFont(42)
+      info_panel.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
+      info_panel.AddText(f'{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} % {cent_detector_label}')
+      pt_label = f'{pt_bins[i_cent][i_pt]:.1f}' + r' #leq #it{p}_{T} < ' + \
+          f'{pt_bins[i_cent][i_pt+1]:.1f}' + r' GeV/#it{c}'
+      info_panel.AddText(pt_label)
+
       canvas.cd()
       histo_v2_syst[i_pt].Draw()
       std_errorbox.Draw()
       std_line.Draw()
+      info_panel.Draw()
 
       histo_v2_syst[i_pt].Write()
       canvas.Write()
-      canvas.SaveAs(f'{output_dir_name}/plots/{canvas.GetName()}.pdf')
+      canvas.SaveAs(f'{output_dir_name}/plots/cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/{canvas.GetName()}.pdf')
 
 
 # Final plots
+print("Making final plots")
 cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
 cV2.SetBottomMargin(0.13)

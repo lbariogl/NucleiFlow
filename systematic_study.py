@@ -123,16 +123,12 @@ for var in cut_dict_syst:
     cut_string_dict[var] = []
     cut_label_dict[var] = []
     for cut in cut_arr:
-        sel_string_tmp = var + cut_greater_string + str(cut)
-        sel_string = sel_string_tmp
+        sel_string = var + cut_greater_string + str(cut)
         for var2 in selection_dict:
             if var2 != var:
-                sel_string = sel_string_tmp + f' and {selection_dict[var2]}'
+                sel_string = sel_string + f' and {selection_dict[var2]}'
         cut_string_dict[var].append(sel_string)
         cut_label_dict[var].append(cut_greater_string + f'{cut:.3f}')
-        print(f'var: {var}')
-        print(f'    sel_string_tmp: {sel_string_tmp}')
-        print(f'    sel_string: {sel_string}')
 
 print("  ** separated cuts **")
 

@@ -3,6 +3,7 @@ from hipe4ml.tree_handler import TreeHandler
 import pandas as pd
 import yaml
 import argparse
+import os
 
 import sys
 sys.path.append('utils')
@@ -47,8 +48,9 @@ resolution_train = config['resolution_train']
 n_sigma_plot = config['n_sigma_plot']
 
 # create output file
+if not os.path.exists(output_dir_name):
+  os.makedirs(output_dir_name)
 output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
-
 
 # get a unique df from nuclei and ep trees
 nuclei_hdl = TreeHandler(input_file_name, f'{nuclei_tree_name};', folder_name='DF*')
@@ -72,10 +74,10 @@ complete_df.query(f'{mandatory_selections} and {selections}', inplace=True)
 # Create QC histograms
 hEta = ROOT.TH1F('hEta', ';#eta;', 200, -1., 1.)
 utils.setHistStyle(hEta, ROOT.kRed+2)
-hAvgItsClusSize = ROOT.TH1F('hAvgItsClusSize', r';#LT ITS cluster size #GT;', 20, 0, 20)
+hAvgItsClusSize = ROOT.TH1F('hAvgItsClusSize', r';#LT ITS cluster size #GT;', 100, 0, 20)
 utils.setHistStyle(hAvgItsClusSize, ROOT.kRed+2)
 
-hAvgItsClusSizeCosLambda = ROOT.TH1F('hAvgItsClusSizeCosLambda', r';#LT ITS cluster size #GT #times Cos(#lambda);', 20, 0, 20)
+hAvgItsClusSizeCosLambda = ROOT.TH1F('hAvgItsClusSizeCosLambda', r';#LT ITS cluster size #GT #times Cos(#lambda);', 100, 0, 20)
 utils.setHistStyle(hAvgItsClusSizeCosLambda, ROOT.kRed+2)
 hTPCsignalVsPoverZ = ROOT.TH2F('hTPCsignalVsPoverZ', r';#it{p}/z (GeV/#it{c}); d#it{E} / d#it{x} (a.u.)', 600, -6., 6., 1400, 0., 1400.)
 hPhi = ROOT.TH1F('hPhi', r';#phi;', 140, -7., 7.)
@@ -148,23 +150,27 @@ for f in functions:
   f.Write()
 
 # Save QC histogram as PDF
-utils.saveCanvasAsPDF(hEta, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hAvgItsClusSize, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambda, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hTPCsignalVsPoverZ, f'{output_dir_name}/qc_plots', is2D=True)
-utils.saveCanvasAsPDF(hPhi, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hPsiFT0C, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hPhiMinusPsiFT0C, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hV2, f'{output_dir_name}/qc_plots')
-cTPC.SaveAs(f'{output_dir_name}/qc_plots/cTPC.pdf')
-utils.saveCanvasAsPDF(hZvtx, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hCentFT0C, f'{output_dir_name}/qc_plots')
-utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCl, f'{output_dir_name}/qc_plots', is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCr, f'{output_dir_name}/qc_plots', is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCl, f'{output_dir_name}/qc_plots', is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCr, f'{output_dir_name}/qc_plots', is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_FT0A, f'{output_dir_name}/qc_plots', is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, f'{output_dir_name}/qc_plots', is2D=True)
+plot_dir_name = f'{output_dir_name}/qc_plots'
+if not os.path.exists(plot_dir_name):
+  os.makedirs(plot_dir_name)
+
+utils.saveCanvasAsPDF(hEta, plot_dir_name)
+utils.saveCanvasAsPDF(hAvgItsClusSize, plot_dir_name)
+utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambda, plot_dir_name)
+utils.saveCanvasAsPDF(hTPCsignalVsPoverZ, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hPhi, plot_dir_name)
+utils.saveCanvasAsPDF(hPsiFT0C, plot_dir_name)
+utils.saveCanvasAsPDF(hPhiMinusPsiFT0C, plot_dir_name)
+utils.saveCanvasAsPDF(hV2, plot_dir_name)
+cTPC.SaveAs(f'{plot_dir_name}/cTPC.pdf')
+utils.saveCanvasAsPDF(hZvtx, plot_dir_name)
+utils.saveCanvasAsPDF(hCentFT0C, plot_dir_name)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCl, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCr, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCl, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCr, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_FT0A, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name, is2D=True)
 
 # resolution plot
 resolution_file = ROOT.TFile('Resolution_FT0C.root')

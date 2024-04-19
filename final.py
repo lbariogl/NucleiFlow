@@ -1,6 +1,7 @@
 import ROOT
 import yaml
 import argparse
+import os
 
 import sys
 sys.path.append('utils')
@@ -30,6 +31,13 @@ cent_colours = config['cent_colours']
 input_file = ROOT.TFile(input_file_name)
 output_file_name = config['output_dir_name'] + 'final.root'
 output_file = ROOT.TFile(output_file_name, 'recreate')
+output_dir_name = config['output_dir_name']
+
+output_dir_plots_name = output_dir_name + 'final_plots/'
+
+if not os.path.exists(output_dir_plots_name):
+      os.makedirs(output_dir_plots_name)
+
 
 stat_list = []
 syst_list = []
@@ -72,8 +80,9 @@ for i_cent in range(0, n_cent):
   h_stat.Write()
   h_syst.Write()
   cV2_cent.Write()
+  cV2_cent.SaveAs(f'{output_dir_plots_name}{cV2_cent.GetName()}.pdf')
 
-cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
+cV2 = ROOT.TCanvas('cV2_tot', 'cV2_tot', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
 cV2.SetBottomMargin(0.13)
 cV2.cd()
@@ -91,3 +100,4 @@ legend.Draw()
 
 output_file.cd()
 cV2.Write()
+cV2.SaveAs(f'{output_dir_plots_name}{cV2.GetName()}.pdf')

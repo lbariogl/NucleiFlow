@@ -55,10 +55,13 @@ for cut in its_clus_size_coslambda_cut_arr:
 
 
 # configurations
-input_file = ROOT.TFile('../results_default/flow_separated.root')
-input_file_coslambda = ROOT.TFile('../results_coslambda/flow_separated.root')
+input_file = ROOT.TFile('../results_check_size/flow_separated.root')
+input_file_coslambda = ROOT.TFile('../results_check_size_coslambda/flow_separated.root')
 
-output_file = ROOT.TFile('../results_default/its_clus_studies/its_cluster_size_study.root', 'RECREATE')
+output_plot_dir_name = f'../its_clus_studies'
+if not os.path.exists(output_plot_dir_name):
+        os.makedirs(output_plot_dir_name)
+output_file = ROOT.TFile(f'{output_plot_dir_name}/its_cluster_size_study.root', 'RECREATE')
 n_cent_classes = len(centrality_classes)
 
 # get color paletter
@@ -71,12 +74,12 @@ for i_cent in range(n_cent_classes):
     cent_dir = output_file.mkdir(cent_name)
 
     its_clus_size_dir = cent_dir.mkdir('fAvgItsClusSize')
-    its_clus_size_plot_dir_name = f'../results_default/its_clus_studies/{cent_name}/fAvgItsClusSize'
+    its_clus_size_plot_dir_name = f'{output_plot_dir_name}/{cent_name}/fAvgItsClusSize'
     if not os.path.exists(its_clus_size_plot_dir_name):
         os.makedirs(its_clus_size_plot_dir_name)
 
     its_clus_size_coslambda_dir = cent_dir.mkdir('fAvgItsClusSizeCosLambda')
-    its_clus_size_coslambda_plot_dir_name = f'../results_default/its_clus_studies/{cent_name}/fAvgItsClusSizeCosLambda'
+    its_clus_size_coslambda_plot_dir_name = f'{output_plot_dir_name}/{cent_name}/fAvgItsClusSizeCosLambda'
     if not os.path.exists(its_clus_size_coslambda_plot_dir_name):
         os.makedirs(its_clus_size_coslambda_plot_dir_name)
 

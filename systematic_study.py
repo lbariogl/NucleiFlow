@@ -5,6 +5,7 @@ import yaml
 import argparse
 import numpy as np
 import copy
+import os
 
 import sys
 sys.path.append('utils')
@@ -47,6 +48,8 @@ resolution_train = config['resolution_train']
 n_sigma_plot = config['n_sigma_plot']
 
 # create output file
+if not os.path.exists(output_dir_name):
+  os.makedirs(output_dir_name)
 output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
 
 # Get resolution from file
@@ -186,6 +189,10 @@ for i_cent in range(n_cent_classes):
     cent_dirs[i_cent].mkdir('std')
     default_v2_histos[i_cent].Write()
 
+    cent_syst_dir_name = output_dir_name + f'/syst_plots/cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/'
+    if not os.path.exists(cent_syst_dir_name):
+        os.makedirs(cent_syst_dir_name)
+
     for var, histos in v2_dict.items():
         cent_dirs[i_cent].cd(f'{var}')
         canvas_dict[var].cd()
@@ -204,3 +211,4 @@ for i_cent in range(n_cent_classes):
         legend_dict[var].Draw()
         legend_dict[var].SetNColumns(5)
         canvas_dict[var].Write()
+        canvas_dict[var].SaveAs(f'{cent_syst_dir_name}/{canvas_dict[var].GetName()}.pdf')

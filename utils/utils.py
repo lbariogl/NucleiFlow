@@ -104,7 +104,7 @@ def redifineColumns(complete_df):
     print('fPhi')
     complete_df['fPhi'] = getCorrectPhi_vectorised(complete_df['fPhi'])
     print('fCosLambda')
-    complete_df.eval('fCosLambda = tanh(fEta)', inplace=True)
+    complete_df.eval('fCosLambda = 1 / cosh(fEta)', inplace=True)
     print('fAvgItsClusSize')
     complete_df.eval(
         'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)

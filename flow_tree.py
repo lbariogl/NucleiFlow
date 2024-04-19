@@ -5,6 +5,7 @@ import yaml
 import argparse
 import numpy as np
 from itertools import product
+import os
 
 import sys
 sys.path.append('utils')
@@ -49,6 +50,9 @@ resolution_train = config['resolution_train']
 n_sigma_plot = config['n_sigma_plot']
 
 #create output file
+if not os.path.exists(output_dir_name):
+  os.makedirs(output_dir_name)
+output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
 output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
 
 
@@ -76,9 +80,8 @@ res_0_10 = hResolution.GetBinContent(1)
 res_10_20 = hResolution.GetBinContent(2)
 res_20_40 = (hResolution.GetBinContent(3) + hResolution.GetBinContent(4)) / 2
 res_40_60 = (hResolution.GetBinContent(5) + hResolution.GetBinContent(6)) / 2
-res_60_80 = (hResolution.GetBinContent(7) + hResolution.GetBinContent(8)) / 2
 
-resolutions = [res_0_10, res_10_20, res_20_40, res_40_60, res_60_80]
+resolutions = [res_0_10, res_10_20, res_20_40, res_40_60]
 
 # Flow measurement
 output_file.cd()
@@ -89,6 +92,7 @@ n_cent_classes = len(centrality_classes)
 flow_makers = []
 default_values = []
 cent_dirs = []
+cent_plots_dir_names = []
 
 for i_cent in range(n_cent_classes):
   flow_maker = FlowMaker()
@@ -104,7 +108,15 @@ for i_cent in range(n_cent_classes):
   default_dir = cent_dir.mkdir('default')
 
   flow_maker.output_dir = default_dir
-  flow_maker.plot_dir = f'../results/plots/cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}'
+
+  plot_dir_name = f'{output_dir_name}/plots/cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}'
+  if not os.path.exists(plot_dir_name):
+        os.makedirs(plot_dir_name)
+
+
+  cent_plots_dir_names.append(plot_dir_name)
+
+  flow_maker.plot_dir = plot_dir_name
   flow_maker.color = cent_colours[i_cent]
 
   flow_maker.make_flow()
@@ -239,7 +251,7 @@ if do_syst:
 
       histo_v2_syst[i_pt].Write()
       canvas.Write()
-      canvas.SaveAs(f'{output_dir_name}/plots/cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/{canvas.GetName()}.pdf')
+      canvas.SaveAs(f'{cent_plots_dir_names[i_cent]}/{canvas.GetName()}.pdf')
 
 
 # Final plots

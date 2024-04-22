@@ -1,11 +1,14 @@
 import os
-import utils as utils
 import ROOT
 import numpy as np
 
 import sys
 sys.path.append('utils')
+import utils as utils
 
+ROOT.ROOT.EnableImplicitMT()
+ROOT.RooMsgService.instance().setSilentMode(True)
+ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
 
 class FlowMaker:
 
@@ -33,6 +36,7 @@ class FlowMaker:
         self.n_V2_bin_limits = [-1., 1.]
 
         self.hNigma3He = []
+        self.frNigma3He = []
         self.hTOFmassSquared = []
         self.hV2vsNsigma3He2D = []
         self.hV2vsNsigma3He = []
@@ -156,6 +160,40 @@ class FlowMaker:
 
             self.hV2.append(hV2_tmp)
 
+            # fit to the n-sigma TPC distribution
+            # Define TPC variable
+            ns = ROOT.RooRealVar(r'n#sigma_{p}', r'n#sigma_{TPC}({}^{3}He})',
+                                 self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], 'a. u.')
+
+            # 3He signal
+            nSig = ROOT.RooRealVar(
+                r'N_{sig}', 'counts TPC signal', 1e+2, 0, 1e+4)
+            muSig = ROOT.RooRealVar(r'#mu_{sig}', 'mu TPC signal', 0, -1, 1)
+            sigmaSig = ROOT.RooRealVar(
+                r'#sigma_{sig}', 'sigma TPC signal', 0.1, 0.1, 1.5)
+
+            sigModel = ROOT.RooGaussian(
+                'signal', 'signal function tpc', ns, muSig, sigmaSig)
+
+           # bkg
+            nBkg = ROOT.RooRealVar(
+                r'N_{bkg}', 'counts TOF bkg0', 1e+2, 0, 1e+4)
+            tauBkg = ROOT.RooRealVar(
+                r'#tau_{bkg}', 'tau TOF bkg0', -0.3, -10, -1.e-5)
+
+            bkgModel = ROOT.RooExponential('bkg', 'bkg function', ns, tauBkg)
+
+            totModel = ROOT.RooAddPdf('model', 'tot function', ROOT.RooArgList(
+                sigModel, bkgModel), ROOT.RooArgList(nSig, nBkg))
+
+            frame_title = f'{self.cent_limits[0]} - {self.cent_limits[1]} %, {pt_label}'
+            histo_name = hNsigma3He_tmp.GetName()
+            frame_name = histo_name.replace('h', 'fr', 1)
+            frame, _, _ = utils.plotData(ns, hNsigma3He_tmp, totModel, frame_title, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1], frame_name)
+
+            self.frNigma3He.append(frame)
+
+        # v2 vs Pt
         self.hV2vsPt = ROOT.TH1F(
             f'hV2vsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}{self.suffix}', r'; #it{p}_{T} (GeV/#it{c}); v_{2}', n_pt_bins, pt_bins_arr)
         utils.setHistStyle(self.hV2vsPt, self.color)
@@ -178,6 +216,7 @@ class FlowMaker:
             self.output_dir.mkdir(f'pt_{bin[0]}_{bin[1]}')
             self.output_dir.cd(f'pt_{bin[0]}_{bin[1]}')
             self.hNigma3He[i_pt].Write()
+            self.frNigma3He[i_pt].Write()
             self.hTOFmassSquared[i_pt].Write()
             self.hV2vsNsigma3He2D[i_pt].Write()
             self.hV2vsNsigma3He[i_pt].Write()
@@ -196,11 +235,13 @@ class FlowMaker:
             utils.saveCanvasAsPDF(self.hNigma3He[i_pt], self.plot_dir)
             utils.saveCanvasAsPDF(self.hTOFmassSquared[i_pt], self.plot_dir)
             utils.saveCanvasAsPDF(self.hV2[i_pt], self.plot_dir)
+            utils.saveFrameAsPDF(self.frNigma3He[i_pt], self.plot_dir)
         utils.saveCanvasAsPDF(self.hV2vsPt, self.plot_dir)
         utils.saveCanvasAsPDF(self.hRawCountsVsPt, self.plot_dir)
 
     def del_dyn_members(self):
         self.hNigma3He = []
+        self.frNigma3He = []
         self.hTOFmassSquared = []
         self.hV2vsNsigma3He2D = []
         self.hV2vsNsigma3He = []

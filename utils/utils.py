@@ -347,17 +347,6 @@ def saveCanvasAsPDF(histo, plots_dir, is2D=False):
         histo.Draw('colz')
     canvas.SaveAs(f'{plots_dir}/{canvas_name}.pdf')
 
-
-def saveFrameAsPDF(frame, plots_dir):
-    frame_name = frame.GetName()
-    canvas_name = frame_name.replace('fr', 'cFrame', 1)
-    canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
-    canvas.SetBottomMargin(0.13)
-    canvas.SetLeftMargin(0.13)
-    frame.Draw()
-    canvas.SaveAs(f'{plots_dir}/{canvas_name}.pdf')
-
-
 def getValuesFromHisto(histo):
     n_bins = histo.GetXaxis().GetNbins()
     histo_content = []
@@ -365,25 +354,3 @@ def getValuesFromHisto(histo):
         histo_content.append(
             [histo.GetBinContent(i_bin), histo.GetBinError(i_bin)])
     return histo_content
-
-
-def plotData(variable, hist, model, title, left_limit, right_limit, frame_name, integral_range=[-2., 2.]):
-    data_hist = ROOT.RooDataHist(f'{hist.GetName()}_roofit', 'n-sigma distribution',
-                                 ROOT.RooArgList(variable), ROOT.RooFit.Import(hist))
-    fit_results = model.fitTo(data_hist, ROOT.RooFit.Extended(), ROOT.RooFit.Verbose(
-        False), ROOT.RooFit.PrintEvalErrors(-1), ROOT.RooFit.PrintLevel(-1), ROOT.RooFit.Range(left_limit, right_limit), ROOT.RooFit.Save())
-    frame = variable.frame(left_limit, right_limit)
-    frame.SetTitle(title)
-    frame.SetName(frame_name)
-    data_hist.plotOn(frame, ROOT.RooFit.Name(
-        'data'), ROOT.RooFit.DrawOption('pz'))
-    # background line
-    model.plotOn(frame, ROOT.RooFit.Components('bkg'), ROOT.RooFit.LineStyle(
-        ROOT.kDashed), ROOT.RooFit.LineColor(ROOT.kRed+2), ROOT.RooFit.Name('bkg'))
-
-    # Total line
-    model.plotOn(frame, ROOT.RooFit.DrawOption(
-        ''), ROOT.RooFit.LineColor(ROOT.kAzure+2), ROOT.RooFit.Name('model'))
-    chi2 = frame.chiSquare('model', 'data')
-
-    return frame, chi2, fit_results

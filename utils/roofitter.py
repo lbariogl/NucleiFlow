@@ -1,10 +1,10 @@
+import utils as utils
 import os
 import ROOT
 import numpy as np
 
 import sys
 sys.path.append('utils')
-import utils as utils
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.RooMsgService.instance().setSilentMode(True)
@@ -31,18 +31,28 @@ class RooFitter:
         # background
         self.n_background = None
         self.n_background_limits = [1e+2, 0, 1e+4]
-        self.tau_bakground = None
-        self.tau_bakground_limits = [-0.3, -10, -1.e-5]
+        self.tau_background = None
+        self.tau_background_limits = [-0.3, -10, -1.e-5]
 
         self.model_background = None
 
         # total
         self.total_model = None
 
+
+        self.fit_results = None
+        self.tot_integral = 0.
+        self.tot_integral_error = 0.
+        self.bkg_integral = 0.
+        self.bkg_integral_error = 0.
+        self.purity = 1.
+        self.purity_error = 0.
+
         # integral range
         self.integral_range = []
 
         self.frame = None
+        self.info_panel = None
         self.canvas = None
 
         self.pt_label = ''
@@ -67,10 +77,10 @@ class RooFitter:
 
         if self.n_background is None:
             raise ValueError(f'n_background not correctly set')
-        if self.tau_bakground is None:
-            raise ValueError(f'tau_bakground_background not correctly set')
-        if self.model_bakground is None:
-            raise ValueError(f'model_bakground_background not correctly set')
+        if self.tau_background is None:
+            raise ValueError(f'tau_background_background not correctly set')
+        if self.model_background is None:
+            raise ValueError(f'model_background_background not correctly set')
 
         if self.total_model is None:
             raise ValueError(f'total_model not correctly set')
@@ -97,22 +107,25 @@ class RooFitter:
         # background
         self.n_background = ROOT.RooRealVar(
             r'N_{bkg}', r'N_{bkg}', self.n_background_limits[0], self.n_background_limits[1], self.n_background_limits[2])
-        self.tau_bakground = ROOT.RooRealVar(
-            r'#tau_{bkg}', r'#tau_{bkg}', self.tau_bakground_limits[0], self.tau_bakground_limits[1], self.tau_bakground_limits[2])
+        self.tau_background = ROOT.RooRealVar(
+            r'#tau_{bkg}', r'#tau_{bkg}', self.tau_background_limits[0], self.tau_background_limits[1], self.tau_background_limits[2])
 
         self.model_background = ROOT.RooExponential(
-            'background', 'background', self.variable, self.tau_bakground)
+            'background', 'background', self.variable, self.tau_background)
 
         # total model
         self.total_model = ROOT.RooAddPdf('model', 'total model', ROOT.RooArgList(
             self.model_signal, self.model_background), ROOT.RooArgList(self.n_signal, self.n_background))
 
     def fit(self):
+        self._check_members()
+
         data_hist = ROOT.RooDataHist(f'{self.hist.GetName()}_roofit', 'n-sigma distribution',
-                                 ROOT.RooArgList(self.variable), ROOT.RooFit.Import(self.hist))
-        fit_results = self.model.fitTo(data_hist, ROOT.RooFit.Extended(), ROOT.RooFit.Verbose(
+                                     ROOT.RooArgList(self.variable), ROOT.RooFit.Import(self.hist))
+        self.fit_results = self.total_model.fitTo(data_hist, ROOT.RooFit.Extended(), ROOT.RooFit.Verbose(
             False), ROOT.RooFit.PrintEvalErrors(-1), ROOT.RooFit.PrintLevel(-1), ROOT.RooFit.Range(self.variable_range[0], self.variable_range[1]), ROOT.RooFit.Save())
-        self.frame = self.variable.frame(self.variable_range[0], self.variable_range[1])
+        self.frame = self.variable.frame(
+            self.variable_range[0], self.variable_range[1])
         frame_title = f'{self.cent_label}, {self.pt_label}'
         self.frame.SetTitle(frame_title)
         histo_name = self.hist.GetName()
@@ -122,50 +135,55 @@ class RooFitter:
             'data'), ROOT.RooFit.DrawOption('pz'))
 
         # background line
-        self.model.plotOn(self.frame, ROOT.RooFit.Components('bkg'), ROOT.RooFit.LineStyle(
-            ROOT.kDashed), ROOT.RooFit.LineColor(ROOT.kRed+2), ROOT.RooFit.Name('bkg'))
+        self.total_model.plotOn(self.frame, ROOT.RooFit.Components('background'), ROOT.RooFit.LineStyle(
+            ROOT.kDashed), ROOT.RooFit.LineColor(ROOT.kRed+2), ROOT.RooFit.Name('background'))
 
         # Total line
-        self.model.plotOn(self.frame, ROOT.RooFit.DrawOption(
+        self.total_model.plotOn(self.frame, ROOT.RooFit.DrawOption(
             ''), ROOT.RooFit.LineColor(ROOT.kAzure+2), ROOT.RooFit.Name('model'))
 
+        # purity determination
 
-# # determine purity
-#     if bkg_model:
-#         # signal histogram
-#         tot_integral = hist.Integral(hist.FindBin(
-#             integral_range[0]), hist.FindBin(integral_range[1]))
-#         tot_integral_err = np.sqrt(tot_integral)
+        # total integral in the signal region
+        self.tot_integral = self.hist.Integral(self.hist.FindBin(self.integral_range[0]), self.hist.FindBin(self.integral_range[1]))
+        self.tot_integral_error = np.sqrt(self.tot_integral)
 
-#         # build a copy of bkg function with covariance matrix from fit
-#         bkg_par_rooarglist = ROOT.RooArgList(
-#             bkg_model_par_list[0], bkg_model_par_list[1])
-#         n_bkg = bkg_model_par_list[1]
-#         bkg0_cov_matrix = fit_results.reducedCovarianceMatrix(
-#             bkg_par_rooarglist).GetMatrixArray()
+        # background integral in the signal region
+        bkg_par_list = ROOT.RooArgList(self.tau_background, self.n_background)
+        bkg_model = ROOT.RooAddPdf('bkg_model', 'bkg function TOF', ROOT.RooArgList(self.model_background), ROOT.RooArgList(self.n_background))
+        bkg_model.fixCoefNormalization(ROOT.RooArgSet(self.variable))
+        func_bkg = bkg_model.asTF(ROOT.RooArgList(self.variable), bkg_par_list)
+        bkg_integral_full = func_bkg.Integral(self.variable_range[0], self.variable_range[1])
+        self.bkg_integral = self.n_background.getVal() * func_bkg.Integral(self.integral_range[0], self.integral_range[1], 0) / bkg_integral_full
+        self.bkg_integral_error = np.sqrt(self.bkg_integral)
 
-#         bkg_model_copy = ROOT.RooAddPdf('bkg_model', 'bkg function', ROOT.RooArgList(
-#             bkg_model), ROOT.RooArgList(n_bkg))
-#         func_bkg = bkg_model_copy.asTF(
-#             ROOT.RooArgList(variable), bkg_par_rooarglist)
+        # purity determination
+        self.purity = 1 - (self.bkg_integral / self.tot_integral)
+        self.purity_error = np.hypot(self.bkg_integral_error/self.bkg_integral, self.tot_integral_error/self.tot_integral)
 
-#         # evaluate background integral
-#         bkg_integral_full = func_bkg.Integral(
-#             integral_range[0], integral_range[1])
-#         bkg_integral = n_bkg.getVal() * func_bkg.Integral(integral_range[0], integral_range[1], 0) / bkg_integral_full
-#         bkg_integral_err = n_bkg.getVal() * func_bkg.IntegralError(-3, 3, ROOT.nullptr, bkg0_cov_matrix) / bkg_integral_full
-#         bkg_integral_err = np.sqrt(bkg_integral_err)
+        # create canvas
+        canvas_name = frame_name.replace('fr', 'c', 1) + '_Fit'
+        self.canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
+        self.canvas.cd()
 
-#         # system infopanel
-#         info_panel = ROOT.TPaveText(0.4, 0.6, 0.6, 0.82, 'NDC')
-#         info_panel.SetBorderSize(0)
-#         info_panel.SetFillStyle(0)
-#         info_panel.SetTextAlign(12)
-#         info_panel.SetTextFont(42)
-#         info_panel.AddText('ALICE')
-#         info_panel.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
-#         info_panel.AddText(
-#             f'{cent_limits[0]} - {cent_limits[1]} % {cent_detector}')
-#         info_panel.AddText(pt_label)
-#         info_panel.AddText(f'S+B ({integral_range[0]}' + r'#sigma, ' + f'{integral_range[0]}) = {tot_integral} ' + r'#pm ' + {tot_integral_err})
-#         info_panel.AddText(f'B ({integral_range[0]}' + r'#sigma, ' + f'{integral_range[0]}) = {bkg_integral} ' + r'#pm ' + {bkg_integral})
+        self.info_panel = ROOT.TPaveText(0.12, 0.15, 0.35, 0.5, 'brNDC')
+        self.info_panel.SetBorderSize(0)
+        self.info_panel.SetFillStyle(0)
+        self.info_panel.SetTextAlign(12)
+        self.info_panel.SetTextFont(42)
+        self.info_panel.AddText(r'#mu = ' + f'{self.mu_signal.getVal():.3f} #pm {self.mu_signal.getError():.3f}')
+        self.info_panel.AddText(r'#sigma = ' + f'{self.sigma_signal.getVal():.3f} #pm {self.sigma_signal.getError():.3f}')
+        self.info_panel.AddText(r'#tau = ' + f'{self.tau_background.getVal():.3f} #pm {self.tau_background.getError():.3f}')
+        self.info_panel.AddText(r'N_{tot}' + f'([{self.integral_range[0]}, {self.integral_range[1]}]) =  {self.tot_integral:.1f} #pm {self.tot_integral_error:.1f}')
+        self.info_panel.AddText(r'N_{bkg}' + f'([{self.integral_range[0]}, {self.integral_range[1]}]) = {self.bkg_integral:.1f} #pm {self.bkg_integral_error:.1f}')
+        self.info_panel.AddText(r'purity' + f'([{self.integral_range[0]}, {self.integral_range[1]}]) = {self.purity:.3f}')
+
+        self.frame.Draw()
+        self.canvas.cd()
+        self.canvas.Update()
+        self.info_panel.Draw()
+        self.canvas.Update()
+        self.canvas.SetLogy()
+
+    def saveFrameAsPDF(self, plots_dir):
+        self.canvas.SaveAs(f'{plots_dir}/{self.canvas.GetName()}.pdf')

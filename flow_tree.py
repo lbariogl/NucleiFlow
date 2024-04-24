@@ -218,10 +218,10 @@ if do_syst:
 
       # create canvas with the central value
       histo_name = histo_v2_syst[i_pt].GetName()
-      canvas_name = histo_name.replace('h', 'c', 1)
-      canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
-      canvas.SetBottomMargin(0.13)
-      canvas.SetLeftMargin(0.13)
+      canvas_syst_name = histo_name.replace('h', 'c', 1)
+      canvas_syst = ROOT.Tcanvas_syst(canvas_syst_name, canvas_syst_name, 800, 600)
+      canvas_syst.SetBottomMargin(0.13)
+      canvas_syst.SetLeftMargin(0.13)
 
       std_line = ROOT.TLine(default_values[i_cent][i_pt][0], 0, default_values[i_cent][i_pt][0], 1.05 * histo_v2_syst[i_pt].GetMaximum())
       std_line.SetLineColor(ROOT.kAzure+2)
@@ -243,15 +243,15 @@ if do_syst:
           f'{pt_bins[i_cent][i_pt+1]:.1f}' + r' GeV/#it{c}'
       info_panel.AddText(pt_label)
 
-      canvas.cd()
+      canvas_syst.cd()
       histo_v2_syst[i_pt].Draw()
       std_errorbox.Draw()
       std_line.Draw()
       info_panel.Draw()
 
       histo_v2_syst[i_pt].Write()
-      canvas.Write()
-      canvas.SaveAs(f'{cent_plots_dir_names[i_cent]}/{canvas.GetName()}.pdf')
+      canvas_syst.Write()
+      canvas_syst.SaveAs(f'{cent_plots_dir_names[i_cent]}/{canvas_syst.GetName()}.pdf')
 
 
 # Final plots

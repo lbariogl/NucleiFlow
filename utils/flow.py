@@ -94,11 +94,11 @@ class FlowMaker:
             self.hRawCountsVsPt.SetBinError(i_pt+1, np.sqrt(len(bin_df)))
 
             # crate and fill histograms
-            hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}', pt_label + r';n#sigma^{TPC} (a.u.);',
+            hNsigma3He_tmp = ROOT.TH1F(f'hNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}', pt_label + r';n#sigma^{TPC} (a.u.); counts',
                                        self.n_nsigmaTPC_bins, self.nsigmaTPC_bin_limits[0], self.nsigmaTPC_bin_limits[1])
             # hNsigma3He_tmp.SetTitle(pt_label)
             utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed+1, linewidth=2)
-            hTOFmassSquared_tmp = ROOT.TH1F(f'hTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}', pt_label + r';m_{TOF}^{2} - m_{0}^{2} (GeV/#it{c}^{2})^{2};',
+            hTOFmassSquared_tmp = ROOT.TH1F(f'hTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}', pt_label + r';m_{TOF}^{2} - m_{0}^{2} (GeV/#it{c}^{2})^{2}; counts',
                                             self.n_tofMassSquared_bins, self.tofMassSquared_bin_limits[0], self.tofMassSquared_bin_limits[1])
             utils.setHistStyle(hTOFmassSquared_tmp, ROOT.kRed+1, linewidth=2)
             histo_title = r';n#sigma^{TPC} (a.u.); cos(2(#phi - #Psi))'
@@ -136,7 +136,7 @@ class FlowMaker:
 
             self.cV2vsNsigma3He.append(canvas)
 
-            hV2_tmp = ROOT.TH1F(f'hV2{self.ref_detector}_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}', f'{pt_label}' + r';cos(2(#phi - #Psi))',
+            hV2_tmp = ROOT.TH1F(f'hV2{self.ref_detector}_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}', f'{pt_label}' + r';cos(2(#phi - #Psi)); counts',
                                 self.n_V2_bins, self.n_V2_bin_limits[0], self.n_V2_bin_limits[1])
             df_bin_3He = bin_df.query(
                 f'abs(fNsigmaTPC3He) < {self.n_sigma_selection}')

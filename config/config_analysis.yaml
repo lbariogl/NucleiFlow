@@ -1,8 +1,8 @@
-input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass2_new/AO2D_merged.root"
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass3/AO2D_merged.root"
 
-input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass2_new/AnalysisResults.root"
+input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass3/AnalysisResults_merged.root"
 
-output_dir_name: "../results/"
+output_dir_name: "../results_pass3/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 
@@ -12,7 +12,6 @@ ep_tree_name: "O2nucleitableflow"
 mandatory_selections: "fSign < 0 and abs(fEta) < 0.8"
 selection_dict : {
   "abs(fDCAxy)" : "abs(fDCAxy) < 0.1",
-  # "fAvgItsClusSize": "fAvgItsClusSize > 4.5",
   "abs(fDCAz)": "abs(fDCAz) < 1.",
   "fTPCnCls": "fTPCnCls > 99",
   "fAvgItsClusSizeCosLambda" : "fAvgItsClusSizeCosLambda > 5"
@@ -33,12 +32,11 @@ p_train: [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 resolution_train: 0.09
 n_sigma_plot: 5
 
-do_syst: True
+do_syst: Train
 n_trials: 500
 
 cut_dict_syst: {
   "abs(fDCAxy)": {"cut_greater": False, "cut_list": [0.05, 0.15, 11]},
-  # "fAvgItsClusSize": {"cut_greater": True, "cut_list": [0, 7, 36]},
   "abs(fDCAz)": {"cut_greater": False, "cut_list": [0.75, 1.00, 26]},
   "fTPCnCls": {"cut_greater": True, "cut_list": [100, 130, 7]},
   "fAvgItsClusSizeCosLambda" : {"cut_greater": True, "cut_list": [4, 7, 16]}

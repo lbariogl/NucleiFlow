@@ -176,7 +176,7 @@ class RooFitter:
         self.info_panel.AddText(r'#tau = ' + f'{self.tau_background.getVal():.3f} #pm {self.tau_background.getError():.3f}')
         self.info_panel.AddText(r'N_{tot}' + f'([{self.integral_range[0]}, {self.integral_range[1]}]) =  {self.tot_integral:.1f} #pm {self.tot_integral_error:.1f}')
         self.info_panel.AddText(r'N_{bkg}' + f'([{self.integral_range[0]}, {self.integral_range[1]}]) = {self.bkg_integral:.1f} #pm {self.bkg_integral_error:.1f}')
-        self.info_panel.AddText(r'purity' + f'([{self.integral_range[0]}, {self.integral_range[1]}]) = {self.purity:.3f}')
+        self.info_panel.AddText(r'purity' + f'([{self.integral_range[0]}, {self.integral_range[1]}]) = {self.purity:.2f}')
 
         self.frame.Draw()
         self.canvas.cd()

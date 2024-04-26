@@ -101,6 +101,7 @@ for i_cent in range(n_cent_classes):
   flow_maker.pt_bins = pt_bins[i_cent]
   flow_maker.cent_limits = centrality_classes[i_cent]
   flow_maker.resolution = resolutions[i_cent]
+  flow_maker.print_frame = True
 
   # create output_dir
   cent_dir = output_file.mkdir(f'cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}')
@@ -219,7 +220,7 @@ if do_syst:
       # create canvas with the central value
       histo_name = histo_v2_syst[i_pt].GetName()
       canvas_syst_name = histo_name.replace('h', 'c', 1)
-      canvas_syst = ROOT.Tcanvas_syst(canvas_syst_name, canvas_syst_name, 800, 600)
+      canvas_syst = ROOT.TCanvas(canvas_syst_name, canvas_syst_name, 800, 600)
       canvas_syst.SetBottomMargin(0.13)
       canvas_syst.SetLeftMargin(0.13)
 

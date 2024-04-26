@@ -138,12 +138,12 @@ def redifineColumns(complete_df):
     complete_df.drop(columns=['fITSclusterSizes'])
     print('fSign')
     complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
-    print('fTrackedAsHe')
-    complete_df.eval(
-        'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
-    print('fTPCInnerParam')
-    complete_df.loc[complete_df['fTrackedAsHe'] == True,
-                    'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
+    # print('fTrackedAsHe')
+    # complete_df.eval(
+    #     'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
+    # print('fTPCInnerParam')
+    # complete_df.loc[complete_df['fTrackedAsHe'] == True,
+    #                 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
     print('fNsigmaTPC3He')
     complete_df.eval(
         'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)

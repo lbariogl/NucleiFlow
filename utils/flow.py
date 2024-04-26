@@ -56,6 +56,9 @@ class FlowMaker:
         # resolution
         self.resolution = 1.
 
+        # save frame as PDF
+        self.print_frame = False
+
     def _check_members(self):
 
         if self.data_df is None:
@@ -130,7 +133,8 @@ class FlowMaker:
             sigma_rootfitter.cent_label = f'{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}'
             sigma_rootfitter.initialise()
             sigma_rootfitter.fit()
-            sigma_rootfitter.saveFrameAsPDF(self.plot_dir)
+            if self.print_frame:
+                sigma_rootfitter.saveFrameAsPDF(self.plot_dir)
 
             self.cNsigma3HeFit.append(sigma_rootfitter.canvas)
 

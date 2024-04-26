@@ -335,7 +335,7 @@ def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_b
     canvas.Write()
 
 
-def saveCanvasAsPDF(histo, plots_dir, is2D=False):
+def saveCanvasAsPDF(histo, plots_dir, is2D=False, logScale=False):
     histo_name = histo.GetName()
     canvas_name = histo_name.replace('h', 'c', 1)
     canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
@@ -345,6 +345,11 @@ def saveCanvasAsPDF(histo, plots_dir, is2D=False):
         histo.Draw('histo')
     else:
         histo.Draw('colz')
+    if logScale:
+        if not is2D:
+            canvas.SetLogy()
+        else:
+            canvas.SetLogz()
     canvas.SaveAs(f'{plots_dir}/{canvas_name}.pdf')
 
 def getValuesFromHisto(histo):

@@ -59,6 +59,10 @@ class FlowMaker:
         # save frame as PDF
         self.print_frame = False
 
+        # purity
+        self.purity = []
+        self.hPurityVsPt = None
+
     def _check_members(self):
 
         if self.data_df is None:
@@ -138,6 +142,8 @@ class FlowMaker:
 
             self.cNsigma3HeFit.append(sigma_rootfitter.canvas)
 
+            self.purity.append(sigma_rootfitter.purity)
+
             # system infopanel
             info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
             info_panel.SetBorderSize(0)
@@ -189,6 +195,14 @@ class FlowMaker:
 
         self.hV2vsPt.Scale(1/self.resolution)
 
+        # purity vs pt
+        self.hPurityVsPt = ROOT.TH1F(
+            f'hPurityVsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}{self.suffix}', r'; #it{p}_{T} (GeV/#it{c}); purity', n_pt_bins, pt_bins_arr)
+        self.hPurityVsPt.GetYaxis().SetRangeUser(0., 1.1)
+        utils.setHistStyle(self.hPurityVsPt, self.color)
+        for i_pt in range(0, len(self.pt_bins) - 1):
+            self.hPurityVsPt.SetBinContent(i_pt+1, self.purity[i_pt])
+
     def getFlowValues(self):
         return utils.getValuesFromHisto(self.hV2vsPt)
 
@@ -210,6 +224,7 @@ class FlowMaker:
             self.hV2[i_pt].Write()
         self.output_dir.cd()
         self.hV2vsPt.Write()
+        self.hPurityVsPt.Write()
         self.hRawCountsVsPt.Write()
 
     def dump_to_pdf(self):
@@ -219,10 +234,10 @@ class FlowMaker:
             os.makedirs(self.plot_dir)
         for i_pt in range(0, len(self.pt_bins) - 1):
             utils.saveCanvasAsPDF(self.hNsigma3He[i_pt], self.plot_dir)
-            utils.saveCanvasAsPDF(self.hTOFmassSquared[i_pt], self.plot_dir)
+            # utils.saveCanvasAsPDF(self.hTOFmassSquared[i_pt], self.plot_dir)
             utils.saveCanvasAsPDF(self.hV2[i_pt], self.plot_dir)
-            # self.cNsigma3HeFit[i_pt].SaveAs(f'{self.plot_dir}/{self.cNsigma3HeFit[i_pt].GetName()}.pdf')
         utils.saveCanvasAsPDF(self.hV2vsPt, self.plot_dir)
+        utils.saveCanvasAsPDF(self.hPurityVsPt, self.plot_dir)
         utils.saveCanvasAsPDF(self.hRawCountsVsPt, self.plot_dir)
 
     def del_dyn_members(self):
@@ -234,4 +249,6 @@ class FlowMaker:
         self.cV2vsNsigma3He = []
         self.hV2 = []
         self.hV2vsPt = None
+        self.hPurityVsP = None
         self.hRawCountsVsPt = None
+        self.purity = []

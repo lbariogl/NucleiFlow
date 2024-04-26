@@ -178,6 +178,14 @@ cTPC.Write()
 hV2.Write()
 for f in functions:
   f.Write()
+hZvtx.Write()
+hCentFT0C.Write()
+hDeltaPsi_FT0A_TPCl.Write()
+hDeltaPsi_FT0A_TPCr.Write()
+hDeltaPsi_FT0C_TPCl.Write()
+hDeltaPsi_FT0C_TPCr.Write()
+hDeltaPsi_FT0C_FT0A.Write()
+hDeltaPsi_TPCl_TPCr.Write()
 
 # Save QC histogram as PDF
 plot_dir_name = f'{output_dir_name}/qc_plots'
@@ -198,12 +206,12 @@ cTPC.SaveAs(f'{plot_dir_name}/cTPC.pdf')
 cAvgItsClusSizeCosLambdaPt.SaveAs(f'{plot_dir_name}/cAvgItsClusSizeCosLambdaPt.pdf')
 utils.saveCanvasAsPDF(hZvtx, plot_dir_name)
 utils.saveCanvasAsPDF(hCentFT0C, plot_dir_name)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCl, plot_dir_name, is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCr, plot_dir_name, is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCl, plot_dir_name, is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCr, plot_dir_name, is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_FT0A, plot_dir_name, is2D=True)
-utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCl, plot_dir_name, is2D=True, logScale=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCr, plot_dir_name, is2D=True, logScale=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCl, plot_dir_name, is2D=True, logScale=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCr, plot_dir_name, is2D=True, logScale=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_FT0A, plot_dir_name, is2D=True, logScale=True)
+utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name, is2D=True, logScale=True)
 
 # resolution plot
 resolution_file = ROOT.TFile('Resolution_FT0C.root')

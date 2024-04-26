@@ -274,3 +274,4 @@ legend.Draw()
 
 output_file.cd()
 cV2.Write()
+cV2.SaveAs(f'{output_dir_name}/plots/{cV2.GetName()}.pdf')

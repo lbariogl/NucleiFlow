@@ -166,7 +166,7 @@ class RooFitter:
         self.canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
         self.canvas.cd()
 
-        self.info_panel = ROOT.TPaveText(0.12, 0.15, 0.35, 0.5, 'brNDC')
+        self.info_panel = ROOT.TPaveText(0.7, 0.6, 0.9, 0.6, 'brNDC')
         self.info_panel.SetBorderSize(0)
         self.info_panel.SetFillStyle(0)
         self.info_panel.SetTextAlign(12)

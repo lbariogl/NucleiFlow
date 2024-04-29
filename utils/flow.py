@@ -234,7 +234,6 @@ class FlowMaker:
             os.makedirs(self.plot_dir)
         for i_pt in range(0, len(self.pt_bins) - 1):
             utils.saveCanvasAsPDF(self.hNsigma3He[i_pt], self.plot_dir)
-            # utils.saveCanvasAsPDF(self.hTOFmassSquared[i_pt], self.plot_dir)
             utils.saveCanvasAsPDF(self.hV2[i_pt], self.plot_dir)
         utils.saveCanvasAsPDF(self.hV2vsPt, self.plot_dir)
         utils.saveCanvasAsPDF(self.hPurityVsPt, self.plot_dir)

@@ -256,6 +256,7 @@ if do_syst:
 
 
 # Final plots
+
 print("Making final plots")
 cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
@@ -275,3 +276,23 @@ legend.Draw()
 output_file.cd()
 cV2.Write()
 cV2.SaveAs(f'{output_dir_name}/plots/{cV2.GetName()}.pdf')
+
+cPurity = ROOT.TCanvas('cPurity', 'cPurity', 800, 600)
+frame = cPurity .DrawFrame(1.7, 0.5, 9, 1.1, r';#it{p}_{T} (GeV/#it{c}); purity')
+cPurity.SetBottomMargin(0.13)
+cPurity.SetLeftMargin(0.13)
+cPurity.cd()
+legend_purity = ROOT.TLegend(0.23, 0.22, 0.49, 0.57, 'FT0C centrality', 'brNDC')
+legend_purity.SetBorderSize(0)
+legend_purity.SetNColumns(2)
+
+for i_cent in range(n_cent_classes):
+  cent_label = f'{flow_makers[i_cent].cent_limits[0]} - {flow_makers[i_cent].cent_limits[1]}' + r'%'
+  legend_purity.AddEntry(flow_makers[i_cent].hPurityVsPt, cent_label,'PF')
+  flow_makers[i_cent].hPurityVsPt.Draw('SAME')
+
+legend_purity.Draw()
+
+output_file.cd()
+cPurity.Write()
+cPurity.SaveAs(f'{output_dir_name}/plots/{cPurity.GetName()}.pdf')

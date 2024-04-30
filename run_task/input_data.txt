@@ -1,0 +1,2 @@
+/data/shared/Run3_LHC23zzh_apass3/o2_ctf_run00544124_orbit0341507168_tf0000853301_epn020/001/AO2D.root
+/data/shared/Run3_LHC23zzh_apass3/o2_ctf_run00544124_orbit0341507168_tf0000853301_epn020/002/AO2D.root

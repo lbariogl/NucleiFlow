@@ -35,6 +35,11 @@ ep_tree_name = config['ep_tree_name']
 
 mandatory_selections = config['mandatory_selections']
 selection_dict = config['selection_dict']
+standard_selection_list = selection_dict.values()
+standard_selections = " and ".join(standard_selection_list)
+
+ptdep_selection_dict = config['ptdep_selection_dict']
+standard_ptdep_selections = ptdep_selection_dict['fAvgItsClusSizeCosLambda']
 
 cent_detector_label = config['cent_detector_label']
 
@@ -113,6 +118,8 @@ complete_df.query(mandatory_selections, inplace=True)
 print("** Starting systematic variations **")
 
 # create a dictionary with all the possible selections for a specific variable
+
+# pt-independent selections
 cut_dict_syst = config['cut_dict_syst']
 cut_string_dict = {}
 cut_label_dict = {}
@@ -133,6 +140,35 @@ for var in cut_dict_syst:
         cut_string_dict[var].append(sel_string)
         cut_label_dict[var].append(cut_greater_string + f'{cut:.3f}')
 
+# pt-dependent selections
+ptdep_cut_dict_syst = config['ptdep_cut_dict_syst']
+
+ptdep_cut_string_list = []
+for i_pt, pt_el in enumerate(ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]):
+    ptdep_cut_greater = pt_el['cut_greater']
+    ptdep_cut_greater_string = " > " if ptdep_cut_greater else " < "
+    ptdep_cut_list = pt_el['cut_list']
+    ptdep_cut_arr = np.linspace(ptdep_cut_list[0], ptdep_cut_list[1], ptdep_cut_list[2])
+    ptdep_cut_string_list.append([])
+    for i_ptdep_cut, ptdep_cut in enumerate(ptdep_cut_arr):
+        ptdep_cut_string_list[i_pt].append(
+        'fAvgItsClusSizeCosLambda' + ptdep_cut_greater_string + str(ptdep_cut))
+
+n_ptdep_variations = len(ptdep_cut_string_list[0])
+n_max_pt_bins = len(pt_bins[0]) - 1
+
+sorted_ptdep_cut_string_list = []
+cut_label_dict['fAvgItsClusSizeCosLambda'] = []
+variation_list = ['- 0.5', '- 0.4', '- 0.3', '- 0.2', '- 0.1', '', '+ 0.1', '+ 0.2', '+ 0.3', '+ 0.4', '+ 0.5']
+
+for i_var in range(0, n_ptdep_variations):
+    pt_var_list = []
+    for i_pt in range(0, n_max_pt_bins):
+        pt_var_list.append(ptdep_cut_string_list[i_pt][i_var])
+    sorted_ptdep_cut_string_list.append(pt_var_list)
+    cut_label_dict['fAvgItsClusSizeCosLambda'].append(f'> def. {variation_list[i_var]}')
+
+
 print("  ** separated cuts **")
 
 for i_cent in range(n_cent_classes):
@@ -144,6 +180,7 @@ for i_cent in range(n_cent_classes):
     canvas_dict = {}
     legend_dict = {}
 
+    # pt-independent cuts
     for var, cuts in cut_string_dict.items():
         print(f'var: {var}')
         var_dir = cent_dirs[i_cent].mkdir(var)
@@ -168,6 +205,7 @@ for i_cent in range(n_cent_classes):
 
             var_suffix = f'_{var}_{i_cut}'
             flow_maker_syst.selection_string = cut
+            flow_maker_syst.ptdep_selection_string = standard_ptdep_selections
             flow_maker_syst.suffix = var_suffix
 
             flow_maker_syst.make_flow()
@@ -181,6 +219,46 @@ for i_cent in range(n_cent_classes):
             v2_dict[var].append(histo)
 
             del flow_maker_syst
+
+    # pt-dependent cuts
+    print(f'var: fAvgItsClusSizeCosLambda')
+    var = 'fAvgItsClusSizeCosLambda'
+    var_dir = cent_dirs[i_cent].mkdir(var)
+
+    v2_dict[var] = []
+    canvas_dict[var] = ROOT.TCanvas(f'c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}',
+                                    f'c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}', 800, 600)
+    legend_dict[var] = ROOT.TLegend(0.16, 0.61, 0.86, 0.88, '', 'brNDC')
+    legend_dict[var].SetBorderSize(0)
+
+    for i_cut, cut in enumerate(sorted_ptdep_cut_string_list):
+
+        print(f'{var}: {i_cut} / {len(sorted_ptdep_cut_string_list)} ==> {cut}')
+
+        output_dir_varied = var_dir.mkdir(f'{i_cut}')
+
+        flow_maker_syst = FlowMaker()
+        flow_maker_syst.data_df = complete_df
+        flow_maker_syst.pt_bins = pt_bins[i_cent]
+        flow_maker_syst.cent_limits = centrality_classes[i_cent]
+        flow_maker_syst.resolution = resolutions[i_cent]
+
+        var_suffix = f'_{var}_{i_cut}'
+        flow_maker_syst.selection_string = standard_selections
+        flow_maker_syst.ptdep_selection_string = cut
+        flow_maker_syst.suffix = var_suffix
+
+        flow_maker_syst.make_flow()
+        flow_values = flow_maker_syst.getFlowValues()
+        # write histograms to file
+        flow_maker_syst.output_dir = output_dir_varied
+        flow_maker_syst.dump_to_output_file()
+
+        histo = copy.deepcopy(flow_maker_syst.hV2vsPt)
+
+        v2_dict[var].append(histo)
+
+        del flow_maker_syst
 
     # get color paletter
     cols = ROOT.TColor.GetPalette()

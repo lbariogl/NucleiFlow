@@ -1,3 +1,5 @@
+import roofitter
+import utils as utils
 import os
 import ROOT
 import numpy as np
@@ -5,12 +7,11 @@ import copy
 
 import sys
 sys.path.append('utils')
-import utils as utils
-import roofitter
 
 ROOT.ROOT.EnableImplicitMT()
 ROOT.RooMsgService.instance().setSilentMode(True)
 ROOT.RooMsgService.instance().setGlobalKillBelow(ROOT.RooFit.WARNING)
+
 
 class FlowMaker:
 
@@ -19,6 +20,7 @@ class FlowMaker:
         # data frame
         self.data_df = None
         self.selection_string = ''
+        self.ptdep_selection_string = []
         self.n_sigma_selection = 2
 
         # variable related members
@@ -87,6 +89,8 @@ class FlowMaker:
         for i_pt in range(0, n_pt_bins):
             pt_bin = [self.pt_bins[i_pt], self.pt_bins[i_pt + 1]]
             pt_sel = f'abs(fPt) > {pt_bin[0]} and abs(fPt) < {pt_bin[1]}'
+            if self.ptdep_selection_string:
+                pt_sel = pt_sel + ' and ' + self.ptdep_selection_string[i_pt]
             cent_sel = f'fCentFT0C > {self.cent_limits[0]} and fCentFT0C < {self.cent_limits[1]}'
             if self.selection_string:
                 bin_sel = f'{cent_sel} and {pt_sel} and {self.selection_string}'
@@ -132,7 +136,8 @@ class FlowMaker:
             sigma_rootfitter = roofitter.RooFitter()
             sigma_rootfitter.variable_range = self.nsigmaTPC_bin_limits
             sigma_rootfitter.hist = hNsigma3He_tmp
-            sigma_rootfitter.integral_range = [-1*self.n_sigma_selection, self.n_sigma_selection]
+            sigma_rootfitter.integral_range = [-1 *
+                                               self.n_sigma_selection, self.n_sigma_selection]
             sigma_rootfitter.pt_label = pt_label
             sigma_rootfitter.cent_label = f'{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}'
             sigma_rootfitter.initialise()

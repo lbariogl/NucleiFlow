@@ -299,22 +299,22 @@
   },
   "epvector": {
     "cfgURL": "http:\/\/alice-ccdb.cern.ch",
-    "ccdb-no-later-than": "1712537624133",
+    "ccdb-no-later-than": "1712019074832",
     "cfgCutVertex": "10",
     "cfgCutCentrality": "80",
-    "cfgCutPT": "0.150000006",
+    "cfgCutPT": "0.200000003",
     "cfgCutPTMax": "3",
     "cfgCutEta": "0.800000012",
     "cfgMinEta": "0.100000001",
-    "cfgCutDCAxy": "0.200000003",
-    "cfgCutDCAz": "0.200000003",
-    "cfgITScluster": "4",
+    "cfgCutDCAxy": "0.100000001",
+    "cfgCutDCAz": "0.100000001",
+    "cfgITScluster": "5",
     "useGainCallib": "true",
     "useRecentere": "true",
-    "useShift": "false",
-    "ConfGainPath": "Users\/s\/skundu\/My\/Object\/PPb_2023_pass2\/gainv2",
-    "ConfRecentere": "Users\/s\/skundu\/My\/Object\/allPbPbpass2\/recentere",
-    "ConfShift": "Users\/s\/skundu\/My\/Object\/Finaltest2\/recenereall"
+    "useShift": "true",
+    "ConfGainPath": "Users\/s\/skundu\/My\/Object\/PbPbpass2\/gaincallib_newevtcut",
+    "ConfRecentere": "Users\/s\/skundu\/My\/Object\/PbPbpass2\/recentere_finebin",
+    "ConfShift": "Users\/s\/skundu\/My\/Object\/PbPbpass2\/shiftcorrection"
   },
   "nuclei-spectra": {
     "cfgCompensatePIDinTracking": "true",
@@ -714,8 +714,8 @@
     "cfgMaterialCorrection": "2",
     "ccdb-url": "http:\/\/alice-ccdb.cern.ch",
     "processData": "false",
-    "processDataFlow": "false",
-    "processDataFlowAlternative": "true",
+    "processDataFlow": "true",
+    "processDataFlowAlternative": "false",
     "processMC": "false"
   },
   "flow-qc": {

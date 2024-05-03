@@ -199,7 +199,6 @@ if do_syst:
   for i_cent in range(n_cent_classes):
 
     histo_v2_syst = []
-    canvas_v2_syst = []
     n_pt_bins = len(pt_bins[i_cent]) - 1
     for i_pt in range(0, n_pt_bins):
       histo_v2_syst.append(ROOT.TH1F(f'hV2syst_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}',
@@ -248,6 +247,7 @@ if do_syst:
     output_file.cd(f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}')
     for i_pt in range(0, n_pt_bins):
 
+      utils.setHistStyle(histo_v2_syst[i_pt], ROOT.kRed+1)
       # create canvas with the central value
       histo_name = histo_v2_syst[i_pt].GetName()
       canvas_syst_name = histo_name.replace('h', 'c', 1)
@@ -276,7 +276,7 @@ if do_syst:
       info_panel.AddText(pt_label)
 
       canvas_syst.cd()
-      histo_v2_syst[i_pt].Draw()
+      histo_v2_syst[i_pt].Draw('histo')
       std_errorbox.Draw()
       std_line.Draw()
       info_panel.Draw()

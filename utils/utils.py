@@ -352,6 +352,7 @@ def saveCanvasAsPDF(histo, plots_dir, is2D=False, logScale=False):
             canvas.SetLogz()
     canvas.SaveAs(f'{plots_dir}/{canvas_name}.pdf')
 
+
 def getValuesFromHisto(histo):
     n_bins = histo.GetXaxis().GetNbins()
     histo_content = []
@@ -359,3 +360,9 @@ def getValuesFromHisto(histo):
         histo_content.append(
             [histo.GetBinContent(i_bin), histo.GetBinError(i_bin)])
     return histo_content
+
+
+def passBarlow(def_val, varied_val, def_err, varied_err, n_sigma=2):
+    numerator = abs(def_val - varied_val)
+    denominator = abs(def_err - varied_err)
+    return (numerator/denominator) < 2

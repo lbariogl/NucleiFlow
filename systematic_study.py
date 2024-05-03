@@ -9,8 +9,8 @@ import os
 
 import sys
 sys.path.append('utils')
-from flow import FlowMaker
 import utils as utils
+from flow import FlowMaker
 
 parser = argparse.ArgumentParser(
     description='Configure the parameters of the script.')
@@ -54,7 +54,7 @@ n_sigma_plot = config['n_sigma_plot']
 
 # create output file
 if not os.path.exists(output_dir_name):
-  os.makedirs(output_dir_name)
+    os.makedirs(output_dir_name)
 output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
 
 # Get resolution from file
@@ -148,25 +148,28 @@ for i_pt, pt_el in enumerate(ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]):
     ptdep_cut_greater = pt_el['cut_greater']
     ptdep_cut_greater_string = " > " if ptdep_cut_greater else " < "
     ptdep_cut_list = pt_el['cut_list']
-    ptdep_cut_arr = np.linspace(ptdep_cut_list[0], ptdep_cut_list[1], ptdep_cut_list[2])
+    ptdep_cut_arr = np.linspace(
+        ptdep_cut_list[0], ptdep_cut_list[1], ptdep_cut_list[2])
     ptdep_cut_string_list.append([])
     for i_ptdep_cut, ptdep_cut in enumerate(ptdep_cut_arr):
         ptdep_cut_string_list[i_pt].append(
-        'fAvgItsClusSizeCosLambda' + ptdep_cut_greater_string + str(ptdep_cut))
+            'fAvgItsClusSizeCosLambda' + ptdep_cut_greater_string + str(ptdep_cut))
 
 n_ptdep_variations = len(ptdep_cut_string_list[0])
 n_max_pt_bins = len(pt_bins[0]) - 1
 
 sorted_ptdep_cut_string_list = []
 cut_label_dict['fAvgItsClusSizeCosLambda'] = []
-variation_list = ['- 0.5', '- 0.4', '- 0.3', '- 0.2', '- 0.1', '', '+ 0.1', '+ 0.2', '+ 0.3', '+ 0.4', '+ 0.5']
+variation_list = ['- 0.5', '- 0.4', '- 0.3', '- 0.2',
+                  '- 0.1', '', '+ 0.1', '+ 0.2', '+ 0.3', '+ 0.4', '+ 0.5']
 
 for i_var in range(0, n_ptdep_variations):
     pt_var_list = []
     for i_pt in range(0, n_max_pt_bins):
         pt_var_list.append(ptdep_cut_string_list[i_pt][i_var])
     sorted_ptdep_cut_string_list.append(pt_var_list)
-    cut_label_dict['fAvgItsClusSizeCosLambda'].append(f'> def. {variation_list[i_var]}')
+    cut_label_dict['fAvgItsClusSizeCosLambda'].append(
+        f'> def. {variation_list[i_var]}')
 
 
 print("  ** separated cuts **")
@@ -179,6 +182,7 @@ for i_cent in range(n_cent_classes):
     v2_dict = {}
     canvas_dict = {}
     legend_dict = {}
+    dict_hist_rel_syst = {}
 
     # pt-independent cuts
     for var, cuts in cut_string_dict.items():
@@ -190,6 +194,12 @@ for i_cent in range(n_cent_classes):
                                         f'c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}', 800, 600)
         legend_dict[var] = ROOT.TLegend(0.16, 0.61, 0.86, 0.88, '', 'brNDC')
         legend_dict[var].SetBorderSize(0)
+
+        histo_v2_syst = []
+        n_pt_bins = len(pt_bins[i_cent]) - 1
+        for i_pt in range(0, n_pt_bins):
+            histo_v2_syst.append(ROOT.TH1F(f'hV2syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}',
+                                           ';v_{2}', 20, default_v2_values[i_cent][i_pt][0] - 3*default_v2_values[i_cent][i_pt][1], default_v2_values[i_cent][i_pt][0] + 3*default_v2_values[i_cent][i_pt][1]))
 
         for i_cut, cut in enumerate(cuts):
 
@@ -214,11 +224,16 @@ for i_cent in range(n_cent_classes):
             flow_maker_syst.output_dir = output_dir_varied
             flow_maker_syst.dump_to_output_file()
 
+            for i_pt in range(0, flow_maker_syst.nPtBins()):
+                histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+
             histo = copy.deepcopy(flow_maker_syst.hV2vsPt)
 
             v2_dict[var].append(histo)
 
             del flow_maker_syst
+
+        dict_hist_rel_syst[var] = histo_v2_syst
 
     # pt-dependent cuts
     print(f'var: fAvgItsClusSizeCosLambda')
@@ -230,6 +245,12 @@ for i_cent in range(n_cent_classes):
                                     f'c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}', 800, 600)
     legend_dict[var] = ROOT.TLegend(0.16, 0.61, 0.86, 0.88, '', 'brNDC')
     legend_dict[var].SetBorderSize(0)
+
+    histo_v2_syst = []
+    n_pt_bins = len(pt_bins[i_cent]) - 1
+    for i_pt in range(0, n_pt_bins):
+        histo_v2_syst.append(ROOT.TH1F(f'hV2syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}',
+                                        ';v_{2}', 20, default_v2_values[i_cent][i_pt][0] - 3*default_v2_values[i_cent][i_pt][1], default_v2_values[i_cent][i_pt][0] + 3*default_v2_values[i_cent][i_pt][1]))
 
     for i_cut, cut in enumerate(sorted_ptdep_cut_string_list):
 
@@ -254,11 +275,16 @@ for i_cent in range(n_cent_classes):
         flow_maker_syst.output_dir = output_dir_varied
         flow_maker_syst.dump_to_output_file()
 
+        for i_pt in range(0, flow_maker_syst.nPtBins()):
+            histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+
         histo = copy.deepcopy(flow_maker_syst.hV2vsPt)
 
         v2_dict[var].append(histo)
 
         del flow_maker_syst
+
+    dict_hist_rel_syst[var] = histo_v2_syst
 
     # get color paletter
     cols = ROOT.TColor.GetPalette()
@@ -267,7 +293,8 @@ for i_cent in range(n_cent_classes):
     cent_dirs[i_cent].mkdir('std')
     default_v2_histos[i_cent].Write()
 
-    cent_syst_dir_name = output_dir_name + f'/syst_plots/cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/'
+    cent_syst_dir_name = output_dir_name + \
+        f'/syst_plots/cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/'
     if not os.path.exists(cent_syst_dir_name):
         os.makedirs(cent_syst_dir_name)
 
@@ -289,4 +316,60 @@ for i_cent in range(n_cent_classes):
         legend_dict[var].Draw()
         legend_dict[var].SetNColumns(5)
         canvas_dict[var].Write()
-        canvas_dict[var].SaveAs(f'{cent_syst_dir_name}/{canvas_dict[var].GetName()}.pdf')
+        canvas_dict[var].SaveAs(
+            f'{cent_syst_dir_name}/{canvas_dict[var].GetName()}.pdf')
+
+        histo_rel_syst = default_v2_histos[i_cent].Clone(f'hRelSystVsPt_{var}')
+        histo_rel_syst.Reset()
+        histo_rel_syst.GetYaxis().SetTitle('relative error')
+        histo_rel_syst.GetYaxis().SetRangeUser(0., 0.5)
+
+        # getting systematic distributions
+        for i_histo, histo in enumerate(dict_hist_rel_syst[var]):
+
+            utils.setHistStyle(histo, ROOT.kRed+1)
+            # create canvas with the central value
+            histo_name = histo.GetName()
+            canvas_syst_name = histo_name.replace('h', 'c', 1)
+            canvas_syst = ROOT.TCanvas(canvas_syst_name, canvas_syst_name, 800, 600)
+            canvas_syst.SetBottomMargin(0.13)
+            canvas_syst.SetLeftMargin(0.13)
+
+            std_line = ROOT.TLine(default_v2_values[i_cent][i_histo][0], 0, default_v2_values[i_cent][i_histo][0], 1.05 * histo.GetMaximum())
+            std_line.SetLineColor(ROOT.kAzure+2)
+            std_line.SetLineWidth(2)
+            # create box for statistical uncertainty
+            std_errorbox = ROOT.TBox(default_v2_values[i_cent][i_histo][0] - default_v2_values[i_cent][i_histo][1], 0,
+                                    default_v2_values[i_cent][i_histo][0] + default_v2_values[i_cent][i_histo][1], 1.05 * histo.GetMaximum())
+            std_errorbox.SetFillColorAlpha(ROOT.kAzure+1, 0.5)
+            std_errorbox.SetLineWidth(0)
+
+            info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
+            info_panel.SetBorderSize(0)
+            info_panel.SetFillStyle(0)
+            info_panel.SetTextAlign(12)
+            info_panel.SetTextFont(42)
+            info_panel.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
+            info_panel.AddText(f'{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} % {cent_detector_label}')
+            pt_label = f'{pt_bins[i_cent][i_pt]:.1f}' + r' #leq #it{p}_{T} < ' + \
+                f'{pt_bins[i_cent][i_pt+1]:.1f}' + r' GeV/#it{c}'
+            info_panel.AddText(pt_label)
+
+            canvas_syst.cd()
+            histo.Draw('histo')
+            std_errorbox.Draw()
+            std_line.Draw()
+            info_panel.Draw()
+
+            cent_dirs[i_cent].cd(f'{var}')
+            histo.Write()
+            canvas_syst.Write()
+            canvas_syst.SaveAs(f'{cent_syst_dir_name}/{canvas_syst.GetName()}.pdf')
+
+            # relative syst vs pt
+            histo_rel_syst.SetBinContent(i_histo+1, histo.GetRMS()/default_v2_values[i_cent][i_histo][0])
+            histo_rel_syst.SetBinError(i_histo+1, 0)
+
+        cent_dirs[i_cent].cd()
+        histo_rel_syst.Write()
+        histo_rel_syst.Smooth(3)

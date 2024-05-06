@@ -367,9 +367,9 @@ for i_cent in range(n_cent_classes):
             canvas_syst.SaveAs(f'{cent_syst_dir_name}/{canvas_syst.GetName()}.pdf')
 
             # relative syst vs pt
-            histo_rel_syst.SetBinContent(i_histo+1, histo.GetRMS()/default_v2_values[i_cent][i_histo][0])
+            histo_rel_syst.SetBinContent(i_histo+1, histo.GetRMS()/abs(default_v2_values[i_cent][i_histo][0]))
             histo_rel_syst.SetBinError(i_histo+1, 0)
 
         cent_dirs[i_cent].cd()
+        histo_rel_syst.Smooth(5)
         histo_rel_syst.Write()
-        histo_rel_syst.Smooth(3)

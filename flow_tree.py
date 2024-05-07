@@ -25,6 +25,7 @@ config_file = open(args.config_file, 'r')
 config = yaml.full_load(config_file)
 
 input_file_name = config['input_file_name']
+resolution_file_name = config['resolution_file_name']
 output_dir_name = config['output_dir_name']
 output_file_name = config['output_file_name']
 
@@ -79,8 +80,8 @@ utils.redifineColumns(complete_df)
 complete_df.query(mandatory_selections, inplace=True)
 
 # Get resolution from file
-resolution_file = ROOT.TFile('Resolution_FT0C.root')
-hResolution = resolution_file.Get('Resolutuion')
+resolution_file = ROOT.TFile(resolution_file_name)
+hResolution = resolution_file.Get('Resolution/hResolution_FT0C_FT0A_TPCl')
 hResolution.SetDirectory(0)
 
 res_0_10 = hResolution.GetBinContent(1)

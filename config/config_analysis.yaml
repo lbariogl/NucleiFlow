@@ -2,6 +2,8 @@ input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass3_new/AO2D_merged.root"
 
 input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass3_new/AnalysisResults_merged.root"
 
+resolution_file_name: "resolution_EP.root"
+
 output_dir_name: "../results_pass3_new_alternative/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"

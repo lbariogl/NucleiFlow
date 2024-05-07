@@ -25,6 +25,8 @@ input_file = ROOT.TFile(input_file_AR_name)
 
 ref_names = ['FT0C', 'FT0A', 'TPCl', 'TPCr']
 
+use_EP = False
+
 hSP_dict = {}
 hProfile_dict = {}
 cSpProfile_dict = {}
@@ -62,13 +64,19 @@ def getResolution(histo_resolution, det1_det2_name, det2_det3_name, det1_det3_na
             histo_resolution.SetBinError(ibin, np.sqrt(err))
 
 
-def doAllPlots(det_name1, det_name2, det_name3):
+def doAllPlots(det_name1, det_name2, det_name3, ep_method = True):
 
+    if ep_method:
+        directory = 'flow_ep'
+        suffix = 'EP'
+    else:
+        directory = 'flow_qvec'
+        suffix = 'Qvec'
     # first combination
     det1_det2_name = f'{det_name1}_{det_name2}'
     if det1_det2_name not in hSP_dict.keys():
         hSP_dict[det1_det2_name] = input_file.Get(
-            f'flow-qc/flow_ep/hScalarProduct_{det1_det2_name}_EP')
+            f'flow-qc/{directory}/hNormalisedScalarProduct_{det1_det2_name}_{suffix}')
         hSP_dict[det1_det2_name].RebinX(10)
 
         hProfile_dict[det1_det2_name] = hSP_dict[det1_det2_name].ProfileX(
@@ -86,7 +94,7 @@ def doAllPlots(det_name1, det_name2, det_name3):
     det2_det3_name = f'{det_name2}_{det_name3}'
     if det2_det3_name not in hSP_dict.keys():
         hSP_dict[det2_det3_name] = input_file.Get(
-            f'flow-qc/flow_ep/hScalarProduct_{det2_det3_name}_EP')
+            f'flow-qc/{directory}/hNormalisedScalarProduct_{det2_det3_name}_{suffix}')
         hSP_dict[det2_det3_name].RebinX(10)
 
         hProfile_dict[det2_det3_name] = hSP_dict[det2_det3_name].ProfileX(
@@ -104,7 +112,7 @@ def doAllPlots(det_name1, det_name2, det_name3):
     det1_det3_name = f'{det_name1}_{det_name3}'
     if det1_det3_name not in hSP_dict.keys():
         hSP_dict[det1_det3_name] = input_file.Get(
-            f'flow-qc/flow_ep/hScalarProduct_{det1_det3_name}_EP')
+            f'flow-qc/{directory}/hNormalisedScalarProduct_{det1_det3_name}_{suffix}')
         hSP_dict[det1_det3_name].RebinX(10)
 
         hProfile_dict[det1_det3_name] = hSP_dict[det1_det3_name].ProfileX(
@@ -157,9 +165,14 @@ def doAllPlots(det_name1, det_name2, det_name3):
 det_combos = list(combinations(ref_names, 3))
 
 for det_combo in det_combos:
-    doAllPlots(det_combo[0], det_combo[1], det_combo[2])
+    doAllPlots(det_combo[0], det_combo[1], det_combo[2], use_EP)
 
-output_file = ROOT.TFile('resolution.root', 'recreate')
+if use_EP:
+    output_file_name = 'resolution_EP.root'
+else:
+    output_file_name = 'resolution_Qvec.root'
+
+output_file = ROOT.TFile(output_file_name, 'recreate')
 SP_dir = output_file.mkdir('SP')
 Resolution_dir = output_file.mkdir('Resolution')
 

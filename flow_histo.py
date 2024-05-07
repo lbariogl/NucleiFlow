@@ -70,8 +70,6 @@ hSPvsPT_FT0A.Write()
 hSPvsPT_FV0A.Write()
 
 cSPvsPT= ROOT.TCanvas('cSPvsPT', 'cSPvsPT', 800, 600)
-cSPvsPT.SetLeftMargin(0.13)
-cSPvsPT.SetBottomMargin(0.13)
 frame = cSPvsPT.DrawFrame(0., -2., 6., 2., r';#it{p}_{T} (GeV/#it{c}) ;\langle \vec{u}_{2} \cdot \vec{Q} \rangle')
 hSPvsPT_FT0C.Draw('PE SAME')
 hSPvsPT_FT0A.Draw('PE SAME')

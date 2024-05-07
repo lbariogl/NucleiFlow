@@ -40,12 +40,14 @@ ptdep_selection_dict = config['ptdep_selection_dict']
 ptdep_selections = ptdep_selection_dict['fAvgItsClusSizeCosLambda']
 
 cent_detector_label = config['cent_detector_label']
+reference_flow_detector = config['reference_flow_detector']
 
 centrality_classes = config['centrality_classes']
 pt_bins = config['pt_bins']
 cent_colours = config['cent_colours']
 
 do_syst = config['do_syst']
+use_Barlow = config['use_Barlow']
 
 # BB parameters
 p_train = config['p_train']
@@ -108,6 +110,7 @@ for i_cent in range(n_cent_classes):
     flow_maker.cent_limits = centrality_classes[i_cent]
     flow_maker.resolution = resolutions[i_cent]
     flow_maker.print_frame = True
+    flow_maker.ref_detector = reference_flow_detector
 
     # create output_dir
     cent_dir = output_file.mkdir(
@@ -215,6 +218,7 @@ if do_syst:
             flow_maker_syst.pt_bins = pt_bins[i_cent]
             flow_maker_syst.cent_limits = centrality_classes[i_cent]
             flow_maker_syst.resolution = resolutions[i_cent]
+            flow_maker_syst.ref_detector = reference_flow_detector
 
             mega_combo_suffix = f'_combo{i_mega_combo}'
             trial_strings.append("----------------------------------")
@@ -243,7 +247,12 @@ if do_syst:
             print(
                 f'cent: {flow_maker_syst.cent_limits[0]} - {flow_maker_syst.cent_limits[1]}')
             for i_pt in range(0, flow_maker_syst.nPtBins()):
-                histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+                print(f'pt: {i_pt} / {flow_maker_syst.nPtBins()}')
+                if use_Barlow:
+                    if utils.passBarlow(default_values[i_cent][i_pt][0], flow_values[i_pt][0], default_values[i_cent][i_pt][1], flow_values[i_pt][1]):
+                        histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+                    else:
+                        print('    Rejected for Barlow')
                 # print(f'pt_bin: {i_pt} -> v2: {flow_values[i_pt][0]} +- {flow_values[i_pt][1]}')
             print("----------------------------------")
 
@@ -302,7 +311,6 @@ if do_syst:
 print("Making final plots")
 cV2 = ROOT.TCanvas('cV2', 'cV2', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
-cV2.SetBottomMargin(0.13)
 cV2.cd()
 legend = ROOT.TLegend(0.61, 0.58, 0.87, 0.81, 'FT0C centrality', 'brNDC')
 legend.SetBorderSize(0)
@@ -322,8 +330,6 @@ cV2.SaveAs(f'{output_dir_name}/plots/{cV2.GetName()}.pdf')
 cPurity = ROOT.TCanvas('cPurity', 'cPurity', 800, 600)
 frame = cPurity .DrawFrame(
     1.7, 0.5, 9, 1.1, r';#it{p}_{T} (GeV/#it{c}); purity')
-cPurity.SetBottomMargin(0.13)
-cPurity.SetLeftMargin(0.13)
 cPurity.cd()
 legend_purity = ROOT.TLegend(
     0.23, 0.22, 0.49, 0.57, 'FT0C centrality', 'brNDC')

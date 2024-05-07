@@ -104,6 +104,7 @@ for i_cent in range(0, n_cent):
     frame_cent = cV2_cent.DrawFrame(
         1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
     cV2_cent.SetBottomMargin(0.13)
+    cV2_cent.SetBorderSize(0)
 
     info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
     info_panel.SetBorderSize(0)
@@ -130,6 +131,8 @@ for i_cent in range(0, n_cent):
 cV2 = ROOT.TCanvas('cV2_tot', 'cV2_tot', 800, 600)
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
 cV2.SetBottomMargin(0.13)
+cV2.SetLeftMargin(0.13)
+cV2.SetBorderSize(0)
 cV2.cd()
 legend = ROOT.TLegend(0.61, 0.58, 0.87, 0.81, 'FT0C centrality', 'brNDC')
 legend.SetBorderSize(0)
@@ -153,6 +156,7 @@ for i_cent in range(n_cent):
     cent_name = f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}'
     cRelSyst = ROOT.TCanvas(
         f'cRelSystVsPt_{cent_name}', f'cRelSystVsPt_{cent_name}')
+    cRelSyst.SetBorderSize(0)
     legend_syst = ROOT.TLegend(
         0.61, 0.58, 0.87, 0.81, 'Systematic uncertainties', 'brNDC')
     legend_syst.SetBorderSize(0)

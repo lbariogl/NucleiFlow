@@ -6,6 +6,7 @@ ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
 ROOT.gStyle.SetOptStat(0)
 
+ROOT.gStyle.SetFrameLineColor(ROOT.gStyle.GetCanvasColor());
 
 def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
     hist.SetMarkerColor(color)
@@ -362,7 +363,10 @@ def getValuesFromHisto(histo):
     return histo_content
 
 
-def passBarlow(def_val, varied_val, def_err, varied_err, n_sigma=2):
+def passBarlow(def_val, varied_val, def_err, varied_err, n_sigma=1):
     numerator = abs(def_val - varied_val)
     denominator = abs(def_err - varied_err)
-    return (numerator/denominator) < 2
+    if denominator < 1.e-5:
+        return True
+    return (numerator/denominator) < n_sigma
+

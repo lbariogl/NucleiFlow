@@ -47,6 +47,8 @@ centrality_classes = config['centrality_classes']
 pt_bins = config['pt_bins']
 cent_colours = config['cent_colours']
 
+use_Barlow = config['use_Barlow']
+
 # BB parameters
 p_train = config['p_train']
 resolution_train = config['resolution_train']
@@ -225,7 +227,12 @@ for i_cent in range(n_cent_classes):
             flow_maker_syst.dump_to_output_file()
 
             for i_pt in range(0, flow_maker_syst.nPtBins()):
-                histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+                print(f'pt: {i_pt} / {flow_maker_syst.nPtBins()}')
+                if use_Barlow:
+                    if utils.passBarlow(default_v2_values[i_cent][i_pt][0], flow_values[i_pt][0], default_v2_values[i_cent][i_pt][1], flow_values[i_pt][1]):
+                        histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+                    else:
+                        print('    Rejected for Barlow')
 
             histo = copy.deepcopy(flow_maker_syst.hV2vsPt)
 
@@ -367,8 +374,9 @@ for i_cent in range(n_cent_classes):
             canvas_syst.SaveAs(f'{cent_syst_dir_name}/{canvas_syst.GetName()}.pdf')
 
             # relative syst vs pt
-            histo_rel_syst.SetBinContent(i_histo+1, histo.GetRMS()/abs(default_v2_values[i_cent][i_histo][0]))
-            histo_rel_syst.SetBinError(i_histo+1, 0)
+            if histo.Integral() > 2:
+                histo_rel_syst.SetBinContent(i_histo+1, histo.GetRMS()/abs(default_v2_values[i_cent][i_histo][0]))
+                histo_rel_syst.SetBinError(i_histo+1, 0)
 
         cent_dirs[i_cent].cd()
         histo_rel_syst.Smooth(5)

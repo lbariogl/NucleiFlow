@@ -7,6 +7,7 @@ import sys
 sys.path.append('utils')
 import utils as utils
 
+
 parser = argparse.ArgumentParser(
     description='Configure the parameters of the script.')
 parser.add_argument('--config-file', dest='config_file',
@@ -29,8 +30,7 @@ pt_bins = config['pt_bins']
 cent_colours = config['cent_colours']
 
 input_file = ROOT.TFile(input_file_name)
-input_file_separated_syst = ROOT.TFile(
-    input_file_name[:-5] + '_separated.root')
+input_file_separated_syst = ROOT.TFile(input_file_name[:-5] + '_separated.root')
 output_file_name = config['output_dir_name'] + 'final.root'
 output_file = ROOT.TFile(output_file_name, 'recreate')
 output_dir_name = config['output_dir_name']
@@ -129,12 +129,20 @@ for i_cent in range(0, n_cent):
     cV2_cent.SaveAs(f'{output_dir_plots_name}{cV2_cent.GetName()}.pdf')
 
 cV2 = ROOT.TCanvas('cV2_tot', 'cV2_tot', 800, 600)
+info_panel_total = ROOT.TPaveText(0.22, 0.67, 0.42, 0.83, 'NDC')
+info_panel_total.SetBorderSize(0)
+info_panel_total.SetFillStyle(0)
+info_panel_total.SetTextAlign(12)
+info_panel_total.SetTextFont(42)
+info_panel_total.SetTextSize(0.035)
+info_panel_total.AddText(r'ALICE preliminary')
+info_panel_total.AddText(r'PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV')
 frame = cV2.DrawFrame(1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
 cV2.SetBottomMargin(0.13)
 cV2.SetLeftMargin(0.13)
 cV2.SetBorderSize(0)
 cV2.cd()
-legend = ROOT.TLegend(0.61, 0.58, 0.87, 0.81, 'FT0C centrality', 'brNDC')
+legend = ROOT.TLegend(0.56, 0.67, 0.82, 0.83, 'FT0C centrality', 'brNDC')
 legend.SetBorderSize(0)
 legend.SetNColumns(2)
 
@@ -145,6 +153,7 @@ for i_cent in range(n_cent):
     syst_list[i_cent].Draw('PE2 SAME')
 
 legend.Draw()
+info_panel_total.Draw()
 
 output_file.cd()
 cV2.Write()
@@ -169,3 +178,90 @@ for i_cent in range(n_cent):
     cent_dir.cd()
     cRelSyst.Write()
     cRelSyst.SaveAs(f'{output_dir_plots_name}{cRelSyst.GetName()}.pdf')
+
+# comparison with models
+
+cV2comp_0_20 = ROOT.TCanvas('cV2comp_0_20', 'cV2comp_0_20', 800, 600)
+framecomp_0_20 = cV2comp_0_20.DrawFrame(
+    1.7, -0.05, 9, 0.35, r';#it{p}_{T} (GeV/#it{c}); v_{2}')
+cV2comp_0_20.SetBottomMargin(0.13)
+cV2comp_0_20.SetLeftMargin(0.13)
+cV2comp_0_20.SetBorderSize(0)
+
+info_panel_comp_0_20 = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, 'NDC')
+info_panel_comp_0_20.SetBorderSize(0)
+info_panel_comp_0_20.SetFillStyle(0)
+info_panel_comp_0_20.SetTextAlign(12)
+info_panel_comp_0_20.SetTextFont(42)
+info_panel_comp_0_20.SetTextSize(0.035)
+info_panel_comp_0_20.AddText(r'ALICE preliminary')
+info_panel_comp_0_20.AddText(r'PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV')
+info_panel_comp_0_20.AddText(r'0 - 20% FT0C')
+
+legend_comp_0_20 = ROOT.TLegend(0.53, 0.22, 0.81, 0.38, '', 'brNDC')
+legend_comp_0_20.SetBorderSize(0)
+
+merged_file = ROOT.TFile('v2_0_20_merged.root')
+hV2vsPt_0020 = merged_file.Get('hV2vsPt_0020')
+hV2vsPt_0020_syst = merged_file.Get('hV2vsPt_0020_syst')
+utils.setHistStyle(hV2vsPt_0020, ROOT.kRed+1)
+utils.setHistStyle(hV2vsPt_0020_syst, ROOT.kRed+1)
+
+wenbin_theory_file = ROOT.TFile('../theoretical_models/WenbinPredictions.root')
+gPredWenbin020 = wenbin_theory_file.Get('gPredWenbin_0_20')
+gPredWenbin020.SetFillStyle(1001)
+gPredWenbin020.SetFillColorAlpha(ROOT.kCyan+2, 0.6)
+gPredWenbin2040 = wenbin_theory_file.Get('gPredWenbin_20_40')
+gPredWenbin2040.SetFillStyle(1001)
+gPredWenbin2040.SetFillColorAlpha(ROOT.kViolet+1, 0.6)
+
+cV2comp_0_20.cd()
+gPredWenbin020.Draw('E3same][')
+hV2vsPt_0020.Draw('PE SAME')
+hV2vsPt_0020_syst.Draw('PE2 SAME')
+
+legend_comp_0_20.AddEntry(hV2vsPt_0020, 'data', 'PE')
+legend_comp_0_20.AddEntry(gPredWenbin020, r'#splitline{   IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'LF')
+
+info_panel_comp_0_20.Draw()
+legend_comp_0_20.Draw()
+
+cV2comp_0_20.SaveAs(f'{output_dir_plots_name}{cV2comp_0_20.GetName()}.pdf')
+
+cV2comp_20_40 = ROOT.TCanvas('cV2comp_20_40', 'cV2comp_20_40', 800, 600)
+framecomp_20_40 = cV2comp_20_40.DrawFrame(
+    1.7, -0.05, 9, 0.6, r';#it{p}_{T} (GeV/#it{c}); v_{2}')
+cV2comp_20_40.SetBottomMargin(0.13)
+cV2comp_20_40.SetLeftMargin(0.13)
+cV2comp_20_40.SetBorderSize(0)
+
+cV2comp_20_40.cd()
+
+info_panel_comp_20_40 = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, 'NDC')
+info_panel_comp_20_40.SetBorderSize(0)
+info_panel_comp_20_40.SetFillStyle(0)
+info_panel_comp_20_40.SetTextAlign(12)
+info_panel_comp_20_40.SetTextFont(42)
+info_panel_comp_20_40.SetTextSize(0.035)
+info_panel_comp_20_40.AddText(r'ALICE preliminary')
+info_panel_comp_20_40.AddText(r'PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV')
+info_panel_comp_20_40.AddText(r'20 - 40% FT0C')
+
+legend_comp_20_40 = ROOT.TLegend(0.55, 0.17, 0.83, 0.33, '', 'brNDC')
+legend_comp_20_40.SetBorderSize(0)
+
+gPredWenbin2040.Draw('E3same][')
+stat_list[2].Draw('PE SAME')
+syst_list[2].Draw('PE2 SAME')
+
+legend_comp_20_40.AddEntry(stat_list[2], 'data', 'PE')
+legend_comp_20_40.AddEntry(gPredWenbin2040, r'#splitline{   IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'LF')
+
+info_panel_comp_20_40.Draw()
+legend_comp_20_40.Draw()
+
+cV2comp_20_40.SaveAs(f'{output_dir_plots_name}{cV2comp_20_40.GetName()}.pdf')
+
+output_file.cd()
+cV2comp_0_20.Write()
+cV2comp_20_40.Write()

@@ -81,7 +81,7 @@ complete_df.query(mandatory_selections, inplace=True)
 
 # Get resolution from file
 resolution_file = ROOT.TFile(resolution_file_name)
-hResolution = resolution_file.Get('Resolution/hResolution_FT0C_FT0A_TPCl')
+hResolution = resolution_file.Get('Resolution/hResolution_FT0C_TPCl_TPCr')
 hResolution.SetDirectory(0)
 
 res_0_10 = hResolution.GetBinContent(1)

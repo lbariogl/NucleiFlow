@@ -25,7 +25,7 @@ input_file = ROOT.TFile(input_file_AR_name)
 
 ref_names = ['FT0C', 'FT0A', 'TPCl', 'TPCr']
 
-use_EP = False
+use_EP = True
 
 hSP_dict = {}
 hProfile_dict = {}

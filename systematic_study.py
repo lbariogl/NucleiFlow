@@ -25,6 +25,7 @@ config_file = open(args.config_file, 'r')
 config = yaml.full_load(config_file)
 
 input_file_name = config['input_file_name']
+resolution_file_name = config['resolution_file_name']
 output_dir_name = config['output_dir_name']
 output_file_name = config['output_file_name']
 output_file_name = output_file_name[:-5] + '_separated.root'
@@ -60,8 +61,8 @@ if not os.path.exists(output_dir_name):
 output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
 
 # Get resolution from file
-resolution_file = ROOT.TFile('Resolution_FT0C.root')
-hResolution = resolution_file.Get('Resolutuion')
+resolution_file = ROOT.TFile(resolution_file_name)
+hResolution = resolution_file.Get('Resolution/hResolution_FT0C_TPCl_TPCr')
 hResolution.SetDirectory(0)
 
 res_0_10 = hResolution.GetBinContent(1)
@@ -76,9 +77,14 @@ resolutions = [res_0_10, res_10_20, res_20_40, res_40_60, res_60_80]
 standard_file_name = f'{output_dir_name}/' + config['output_file_name']
 standard_file = ROOT.TFile(standard_file_name)
 
+# get alternative flow table
+input_file_alternative = ROOT.TFile(
+    '../results_pass3_new_alternative/flow.root')
+
 n_cent_classes = len(centrality_classes)
 
 default_v2_histos = []
+alternative_v2_histos = []
 default_v2_values = []
 cent_dir_names = []
 cent_dirs = []
@@ -93,6 +99,9 @@ for i_cent in range(n_cent_classes):
     histo.SetDirectory(0)
     default_v2_histos.append(histo)
     default_v2_values.append(utils.getValuesFromHisto(histo))
+    histo_varied = input_file_alternative.Get(
+        f'{cent_dir_name}/default/hV2vsPt_{cent_dir_name}')
+    alternative_v2_histos.append(histo_varied)
 
 
 # get a unique df from nuclei and ep trees
@@ -184,7 +193,7 @@ for i_cent in range(n_cent_classes):
     v2_dict = {}
     canvas_dict = {}
     legend_dict = {}
-    dict_hist_rel_syst = {}
+    dict_hist_abs_syst = {}
 
     # pt-independent cuts
     for var, cuts in cut_string_dict.items():
@@ -240,7 +249,7 @@ for i_cent in range(n_cent_classes):
 
             del flow_maker_syst
 
-        dict_hist_rel_syst[var] = histo_v2_syst
+        dict_hist_abs_syst[var] = histo_v2_syst
 
     # pt-dependent cuts
     print(f'var: fAvgItsClusSizeCosLambda')
@@ -257,7 +266,7 @@ for i_cent in range(n_cent_classes):
     n_pt_bins = len(pt_bins[i_cent]) - 1
     for i_pt in range(0, n_pt_bins):
         histo_v2_syst.append(ROOT.TH1F(f'hV2syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}',
-                                        ';v_{2}', 20, default_v2_values[i_cent][i_pt][0] - 3*default_v2_values[i_cent][i_pt][1], default_v2_values[i_cent][i_pt][0] + 3*default_v2_values[i_cent][i_pt][1]))
+                                       ';v_{2}', 20, default_v2_values[i_cent][i_pt][0] - 3*default_v2_values[i_cent][i_pt][1], default_v2_values[i_cent][i_pt][0] + 3*default_v2_values[i_cent][i_pt][1]))
 
     for i_cut, cut in enumerate(sorted_ptdep_cut_string_list):
 
@@ -291,7 +300,7 @@ for i_cent in range(n_cent_classes):
 
         del flow_maker_syst
 
-    dict_hist_rel_syst[var] = histo_v2_syst
+    dict_hist_abs_syst[var] = histo_v2_syst
 
     # get color paletter
     cols = ROOT.TColor.GetPalette()
@@ -326,28 +335,30 @@ for i_cent in range(n_cent_classes):
         canvas_dict[var].SaveAs(
             f'{cent_syst_dir_name}/{canvas_dict[var].GetName()}.pdf')
 
-        histo_rel_syst = default_v2_histos[i_cent].Clone(f'hRelSystVsPt_{var}')
-        histo_rel_syst.Reset()
-        histo_rel_syst.GetYaxis().SetTitle('relative error')
-        histo_rel_syst.GetYaxis().SetRangeUser(0., 0.5)
+        histo_abs_syst = default_v2_histos[i_cent].Clone(f'hAbsSystVsPt_{var}')
+        histo_abs_syst.Reset()
+        histo_abs_syst.GetYaxis().SetTitle('systematic error')
+        histo_abs_syst.GetYaxis().SetRangeUser(0., 0.05)
 
         # getting systematic distributions
-        for i_histo, histo in enumerate(dict_hist_rel_syst[var]):
+        for i_histo, histo in enumerate(dict_hist_abs_syst[var]):
 
             utils.setHistStyle(histo, ROOT.kRed+1)
             # create canvas with the central value
             histo_name = histo.GetName()
             canvas_syst_name = histo_name.replace('h', 'c', 1)
-            canvas_syst = ROOT.TCanvas(canvas_syst_name, canvas_syst_name, 800, 600)
+            canvas_syst = ROOT.TCanvas(
+                canvas_syst_name, canvas_syst_name, 800, 600)
             canvas_syst.SetBottomMargin(0.13)
             canvas_syst.SetLeftMargin(0.13)
 
-            std_line = ROOT.TLine(default_v2_values[i_cent][i_histo][0], 0, default_v2_values[i_cent][i_histo][0], 1.05 * histo.GetMaximum())
+            std_line = ROOT.TLine(default_v2_values[i_cent][i_histo][0], 0,
+                                  default_v2_values[i_cent][i_histo][0], 1.05 * histo.GetMaximum())
             std_line.SetLineColor(ROOT.kAzure+2)
             std_line.SetLineWidth(2)
             # create box for statistical uncertainty
             std_errorbox = ROOT.TBox(default_v2_values[i_cent][i_histo][0] - default_v2_values[i_cent][i_histo][1], 0,
-                                    default_v2_values[i_cent][i_histo][0] + default_v2_values[i_cent][i_histo][1], 1.05 * histo.GetMaximum())
+                                     default_v2_values[i_cent][i_histo][0] + default_v2_values[i_cent][i_histo][1], 1.05 * histo.GetMaximum())
             std_errorbox.SetFillColorAlpha(ROOT.kAzure+1, 0.5)
             std_errorbox.SetLineWidth(0)
 
@@ -357,7 +368,8 @@ for i_cent in range(n_cent_classes):
             info_panel.SetTextAlign(12)
             info_panel.SetTextFont(42)
             info_panel.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
-            info_panel.AddText(f'{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} % {cent_detector_label}')
+            info_panel.AddText(
+                f'{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} % {cent_detector_label}')
             pt_label = f'{pt_bins[i_cent][i_pt]:.1f}' + r' #leq #it{p}_{T} < ' + \
                 f'{pt_bins[i_cent][i_pt+1]:.1f}' + r' GeV/#it{c}'
             info_panel.AddText(pt_label)
@@ -371,13 +383,66 @@ for i_cent in range(n_cent_classes):
             cent_dirs[i_cent].cd(f'{var}')
             histo.Write()
             canvas_syst.Write()
-            canvas_syst.SaveAs(f'{cent_syst_dir_name}/{canvas_syst.GetName()}.pdf')
+            canvas_syst.SaveAs(
+                f'{cent_syst_dir_name}/{canvas_syst.GetName()}.pdf')
 
-            # relative syst vs pt
+            # absative syst vs pt
             if histo.Integral() > 2:
-                histo_rel_syst.SetBinContent(i_histo+1, histo.GetRMS()/abs(default_v2_values[i_cent][i_histo][0]))
-                histo_rel_syst.SetBinError(i_histo+1, 0)
+                histo_abs_syst.SetBinContent(i_histo+1, histo.GetRMS())
+                histo_abs_syst.SetBinError(i_histo+1, 0)
 
-        cent_dirs[i_cent].cd()
-        histo_rel_syst.Smooth(5)
-        histo_rel_syst.Write()
+        cent_dirs[i_cent].cd(f'{var}')
+        # histo_abs_syst.Smooth(5)
+        histo_abs_syst.Write()
+
+# evaluate systematic from different table
+
+for i_cent in range(n_cent_classes):
+
+    cent_dir_name = f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}'
+    table_comp_dir = output_file.mkdir(f'{cent_dir_name}/table_comp')
+    cent_syst_dir_name = output_dir_name + \
+        f'/syst_plots/cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/'
+
+    histo_ep = default_v2_histos[i_cent]
+    histo_qvec = alternative_v2_histos[i_cent]
+
+    comp_table_canvas = ROOT.TCanvas(
+        f'cCompTableCanvas_{cent_dir_name}', f'cCompTableCanvas_{cent_dir_name}', 800, 600)
+
+    utils.setHistStyle(histo_ep, ROOT.kRed)
+    utils.setHistStyle(histo_qvec, ROOT.kBlack, marker=21)
+
+    histo_ep.Draw('PE')
+    histo_qvec.Draw('PE SAME')
+
+    legend_comp_table = ROOT.TLegend(
+        0.15, 0.62, 0.41, 0.85, f'FT0C {centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]}%', 'brNDC')
+    legend_comp_table.SetBorderSize(0)
+    legend_comp_table.AddEntry(histo_ep, 'EP', 'PE')
+    legend_comp_table.AddEntry(histo_qvec, 'Qvector', 'PE')
+    legend_comp_table.Draw()
+
+    cent_dirs[i_cent].cd('table_comp')
+    comp_table_canvas.Write()
+
+    comp_table_canvas.SaveAs(
+        f'{cent_syst_dir_name}{comp_table_canvas.GetName()}.pdf')
+
+    histo_table_diff = histo_ep.Clone(f'hV2tableDiff_{cent_dir_name}')
+    histo_table_diff.Reset()
+    histo_table_diff.GetYaxis().SetTitle(r'v_{2}^{EP} - v_{2}^{Qvec}')
+
+    n_pt_bins = len(pt_bins[i_cent])-1
+
+    for i_pt in range(1, n_pt_bins+1):
+        diff = histo_ep.GetBinContent(i_pt) - histo_qvec.GetBinContent(i_pt)
+        diff_err = np.hypot(histo_ep.GetBinError(
+            i_pt), histo_qvec.GetBinError(i_pt))
+        histo_table_diff.SetBinContent(i_pt, abs(diff))
+        histo_table_diff.SetBinError(i_pt, diff_err)
+
+    cent_dirs[i_cent].cd('table_comp')
+    histo_table_diff.Write()
+
+    utils.saveCanvasAsPDF(histo_table_diff, cent_syst_dir_name)

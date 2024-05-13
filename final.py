@@ -43,7 +43,7 @@ if not os.path.exists(output_dir_plots_name):
 
 stat_list = []
 syst_list = []
-separated_rel_syst_dict = {}
+separated_abs_syst_dict = {}
 syst_colours = {}
 
 # get color paletter
@@ -54,15 +54,15 @@ n_cols = cols.GetSize()
 # get names of cut variables
 selection_dict = config['selection_dict']
 for var in selection_dict:
-    separated_rel_syst_dict[var] = []
+    separated_abs_syst_dict[var] = []
 
 ptdep_selection_dict = config['ptdep_selection_dict']
 for var in ptdep_selection_dict:
-    separated_rel_syst_dict[var] = []
+    separated_abs_syst_dict[var] = []
 
-period = int(n_cols / len(separated_rel_syst_dict))
+period = int(n_cols / len(separated_abs_syst_dict))
 
-separated_rel_syst_dict['total'] = []
+separated_abs_syst_dict['total'] = []
 
 for i_cent in range(0, n_cent):
     cent_name = f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}'
@@ -70,22 +70,22 @@ for i_cent in range(0, n_cent):
     h_stat.SetDirectory(0)
     stat_list.append(h_stat)
 
-    for i_var, var in enumerate(separated_rel_syst_dict):
+    for i_var, var in enumerate(separated_abs_syst_dict):
         if var == 'total':
             continue
-        h_rel_syst_separated = input_file_separated_syst.Get(
-            f'{cent_name}/hRelSystVsPt_{var}')
-        h_rel_syst_separated.SetDirectory(0)
-        utils.setHistStyle(h_rel_syst_separated,
+        h_abs_syst_separated = input_file_separated_syst.Get(
+            f'{cent_name}/hAbsSystVsPt_{var}')
+        h_abs_syst_separated.SetDirectory(0)
+        utils.setHistStyle(h_abs_syst_separated,
                            cols.At(n_cols - i_var*period - 1))
-        separated_rel_syst_dict[var].append(h_rel_syst_separated)
+        separated_abs_syst_dict[var].append(h_abs_syst_separated)
 
     h_syst = h_stat.Clone(f'hV2vsPt_{cent_name}_syst')
-    h_rel_syst = h_stat.Clone(f'hRelSystVsPt_{cent_name}')
-    h_rel_syst.Reset()
-    h_rel_syst.GetYaxis().SetTitle('relative error')
-    h_rel_syst.GetYaxis().SetRangeUser(0., 0.5)
-    utils.setHistStyle(h_rel_syst, ROOT.kBlack)
+    h_abs_syst = h_stat.Clone(f'hAbsSystVsPt_{cent_name}')
+    h_abs_syst.Reset()
+    h_abs_syst.GetYaxis().SetTitle('systematic error')
+    h_abs_syst.GetYaxis().SetRangeUser(0., 0.5)
+    utils.setHistStyle(h_abs_syst, ROOT.kBlack)
 
     n_pt_bins = len(pt_bins[i_cent]) - 1
     for i_pt in range(0, n_pt_bins):
@@ -93,14 +93,14 @@ for i_cent in range(0, n_cent):
         syst_err = hSystDist.GetRMS()
         central_value = h_syst.GetBinContent(i_pt+1)
         h_syst.SetBinError(i_pt+1, syst_err)
-        h_rel_syst.SetBinContent(i_pt+1, syst_err/abs(central_value))
-        h_rel_syst.SetBinError(i_pt+1, 0)
+        h_abs_syst.SetBinContent(i_pt+1, syst_err)
+        h_abs_syst.SetBinError(i_pt+1, 0)
 
-    h_rel_syst.Smooth(5)
+    h_abs_syst.Smooth(5)
     syst_list.append(h_syst)
-    separated_rel_syst_dict['total'].append(h_rel_syst)
+    separated_abs_syst_dict['total'].append(h_abs_syst)
 
-    cV2_cent = ROOT.TCanvas(f'cV2_{cent_name}', 'cV2_{cent_name}', 800, 600)
+    cV2_cent = ROOT.TCanvas(f'cV2_{cent_name}', f'cV2_{cent_name}', 800, 600)
     frame_cent = cV2_cent.DrawFrame(
         1.7, -0.2, 9, 1., r';#it{p}_{T} (GeV/#it{c}); v_{2}')
     cV2_cent.SetBottomMargin(0.13)
@@ -124,7 +124,7 @@ for i_cent in range(0, n_cent):
     cent_dir.cd()
     h_stat.Write()
     h_syst.Write()
-    h_rel_syst.Write()
+    h_abs_syst.Write()
     cV2_cent.Write()
     cV2_cent.SaveAs(f'{output_dir_plots_name}{cV2_cent.GetName()}.pdf')
 
@@ -163,21 +163,21 @@ cV2.SaveAs(f'{output_dir_plots_name}{cV2.GetName()}.pdf')
 
 for i_cent in range(n_cent):
     cent_name = f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}'
-    cRelSyst = ROOT.TCanvas(
-        f'cRelSystVsPt_{cent_name}', f'cRelSystVsPt_{cent_name}')
-    cRelSyst.SetBorderSize(0)
+    cAbsSyst = ROOT.TCanvas(
+        f'cAbsSystVsPt_{cent_name}', f'cAbsSystVsPt_{cent_name}', 800, 600)
+    cAbsSyst.SetBorderSize(0)
     legend_syst = ROOT.TLegend(
         0.61, 0.58, 0.87, 0.81, 'Systematic uncertainties', 'brNDC')
     legend_syst.SetBorderSize(0)
-    cRelSyst.DrawFrame(
-        1.7, 0., 9, 0.5, r';#it{p}_{T} (GeV/#it{c}); rel. systematic uncertainty')
-    for var in separated_rel_syst_dict:
-        separated_rel_syst_dict[var][i_cent].Draw('histo same')
-        legend_syst.AddEntry(separated_rel_syst_dict[var][i_cent], var, 'PL')
+    cAbsSyst.DrawFrame(
+        1.7, 0., 9, 0.5, r';#it{p}_{T} (GeV/#it{c}); systematic uncertainty')
+    for var in separated_abs_syst_dict:
+        separated_abs_syst_dict[var][i_cent].Draw('histo same')
+        legend_syst.AddEntry(separated_abs_syst_dict[var][i_cent], var, 'PL')
     legend_syst.Draw()
     cent_dir.cd()
-    cRelSyst.Write()
-    cRelSyst.SaveAs(f'{output_dir_plots_name}{cRelSyst.GetName()}.pdf')
+    cAbsSyst.Write()
+    cAbsSyst.SaveAs(f'{output_dir_plots_name}{cAbsSyst.GetName()}.pdf')
 
 # comparison with models
 

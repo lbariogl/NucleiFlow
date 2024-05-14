@@ -15,7 +15,8 @@ mandatory_selections: "fSign < 0 and abs(fEta) < 0.8"
 selection_dict : {
   "abs(fDCAxy)" : "abs(fDCAxy) < 0.1",
   "abs(fDCAz)": "abs(fDCAz) < 1.",
-  "fTPCnCls": "fTPCnCls > 99"
+  "fTPCnCls": "fTPCnCls > 99",
+  "abs(fZvertex)": "abs(fZvertex) < 10."
 }
 ptdep_selection_dict : {
   "fAvgItsClusSizeCosLambda" : ["fAvgItsClusSizeCosLambda > 6",
@@ -52,7 +53,8 @@ n_trials: 500
 cut_dict_syst: {
   "abs(fDCAxy)": {"cut_greater": False, "cut_list": [0.05, 0.15, 11]},
   "abs(fDCAz)": {"cut_greater": False, "cut_list": [0.75, 1.00, 26]},
-  "fTPCnCls": {"cut_greater": True, "cut_list": [100, 130, 7]}
+  "fTPCnCls": {"cut_greater": True, "cut_list": [100, 130, 7]},
+  "abs(fZvertex)": {"cut_greater": False, "cut_list": [8, 10, 5]}
 }
 
 ptdep_cut_dict_syst: {

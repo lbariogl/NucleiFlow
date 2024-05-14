@@ -2,6 +2,7 @@ import ROOT
 import yaml
 import argparse
 import os
+import numpy as np
 
 import sys
 sys.path.append('utils')
@@ -30,7 +31,8 @@ pt_bins = config['pt_bins']
 cent_colours = config['cent_colours']
 
 input_file = ROOT.TFile(input_file_name)
-input_file_separated_syst = ROOT.TFile(input_file_name[:-5] + '_separated.root')
+input_file_separated_syst = ROOT.TFile(
+    input_file_name[:-5] + '_separated.root')
 output_file_name = config['output_dir_name'] + 'final.root'
 output_file = ROOT.TFile(output_file_name, 'recreate')
 output_dir_name = config['output_dir_name']
@@ -62,6 +64,7 @@ for var in ptdep_selection_dict:
 
 period = int(n_cols / len(separated_abs_syst_dict))
 
+separated_abs_syst_dict['table'] = []
 separated_abs_syst_dict['total'] = []
 
 for i_cent in range(0, n_cent):
@@ -73,13 +76,22 @@ for i_cent in range(0, n_cent):
     for i_var, var in enumerate(separated_abs_syst_dict):
         if var == 'total':
             continue
+        elif var == 'table':
+            continue
         h_abs_syst_separated = input_file_separated_syst.Get(
-            f'{cent_name}/hAbsSystVsPt_{var}')
+            f'{cent_name}/{var}/hAbsSystVsPt_{var}')
         h_abs_syst_separated.SetDirectory(0)
         utils.setHistStyle(h_abs_syst_separated,
                            cols.At(n_cols - i_var*period - 1))
         separated_abs_syst_dict[var].append(h_abs_syst_separated)
 
+    # systematic from different tables
+    h_table_syst = input_file_separated_syst.Get(
+        f'{cent_name}/table_comp/hV2tableDiff_{cent_name}')
+    h_table_syst.SetDirectory(0)
+    separated_abs_syst_dict['table'].append(h_table_syst)
+
+    # summing systematic uncertainties
     h_syst = h_stat.Clone(f'hV2vsPt_{cent_name}_syst')
     h_abs_syst = h_stat.Clone(f'hAbsSystVsPt_{cent_name}')
     h_abs_syst.Reset()
@@ -91,9 +103,10 @@ for i_cent in range(0, n_cent):
     for i_pt in range(0, n_pt_bins):
         hSystDist = input_file.Get(f'{cent_name}/hV2syst_{cent_name}_pt{i_pt}')
         syst_err = hSystDist.GetRMS()
-        central_value = h_syst.GetBinContent(i_pt+1)
-        h_syst.SetBinError(i_pt+1, syst_err)
-        h_abs_syst.SetBinContent(i_pt+1, syst_err)
+        table_err = h_table_syst.GetBinContent(i_pt+1)/2
+        tot_err = np.hypot(syst_err, table_err)
+        h_syst.SetBinError(i_pt+1, tot_err)
+        h_abs_syst.SetBinContent(i_pt+1, tot_err)
         h_abs_syst.SetBinError(i_pt+1, 0)
 
     h_abs_syst.Smooth(5)
@@ -159,7 +172,7 @@ output_file.cd()
 cV2.Write()
 cV2.SaveAs(f'{output_dir_plots_name}{cV2.GetName()}.pdf')
 
-# relative systematic uncertainties
+# systematic uncertainties
 
 for i_cent in range(n_cent):
     cent_name = f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}'
@@ -221,7 +234,8 @@ hV2vsPt_0020.Draw('PE SAME')
 hV2vsPt_0020_syst.Draw('PE2 SAME')
 
 legend_comp_0_20.AddEntry(hV2vsPt_0020, 'data', 'PE')
-legend_comp_0_20.AddEntry(gPredWenbin020, r'#splitline{   IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'LF')
+legend_comp_0_20.AddEntry(
+    gPredWenbin020, r'#splitline{   IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'LF')
 
 info_panel_comp_0_20.Draw()
 legend_comp_0_20.Draw()
@@ -255,7 +269,8 @@ stat_list[2].Draw('PE SAME')
 syst_list[2].Draw('PE2 SAME')
 
 legend_comp_20_40.AddEntry(stat_list[2], 'data', 'PE')
-legend_comp_20_40.AddEntry(gPredWenbin2040, r'#splitline{   IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'LF')
+legend_comp_20_40.AddEntry(
+    gPredWenbin2040, r'#splitline{   IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'LF')
 
 info_panel_comp_20_40.Draw()
 legend_comp_20_40.Draw()

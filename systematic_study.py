@@ -442,6 +442,7 @@ for i_cent in range(n_cent_classes):
         histo_table_diff.SetBinContent(i_pt, abs(diff))
         histo_table_diff.SetBinError(i_pt, diff_err)
 
+    histo_table_diff.Smooth(3)
     cent_dirs[i_cent].cd('table_comp')
     histo_table_diff.Write()
 

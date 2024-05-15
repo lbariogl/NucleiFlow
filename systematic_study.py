@@ -392,7 +392,7 @@ for i_cent in range(n_cent_classes):
                 histo_abs_syst.SetBinError(i_histo+1, 0)
 
         cent_dirs[i_cent].cd(f'{var}')
-        # histo_abs_syst.Smooth(5)
+        histo_abs_syst.Smooth(5)
         histo_abs_syst.Write()
 
 # evaluate systematic from different table

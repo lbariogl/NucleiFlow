@@ -89,6 +89,7 @@ for i_cent in range(0, n_cent):
     h_table_syst = input_file_separated_syst.Get(
         f'{cent_name}/table_comp/hV2tableDiff_{cent_name}')
     h_table_syst.SetDirectory(0)
+    h_table_syst.Scale(0.5)
     separated_abs_syst_dict['table'].append(h_table_syst)
 
     # summing systematic uncertainties
@@ -100,16 +101,29 @@ for i_cent in range(0, n_cent):
     utils.setHistStyle(h_abs_syst, ROOT.kBlack)
 
     n_pt_bins = len(pt_bins[i_cent]) - 1
+
+    # check wheter summing systs from single source gives larger uncertainties
     for i_pt in range(0, n_pt_bins):
+        total_sum = 0.
+        for i_var, var in enumerate(separated_abs_syst_dict):
+            if var == 'total':
+                continue
+            elif var == 'table':
+                continue
+            var_err = separated_abs_syst_dict[var][i_cent].GetBinContent(i_pt+1)
+            total_sum = total_sum + var_err * var_err
+        total_sum = np.sqrt(total_sum)
+
         hSystDist = input_file.Get(f'{cent_name}/hV2syst_{cent_name}_pt{i_pt}')
         syst_err = hSystDist.GetRMS()
-        table_err = h_table_syst.GetBinContent(i_pt+1)/2
+        if total_sum > syst_err:
+            syst_err = total_sum
+        table_err = h_table_syst.GetBinContent(i_pt+1)
         tot_err = np.hypot(syst_err, table_err)
         h_syst.SetBinError(i_pt+1, tot_err)
         h_abs_syst.SetBinContent(i_pt+1, tot_err)
         h_abs_syst.SetBinError(i_pt+1, 0)
 
-    h_abs_syst.Smooth(5)
     syst_list.append(h_syst)
     separated_abs_syst_dict['total'].append(h_abs_syst)
 
@@ -176,21 +190,24 @@ cV2.SaveAs(f'{output_dir_plots_name}{cV2.GetName()}.pdf')
 
 for i_cent in range(n_cent):
     cent_name = f'cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}'
+    cent_label = f'{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]}' + r'%'
     cAbsSyst = ROOT.TCanvas(
         f'cAbsSystVsPt_{cent_name}', f'cAbsSystVsPt_{cent_name}', 800, 600)
     cAbsSyst.SetBorderSize(0)
+    cAbsSyst.SetBottomMargin(0.13)
+    cAbsSyst.SetLeftMargin(0.13)
     legend_syst = ROOT.TLegend(
-        0.61, 0.58, 0.87, 0.81, 'Systematic uncertainties', 'brNDC')
+        0.14, 0.64, 0.40, 0.87, 'Systematic uncertainties', 'brNDC')
     legend_syst.SetBorderSize(0)
     cAbsSyst.DrawFrame(
-        1.7, 0., 9, 0.5, r';#it{p}_{T} (GeV/#it{c}); systematic uncertainty')
+        1.7, 0., 9, 0.025, f'{cent_label}' + r';#it{p}_{T} (GeV/#it{c}); systematic uncertainty')
     for var in separated_abs_syst_dict:
         separated_abs_syst_dict[var][i_cent].Draw('histo same')
         legend_syst.AddEntry(separated_abs_syst_dict[var][i_cent], var, 'PL')
     legend_syst.Draw()
-    cent_dir.cd()
+    output_file.cd(cent_name)
     cAbsSyst.Write()
-    cAbsSyst.SaveAs(f'{output_dir_plots_name}{cAbsSyst.GetName()}.pdf')
+    cAbsSyst.SaveAs(f'{output_dir_plots_name}/{cAbsSyst.GetName()}.pdf')
 
 # comparison with models
 

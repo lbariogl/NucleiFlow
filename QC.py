@@ -23,6 +23,7 @@ config = yaml.full_load(config_file)
 
 input_file_name = config['input_file_name']
 input_file_AR_name = config['input_file_AR_name']
+resolution_file_name = config['resolution_file_name']
 output_dir_name = config['output_dir_name']
 output_file_name = config['output_file_name_qc']
 
@@ -242,13 +243,12 @@ utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name,
                       is2D=True, logScale=True)
 
 # resolution plot
-resolution_file = ROOT.TFile('Resolution_FT0C.root')
-hResolutionFT0C = resolution_file.Get('Resolutuion')
-hResolutionFT0C.SetDirectory(0)
-hResolutionFT0C.SetName('hResolutionFT0C')
-hResolutionFT0C.SetTitle(r';FT0C percentile (%); R_{2}')
-utils.setHistStyle(hResolutionFT0C, ROOT.kRed+2)
+resolution_file = ROOT.TFile(resolution_file_name)
+hResolution = resolution_file.Get('Resolution/hResolution_FT0C_TPCl_TPCr')
+hResolution.SetDirectory(0)
+hResolution.SetTitle(r';FT0C percentile (%); R_{2}')
+utils.setHistStyle(hResolution, ROOT.kRed+2)
 cResolutionFT0C = ROOT.TCanvas('cResolutionFT0C', 'cResolutionFT0C', 800, 600)
 cResolutionFT0C.SetBottomMargin(0.15)
-hResolutionFT0C.Draw('PE')
+hResolution.Draw('PE')
 cResolutionFT0C.SaveAs(f'{output_dir_name}/qc_plots/cResolutionFT0C.pdf')

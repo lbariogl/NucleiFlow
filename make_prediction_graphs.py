@@ -47,7 +47,7 @@ v2_20_40_array = np.array(v2_20_40, dtype=np.float64)
 v2_err_20_40_array = np.array(v2_err_20_40, dtype=np.float64)
 zeros_20_40_array = np.zeros(n_points_20_40, dtype=np.float64)
 
-gPredWenbin2040 = ROOT.TGraphErrors(n_points_20_40, pt_20_40_array, v2_0_20_array, zeros_20_40_array, v2_err_20_40_array)
+gPredWenbin2040 = ROOT.TGraphErrors(n_points_20_40, pt_20_40_array, v2_20_40_array, zeros_20_40_array, v2_err_20_40_array)
 gPredWenbin2040.SetName('gPredWenbin_20_40')
 utils.setHistStyle(gPredWenbin2040, ROOT.kViolet+1)
 

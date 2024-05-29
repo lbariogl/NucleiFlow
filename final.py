@@ -238,6 +238,20 @@ hV2vsPt_0020_syst = merged_file.Get('hV2vsPt_0020_syst')
 utils.setHistStyle(hV2vsPt_0020, ROOT.kRed+1)
 utils.setHistStyle(hV2vsPt_0020_syst, ROOT.kRed+1)
 
+old_file = ROOT.TFile('../theoretical_models/normal_published.root')
+h3HeV2_0_20_stat = old_file.Get('h3HeV2_0_20_stat')
+h3HeV2_0_20_stat.SetDirectory(0)
+utils.setHistStyle(h3HeV2_0_20_stat, ROOT.kGray, marker=21)
+h3HeV2_0_20_syst = old_file.Get('h3HeV2_0_20_syst')
+h3HeV2_0_20_syst.SetDirectory(0)
+utils.setHistStyle(h3HeV2_0_20_syst, ROOT.kGray, marker=21)
+h3HeV2_20_40_stat = old_file.Get('h3HeV2_20_40_stat')
+h3HeV2_0_20_stat.SetDirectory(0)
+utils.setHistStyle(h3HeV2_20_40_stat, ROOT.kGray, marker=21)
+h3HeV2_20_40_syst = old_file.Get('h3HeV2_20_40_syst')
+h3HeV2_20_40_syst.SetDirectory(0)
+utils.setHistStyle(h3HeV2_20_40_syst, ROOT.kGray, marker=21)
+
 wenbin_theory_file = ROOT.TFile('../theoretical_models/WenbinPredictions.root')
 gPredWenbin020 = wenbin_theory_file.Get('gPredWenbin_0_20')
 gPredWenbin020.SetFillStyle(1001)
@@ -253,13 +267,26 @@ BW_20_40_file = ROOT.TFile('../theoretical_models/BWflow_20_40.root')
 v2_BW_20_40 = BW_20_40_file.Get('fv23He')
 v2_BW_20_40.SetLineColor(ROOT.kViolet+1)
 
+BW_0_10_3LH_file = ROOT.TFile('../theoretical_models/BlastWave/SpectraAndFunctions.3LHPaper.0010.root')
+v2_BW_0_10_3LH = BW_0_10_3LH_file.Get('fv2He')
+v2_BW_0_10_3LH.SetLineColor(ROOT.kCyan+2)
+v2_BW_0_10_3LH.SetLineStyle(ROOT.kDashed)
+
+BW_0_10_file = ROOT.TFile('../theoretical_models/BlastWave/SpectraAndFunctions.0010.root')
+v2_BW_0_10 = BW_0_10_file.Get('fv2He')
+v2_BW_0_10.SetLineColor(ROOT.kGreen+2)
+
 cV2comp_0_20.cd()
 gPredWenbin020.Draw('E3same][')
 v2_BW_0_20.Draw('L SAME')
+# v2_BW_0_10_3LH.Draw('L SAME')
 hV2vsPt_0020.Draw('PEX0 SAME')
 hV2vsPt_0020_syst.Draw('PE2 SAME')
+h3HeV2_0_20_stat.Draw('PEX0 SAME')
+h3HeV2_0_20_syst.Draw('PE2 SAME')
 
 legend_comp_0_20.AddEntry(hV2vsPt_0020, r'{}^{3}#bar{He}, |#eta| < 0.8', 'PF')
+legend_comp_0_20.AddEntry(h3HeV2_0_20_syst, r'Run 2', 'PF')
 legend_comp_0_20.AddEntry(
     gPredWenbin020, r'#splitline{IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'F')
 legend_comp_0_20.AddEntry(v2_BW_0_20, r'Blast-wave', 'L')
@@ -267,7 +294,7 @@ legend_comp_0_20.AddEntry(v2_BW_0_20, r'Blast-wave', 'L')
 info_panel_comp_0_20.Draw()
 legend_comp_0_20.Draw()
 
-cV2comp_0_20.SaveAs(f'{output_dir_plots_name}{cV2comp_0_20.GetName()}.pdf')
+cV2comp_0_20.SaveAs(f'{output_dir_plots_name}{cV2comp_0_20.GetName()}_comp.pdf')
 
 cV2comp_20_40 = ROOT.TCanvas('cV2comp_20_40', 'cV2comp_20_40', 800, 600)
 framecomp_20_40 = cV2comp_20_40.DrawFrame(
@@ -295,8 +322,11 @@ gPredWenbin2040.Draw('E3same][')
 v2_BW_20_40.Draw('L SAME')
 stat_list[2].Draw('PEX0 SAME')
 syst_list[2].Draw('PE2 SAME')
+h3HeV2_20_40_stat.Draw('PEX0 SAME')
+h3HeV2_20_40_syst.Draw('PE2 SAME')
 
 legend_comp_20_40.AddEntry(stat_list[2], r'{}^{3}#bar{He}, |#eta| < 0.8', 'PF')
+legend_comp_20_40.AddEntry(h3HeV2_20_40_syst, r'Run 2', 'PF')
 legend_comp_20_40.AddEntry(
     gPredWenbin2040, r'#splitline{IP Glasma + MUSIC +}{+ UrQMD + Coalescence}', 'F')
 legend_comp_20_40.AddEntry(v2_BW_20_40, r'Blast-wave', 'L')
@@ -304,8 +334,47 @@ legend_comp_20_40.AddEntry(v2_BW_20_40, r'Blast-wave', 'L')
 info_panel_comp_20_40.Draw()
 legend_comp_20_40.Draw()
 
-cV2comp_20_40.SaveAs(f'{output_dir_plots_name}{cV2comp_20_40.GetName()}.pdf')
+cV2comp_20_40.SaveAs(f'{output_dir_plots_name}{cV2comp_20_40.GetName()}_comp.pdf')
+
+# BW-comparison
+
+cV2comp_0_10 = ROOT.TCanvas('cV2comp_0_10', 'cV2comp_0_10', 800, 600)
+framecomp_0_10 = cV2comp_0_10.DrawFrame(
+    1.7, -0.05, 8., 0.2, r';#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP}')
+cV2comp_0_10.SetBottomMargin(0.13)
+cV2comp_0_10.SetLeftMargin(0.13)
+cV2comp_0_10.SetBorderSize(0)
+
+cV2comp_0_10.cd()
+
+info_panel_comp_0_10 = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, 'NDC')
+info_panel_comp_0_10.SetBorderSize(0)
+info_panel_comp_0_10.SetFillStyle(0)
+info_panel_comp_0_10.SetTextAlign(12)
+info_panel_comp_0_10.SetTextFont(42)
+info_panel_comp_0_10.SetTextSize(0.04)
+info_panel_comp_0_10.AddText(r'ALICE Preliminary')
+info_panel_comp_0_10.AddText(r'Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV')
+info_panel_comp_0_10.AddText(r'0-10% FT0C centrality')
+
+legend_comp_0_10 = ROOT.TLegend(0.54, 0.18, 0.90, 0.33, '', 'brNDC')
+legend_comp_0_10.SetBorderSize(0)
+
+v2_BW_0_10_3LH.Draw('L SAME')
+v2_BW_0_10.Draw('L SAME')
+stat_list[0].Draw('PEX0 SAME')
+syst_list[0].Draw('PE2 SAME')
+
+legend_comp_0_10.AddEntry(stat_list[0], r'{}^{3}#bar{He}, |#eta| < 0.8', 'PF')
+legend_comp_0_10.AddEntry(v2_BW_0_10, r'Blast-wave (#pi, K, p)', 'L')
+legend_comp_0_10.AddEntry(v2_BW_0_10_3LH, r'Blast-wave (d, t, {}^{3}He, {}^{4}He)', 'L')
+
+info_panel_comp_0_10.Draw()
+legend_comp_0_10.Draw()
+
+cV2comp_0_10.SaveAs(f'{output_dir_plots_name}{cV2comp_0_10.GetName()}_comp.pdf')
 
 output_file.cd()
 cV2comp_0_20.Write()
 cV2comp_20_40.Write()
+cV2comp_0_10.Write()

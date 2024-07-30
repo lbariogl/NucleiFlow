@@ -164,6 +164,24 @@ def redifineColumns(complete_df):
     print('fV2TPCr')
     complete_df.eval('fV2TPCr = cos(2 * (fPhi-fPsiTPCr))', inplace=True)
 
+def redifineColumnsLight(complete_df):
+    print('Redifining columns')
+    print('fP')
+    complete_df.eval('fP = fPt * sinh(fEta)', inplace=True)
+    print('fPhi')
+    complete_df['fPhi'] = getCorrectPhi_vectorised(complete_df['fPhi'])
+    print('fCosLambda')
+    complete_df.eval('fCosLambda = 1 / cosh(fEta)', inplace=True)
+    print('fAvgItsClusSize')
+    complete_df.eval(
+        'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)
+    print('fAvgItsClusSize * fCosLambda')
+    complete_df.eval(
+        'fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda', inplace=True)
+    complete_df.drop(columns=['fITSclusterSizes'])
+    print('fSign')
+    complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
+
 
 def getBBAfunctions(parameters, resolution, n_sigma=5):
     upper_scale = 1 + resolution * n_sigma

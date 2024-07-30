@@ -1,0 +1,42 @@
+common_input_path: "/data/lbariogl/flow/LHC23_PbPb_pass3_all/"
+
+input_dir_names:
+  ["LHC23zzk", "LHC23zzl", "LHC23zzl_bis", "LHC23zzm", "LHC23zzn", "LHC23zzo"]
+
+input_file_name: "AO2D.root"
+
+nuclei_tree_name: "O2nucleitable"
+ep_tree_name: "O2nucleitableflow"
+
+output_dir_name: "../results_pass3_all/"
+output_file_name: "tpc_calib.root"
+
+mandatory_selections: "fSign < 0 and abs(fEta) < 0.8"
+p_bins: [1., 1.2, 1.4, 1.6, 1.8, 2., 2.25, 2.5, 2.75, 3.]
+
+selection_dict:
+  {
+    "abs(fDCAxy)": "abs(fDCAxy) < 0.1",
+    "abs(fDCAz)": "abs(fDCAz) < 1.",
+    "fTPCnCls": "fTPCnCls > 99",
+    "abs(fZvertex)": "abs(fZvertex) < 10.",
+  }
+pdep_selection_dict:
+  {
+    "fAvgItsClusSizeCosLambda":
+      [
+        "fAvgItsClusSizeCosLambda > 9",
+        "fAvgItsClusSizeCosLambda > 8.5",
+        "fAvgItsClusSizeCosLambda > 8",
+        "fAvgItsClusSizeCosLambda > 7.5",
+        "fAvgItsClusSizeCosLambda > 6.5",
+        "fAvgItsClusSizeCosLambda > 6",
+        "fAvgItsClusSizeCosLambda > 5.5",
+        "fAvgItsClusSizeCosLambda > 5",
+        "fAvgItsClusSizeCosLambda > 5",
+        "fAvgItsClusSizeCosLambda > 5",
+        "fAvgItsClusSizeCosLambda > 5"
+      ],
+  }
+
+default_parameters: [-321.34, 0.6539, 1.591, 0.8225, 2.363]

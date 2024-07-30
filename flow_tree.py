@@ -59,7 +59,6 @@ n_sigma_plot = config['n_sigma_plot']
 if not os.path.exists(output_dir_name):
     os.makedirs(output_dir_name)
 output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
-output_file = ROOT.TFile(f'{output_dir_name}/{output_file_name}', 'recreate')
 
 
 # get a unique df from nuclei and ep trees

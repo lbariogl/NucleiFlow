@@ -252,13 +252,24 @@ h3HeV2_20_40_syst = old_file.Get('h3HeV2_20_40_syst')
 h3HeV2_20_40_syst.SetDirectory(0)
 utils.setHistStyle(h3HeV2_20_40_syst, ROOT.kGray, marker=21)
 
-wenbin_theory_file = ROOT.TFile('../theoretical_models/WenbinPredictions.root')
-gPredWenbin020 = wenbin_theory_file.Get('gPredWenbin_0_20')
+coalescence_theory_file = ROOT.TFile('../theoretical_models/Predictions.root')
+gPredWenbin020 = coalescence_theory_file.Get('gPredWenbin_0_20')
 gPredWenbin020.SetFillStyle(1001)
 gPredWenbin020.SetFillColorAlpha(ROOT.kCyan+2, 0.6)
-gPredWenbin2040 = wenbin_theory_file.Get('gPredWenbin_20_40')
+gPredWenbin2040 = coalescence_theory_file.Get('gPredWenbin_20_40')
 gPredWenbin2040.SetFillStyle(1001)
 gPredWenbin2040.SetFillColorAlpha(ROOT.kViolet+1, 0.6)
+
+coalescence_theory_file = ROOT.TFile('../theoretical_models/Predictions.root')
+gPredSun020 = coalescence_theory_file.Get('gPredSun_0_20')
+gPredSun020.SetFillStyle(1001)
+gPredSun020.SetFillColorAlpha(ROOT.kSpring+5, 0.6)
+gPredSun2040 = coalescence_theory_file.Get('gPredSun_20_40')
+gPredSun2040.SetFillStyle(1001)
+gPredSun2040.SetFillColorAlpha(ROOT.kOrange-3, 0.6)
+gPredSun4060 = coalescence_theory_file.Get('gPredSun_40_60')
+gPredSun4060.SetFillStyle(1001)
+gPredSun4060.SetFillColorAlpha(ROOT.kRed+1, 0.6)
 
 BW_0_20_file = ROOT.TFile('../theoretical_models/BWflow_0_20.root')
 v2_BW_0_20 = BW_0_20_file.Get('fv23He')
@@ -378,3 +389,86 @@ output_file.cd()
 cV2comp_0_20.Write()
 cV2comp_20_40.Write()
 cV2comp_0_10.Write()
+
+# comparison between different coalescence models
+
+cV2comp_coal_0_20 = ROOT.TCanvas('cV2comp_coal_0_20', 'cV2comp_coal_0_20', 800, 600)
+framecomp_coal_0_20 = cV2comp_coal_0_20.DrawFrame(
+    1.7, -0.07, 8., 0.35, r';#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP}')
+cV2comp_coal_0_20.SetBottomMargin(0.13)
+cV2comp_coal_0_20.SetLeftMargin(0.13)
+cV2comp_coal_0_20.SetBorderSize(0)
+
+info_panel_comp_coal_0_20 = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, 'NDC')
+info_panel_comp_coal_0_20.SetBorderSize(0)
+info_panel_comp_coal_0_20.SetFillStyle(0)
+info_panel_comp_coal_0_20.SetTextAlign(12)
+info_panel_comp_coal_0_20.SetTextFont(42)
+info_panel_comp_coal_0_20.SetTextSize(0.04)
+info_panel_comp_coal_0_20.AddText(r'ALICE Preliminary')
+info_panel_comp_coal_0_20.AddText(r'Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV')
+info_panel_comp_coal_0_20.AddText(r'0-20% FT0C centrality')
+
+legend_comp_coal_0_20 = ROOT.TLegend(0.54, 0.16, 0.9, 0.38, '', 'brNDC')
+legend_comp_coal_0_20.SetBorderSize(0)
+
+cV2comp_coal_0_20.cd()
+gPredWenbin020.Draw('E3same][')
+gPredSun020.Draw('E3same][')
+v2_BW_0_20.Draw('L SAME')
+hV2vsPt_0020.Draw('PEX0 SAME')
+hV2vsPt_0020_syst.Draw('PE2 SAME')
+
+legend_comp_coal_0_20.AddEntry(hV2vsPt_0020, r'{}^{3}#bar{He}, |#eta| < 0.8', 'PF')
+legend_comp_coal_0_20.AddEntry(gPredWenbin020, r'Wenbin', 'F')
+legend_comp_coal_0_20.AddEntry(gPredSun020, r'Sun', 'F')
+legend_comp_coal_0_20.AddEntry(v2_BW_0_20, r'Blast-wave', 'L')
+
+info_panel_comp_coal_0_20.Draw()
+legend_comp_coal_0_20.Draw()
+
+cV2comp_coal_0_20.SaveAs(f'{output_dir_plots_name}{cV2comp_coal_0_20.GetName()}_comp_coal.pdf')
+
+########################
+
+cV2comp_coal_20_40 = ROOT.TCanvas('cV2comp_coal_20_40', 'cV2comp_coal_20_40', 800, 600)
+framecomp_coal_20_40 = cV2comp_coal_20_40.DrawFrame(
+    1.7, -0.05, 8., 0.6, r';#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP}')
+cV2comp_coal_20_40.SetBottomMargin(0.13)
+cV2comp_coal_20_40.SetLeftMargin(0.13)
+cV2comp_coal_20_40.SetBorderSize(0)
+
+cV2comp_coal_20_40.cd()
+
+info_panel_comp_coal_20_40 = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, 'NDC')
+info_panel_comp_coal_20_40.SetBorderSize(0)
+info_panel_comp_coal_20_40.SetFillStyle(0)
+info_panel_comp_coal_20_40.SetTextAlign(12)
+info_panel_comp_coal_20_40.SetTextFont(42)
+info_panel_comp_coal_20_40.SetTextSize(0.04)
+info_panel_comp_coal_20_40.AddText(r'ALICE Preliminary')
+info_panel_comp_coal_20_40.AddText(r'Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV')
+info_panel_comp_coal_20_40.AddText(r'20-40% FT0C centrality')
+
+legend_comp_coal_20_40 = ROOT.TLegend(0.54, 0.18, 0.90, 0.41, '', 'brNDC')
+legend_comp_coal_20_40.SetBorderSize(0)
+
+gPredWenbin2040.Draw('E3same][')
+gPredSun2040.Draw('E3same][')
+v2_BW_20_40.Draw('L SAME')
+stat_list[2].Draw('PEX0 SAME')
+syst_list[2].Draw('PE2 SAME')
+
+legend_comp_coal_20_40.AddEntry(stat_list[2], r'{}^{3}#bar{He}, |#eta| < 0.8', 'PF')
+legend_comp_coal_20_40.AddEntry(gPredWenbin2040, r'Wenbin', 'F')
+legend_comp_coal_20_40.AddEntry(gPredSun2040, r'Sun', 'F')
+legend_comp_coal_20_40.AddEntry(v2_BW_20_40, r'Blast-wave', 'L')
+
+info_panel_comp_coal_20_40.Draw()
+legend_comp_coal_20_40.Draw()
+
+cV2comp_coal_20_40.SaveAs(f'{output_dir_plots_name}{cV2comp_20_40.GetName()}_comp_coal.pdf')
+
+output_file.cd()
+cV2comp_coal_0_20.Write()
+cV2comp_coal_20_40.Write()

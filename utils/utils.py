@@ -6,7 +6,8 @@ ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
 ROOT.gStyle.SetOptStat(0)
 
-ROOT.gStyle.SetFrameLineColor(ROOT.gStyle.GetCanvasColor());
+ROOT.gStyle.SetFrameLineColor(ROOT.gStyle.GetCanvasColor())
+
 
 def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
     hist.SetMarkerColor(color)
@@ -15,6 +16,7 @@ def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
     hist.SetFillStyle(fillstyle)
     hist.SetLineWidth(linewidth)
 
+
 # get average ITS cluster size from its size bitmap
 
 
@@ -22,9 +24,9 @@ def getITSClSize(itsSizeBitmap):
     sum = 0
     nClus = 0
     for i_layer in range(0, 7):
-        size = (itsSizeBitmap >> i_layer*4) & 15
+        size = (itsSizeBitmap >> i_layer * 4) & 15
         if size > 0:
-            nClus = nClus+1
+            nClus = nClus + 1
             sum += size
     return sum / nClus
 
@@ -36,7 +38,7 @@ getITSClSize_vectorised = np.vectorize(getITSClSize)
 
 
 def getSign(flags):
-    if (flags & 256):
+    if flags & 256:
         return 1
     else:
         return -1
@@ -50,7 +52,7 @@ getSign_vectorised = np.vectorize(getSign)
 
 def trackedAsHe(flags):
     pid_flag = (flags >> 12) & 15
-    if (pid_flag == 7 or pid_flag == 8):
+    if pid_flag == 7 or pid_flag == 8:
         return True
     else:
         return False
@@ -64,7 +66,7 @@ trackedAsHe_vectorised = np.vectorize(trackedAsHe)
 
 def BBA(x, p):
 
-    bg = x/2.80839160743
+    bg = x / 2.80839160743
     # (TMath::Abs(x) / TMath::Sqrt(1 + x*x))
     beta = abs(bg) / np.sqrt(1 + bg * bg)
 
@@ -79,7 +81,7 @@ def BBA(x, p):
 
 
 # Literal form of BBA, to be used inside TF1
-func_string = '([1] - TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3]) - TMath::Log([2] + TMath::Power(1/TMath::Abs(2*x/2.80839160743),[4]))) * [0] / TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3])'
+func_string = "([1] - TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3]) - TMath::Log([2] + TMath::Power(1/TMath::Abs(2*x/2.80839160743),[4]))) * [0] / TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3])"
 
 default_bb_parameters = p_train = [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 
@@ -113,7 +115,7 @@ getRapidity_vectorised = np.vectorize(getRapidity)
 def getCorrectPhi(phi):
     new_phi = phi
     if phi > np.pi:
-        new_phi = new_phi - (2*np.pi)
+        new_phi = new_phi - (2 * np.pi)
     return new_phi
 
 
@@ -123,110 +125,129 @@ getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
 
 
 def redifineColumns(complete_df):
-    print('Redifining columns')
-    print('fPt')
-    complete_df['fPt'] = 2 * complete_df['fPt']
-    print('fPhi')
-    complete_df['fPhi'] = getCorrectPhi_vectorised(complete_df['fPhi'])
-    print('fCosLambda')
-    complete_df.eval('fCosLambda = 1 / cosh(fEta)', inplace=True)
-    print('fAvgItsClusSize')
+    print("Redifining columns")
+    print("fPt")
+    complete_df["fPt"] = 2 * complete_df["fPt"]
+    print("fPhi")
+    complete_df["fPhi"] = getCorrectPhi_vectorised(complete_df["fPhi"])
+    print("fCosLambda")
+    complete_df.eval("fCosLambda = 1 / cosh(fEta)", inplace=True)
+    print("fAvgItsClusSize")
     complete_df.eval(
-        'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)
-    print('fAvgItsClusSize * fCosLambda')
+        "fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)", inplace=True
+    )
+    print("fAvgItsClusSize * fCosLambda")
     complete_df.eval(
-        'fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda', inplace=True)
-    complete_df.drop(columns=['fITSclusterSizes'])
-    print('fSign')
-    complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
+        "fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda", inplace=True
+    )
+    complete_df.drop(columns=["fITSclusterSizes"])
+    print("fSign")
+    complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
     # print('fTrackedAsHe')
     # complete_df.eval(
     #     'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
     # print('fTPCInnerParam')
     # complete_df.loc[complete_df['fTrackedAsHe'] == True,
     #                 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
-    print('fNsigmaTPC3He')
+    print("fNsigmaTPC3He")
     complete_df.eval(
-        'fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)', inplace=True)
+        "fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)",
+        inplace=True,
+    )
     # print('fRapidity')
     # complete_df.eval(
     #     'fRapidity = @getRapidity_vectorised(fPt, fEta, fPhi)', inplace=True)
-    print('fTOFmassSquared')
+    print("fTOFmassSquared")
     complete_df.eval(
-        'fTOFmassSquared = 4 * fTPCInnerParam * fTPCInnerParam * (1/(fBeta * fBeta) - 1)', inplace=True)
+        "fTOFmassSquared = 4 * fTPCInnerParam * fTPCInnerParam * (1/(fBeta * fBeta) - 1)",
+        inplace=True,
+    )
     # v2 with event-plane method
-    print('fV2FT0C')
-    complete_df.eval('fV2FT0C = cos(2 * (fPhi-fPsiFT0C))', inplace=True)
-    print('fV2FT0A')
-    complete_df.eval('fV2FT0A = cos(2 * (fPhi-fPsiFT0A))', inplace=True)
-    print('fV2TPCl')
-    complete_df.eval('fV2TPCl = cos(2 * (fPhi-fPsiTPCl))', inplace=True)
-    print('fV2TPCr')
-    complete_df.eval('fV2TPCr = cos(2 * (fPhi-fPsiTPCr))', inplace=True)
+    print("fV2FT0C")
+    complete_df.eval("fV2FT0C = cos(2 * (fPhi-fPsiFT0C))", inplace=True)
+    print("fV2FT0A")
+    complete_df.eval("fV2FT0A = cos(2 * (fPhi-fPsiFT0A))", inplace=True)
+    print("fV2TPCl")
+    complete_df.eval("fV2TPCl = cos(2 * (fPhi-fPsiTPCl))", inplace=True)
+    print("fV2TPCr")
+    complete_df.eval("fV2TPCr = cos(2 * (fPhi-fPsiTPCr))", inplace=True)
+
 
 def redifineColumnsLight(complete_df):
-    print('Redifining columns')
-    print('fP')
-    complete_df.eval('fP = fPt * sinh(fEta)', inplace=True)
-    print('fPhi')
-    complete_df['fPhi'] = getCorrectPhi_vectorised(complete_df['fPhi'])
-    print('fCosLambda')
-    complete_df.eval('fCosLambda = 1 / cosh(fEta)', inplace=True)
-    print('fAvgItsClusSize')
+    print("Redifining columns")
+    print("fP")
+    complete_df.eval("fP = fPt * sinh(fEta)", inplace=True)
+    print("fPhi")
+    complete_df["fPhi"] = getCorrectPhi_vectorised(complete_df["fPhi"])
+    print("fCosLambda")
+    complete_df.eval("fCosLambda = 1 / cosh(fEta)", inplace=True)
+    print("fAvgItsClusSize")
     complete_df.eval(
-        'fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)', inplace=True)
-    print('fAvgItsClusSize * fCosLambda')
+        "fAvgItsClusSize = @getITSClSize_vectorised(fITSclusterSizes)", inplace=True
+    )
+    print("fAvgItsClusSize * fCosLambda")
     complete_df.eval(
-        'fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda', inplace=True)
-    complete_df.drop(columns=['fITSclusterSizes'])
-    print('fSign')
-    complete_df.eval('fSign = @getSign_vectorised(fFlags)', inplace=True)
+        "fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda", inplace=True
+    )
+    complete_df.drop(columns=["fITSclusterSizes"])
+    print("fSign")
+    complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
 
 
 def getBBAfunctions(parameters, resolution, n_sigma=5):
     upper_scale = 1 + resolution * n_sigma
     lower_scale = 1 - resolution * n_sigma
-    func_string_up = f'{upper_scale} * ' + func_string
-    func_string_down = f'{lower_scale} * ' + func_string
+    func_string_up = f"{upper_scale} * " + func_string
+    func_string_down = f"{lower_scale} * " + func_string
 
-    func_BB_left = ROOT.TF1('func_BB_left', func_string, -6, -0.5, 5)
+    func_BB_left = ROOT.TF1("func_BB_left", func_string, -6, -0.5, 5)
     func_BB_left.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4])
+        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
+    )
     func_BB_left.SetLineColor(ROOT.kRed)
 
-    func_BB_left_up = ROOT.TF1('func_BB_left_up', func_string_up, -6, -0.5, 5)
+    func_BB_left_up = ROOT.TF1("func_BB_left_up", func_string_up, -6, -0.5, 5)
     func_BB_left_up.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4])
+        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
+    )
     func_BB_left_up.SetLineColor(ROOT.kRed)
     func_BB_left_up.SetLineStyle(ROOT.kDashed)
 
-    func_BB_left_down = ROOT.TF1(
-        'func_BB_left_down', func_string_down, -6, -0.5, 5)
+    func_BB_left_down = ROOT.TF1("func_BB_left_down", func_string_down, -6, -0.5, 5)
     func_BB_left_down.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4])
+        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
+    )
     func_BB_left_down.SetLineColor(ROOT.kRed)
     func_BB_left_down.SetLineStyle(ROOT.kDashed)
 
-    func_BB_right = ROOT.TF1('func_BB_right', func_string, 0.5, 6., 5)
+    func_BB_right = ROOT.TF1("func_BB_right", func_string, 0.5, 6.0, 5)
     func_BB_right.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4])
+        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
+    )
     func_BB_right.SetLineColor(ROOT.kRed)
 
-    func_BB_right_up = ROOT.TF1('func_BB_right_up', func_string_up, 0.5, 6., 5)
+    func_BB_right_up = ROOT.TF1("func_BB_right_up", func_string_up, 0.5, 6.0, 5)
     func_BB_right_up.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4])
+        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
+    )
     func_BB_right_up.SetLineColor(ROOT.kRed)
     func_BB_right_up.SetLineStyle(ROOT.kDashed)
 
-    func_BB_right_down = ROOT.TF1(
-        'func_BB_right_down', func_string_down, 0.5, 6., 5)
+    func_BB_right_down = ROOT.TF1("func_BB_right_down", func_string_down, 0.5, 6.0, 5)
     func_BB_right_down.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4])
+        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
+    )
     func_BB_right_down.SetLineColor(ROOT.kRed)
     func_BB_right_down.SetLineStyle(ROOT.kDashed)
 
-    functions = [func_BB_left, func_BB_left_up, func_BB_left_down,
-                 func_BB_right, func_BB_right_up, func_BB_right_down]
+    functions = [
+        func_BB_left,
+        func_BB_left_up,
+        func_BB_left_down,
+        func_BB_right,
+        func_BB_right_up,
+        func_BB_right_down,
+    ]
 
     return functions
 
@@ -235,53 +256,63 @@ def getAverage2D(histo2D, histo_name="histo"):
     x_axis = histo2D.GetXaxis()
     nX_bins = x_axis.GetNbins()
     histo2D_y_title = histo2D.GetYaxis().GetTitle()
-    new_title = r'#LT ' + histo2D_y_title + r' #GT'
+    new_title = r"#LT " + histo2D_y_title + r" #GT"
     average_histo = histo2D.ProjectionX(histo_name)
     average_histo.Reset()
     average_histo.GetYaxis().SetTitle(new_title)
     for i_bin in range(1, nX_bins + 1):
-        histo_tmp = histo2D.ProjectionY('histo_tmp', i_bin, i_bin)
+        histo_tmp = histo2D.ProjectionY("histo_tmp", i_bin, i_bin)
         average_histo.SetBinContent(i_bin, histo_tmp.GetMean())
         average_histo.SetBinError(i_bin, histo_tmp.GetStdDev())
         del histo_tmp
     return average_histo
 
 
-def getHistos1D(thn_sparse, pt_bin_low, pt_bin_up, cent_low, cent_up, histo1_name='histo1', histo2_name='histo2', n_rebin=1):
+def getHistos1D(
+    thn_sparse,
+    pt_bin_low,
+    pt_bin_up,
+    cent_low,
+    cent_up,
+    histo1_name="histo1",
+    histo2_name="histo2",
+    n_rebin=1,
+):
     pt_axis = thn_sparse.GetAxis(2)
     pt_axis.SetRange(pt_bin_low, pt_bin_up)
     cent_axis = thn_sparse.GetAxis(3)
-    cent_axis.SetRange(cent_axis.FindBin(cent_low),
-                       cent_axis.FindBin(cent_up)-1)
+    cent_axis.SetRange(cent_axis.FindBin(cent_low), cent_axis.FindBin(cent_up) - 1)
     hNsigma = thn_sparse.Projection(1)
     hNsigma.SetName(histo1_name)
-    hNsigma.SetTitle('')
+    hNsigma.SetTitle("")
     hSPvsNsigma_tmp = thn_sparse.Projection(0, 1)
-    hSPvsNsigma_tmp.SetName(f'{histo2_name}_notAveraged')
+    hSPvsNsigma_tmp.SetName(f"{histo2_name}_notAveraged")
     if n_rebin > 1:
         hNsigma.RebinX(n_rebin)
         hSPvsNsigma_tmp.RebinX(n_rebin)
     hSPvsNsigma = getAverage2D(hSPvsNsigma_tmp, histo2_name)
-    hSPvsNsigma.SetTitle('')
+    hSPvsNsigma.SetTitle("")
     return hSPvsNsigma, hNsigma, hSPvsNsigma_tmp
 
 
-def getCanvasWithTwoPanels(canvas_name, histo_1, histo_2, top_panel=None, bottom_panel=None):
+def getCanvasWithTwoPanels(
+    canvas_name, histo_1, histo_2, top_panel=None, bottom_panel=None
+):
     canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
     pad_top = ROOT.TPad("pad_top", "pad_top", 0.0, 0.5, 1.0, 1.0, 0)
     pad_top.SetLeftMargin(0.15)
-    pad_top.SetBottomMargin(0.)
+    pad_top.SetBottomMargin(0.0)
     pad_top.Draw()
     pad_top.cd()
     histo_1.GetYaxis().SetTitleSize(0.07)
     histo_1.GetYaxis().SetLabelSize(0.05)
-    histo_1.Draw('PE')
+    histo_1.Draw("PE")
     if top_panel:
         histo_1.GetListOfFunctions().Add(top_panel)
     canvas.cd()
     pad_bottom = ROOT.TPad("pad_bottom", "pad_bottom", 0.0, 0.0, 1.0, 0.5, 0)
     pad_bottom.SetLeftMargin(0.15)
-    pad_bottom.SetTopMargin(0.)
+    pad_bottom.SetTopMargin(0.0)
     pad_bottom.SetBottomMargin(0.3)
     pad_bottom.Draw()
     pad_bottom.cd()
@@ -289,13 +320,24 @@ def getCanvasWithTwoPanels(canvas_name, histo_1, histo_2, top_panel=None, bottom
     histo_2.GetYaxis().SetLabelSize(0.05)
     histo_2.GetXaxis().SetTitleSize(0.07)
     histo_2.GetXaxis().SetLabelSize(0.05)
-    histo_2.Draw('PE')
+    histo_2.Draw("PE")
     if bottom_panel:
         histo_2.GetListOfFunctions().Add(bottom_panel)
     return canvas
 
 
-def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_bin_up, output_dir, hSPvsPt, qvec_detector_label='FT0C', cent_detector_label='FTOC', out_pt_bin=0):
+def getCompleteCanvas(
+    hSpvsNsigmaVsPtvsCent,
+    cent_low,
+    cent_up,
+    pt_bin_low,
+    pt_bin_up,
+    output_dir,
+    hSPvsPt,
+    qvec_detector_label="FT0C",
+    cent_detector_label="FTOC",
+    out_pt_bin=0,
+):
 
     output_dir.cd()
 
@@ -309,24 +351,33 @@ def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_b
     cent_bin_up = cent_axis.FindBin(cent_up) - 1
 
     # system infopanel
-    info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, 'NDC')
+    info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
     info_panel.SetBorderSize(0)
     info_panel.SetFillStyle(0)
     info_panel.SetTextAlign(12)
     info_panel.SetTextFont(42)
-    info_panel.AddText('ALICE')
-    info_panel.AddText(r'PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV')
-    info_panel.AddText(f'{cent_low} - {cent_up} % {cent_detector_label}')
-    pt_label = f'{pt_low:.1f}' + r' #leq #it{p}_{T} < ' + \
-        f'{pt_up:.1f}' + r' GeV/#it{c}'
+    info_panel.AddText("ALICE")
+    info_panel.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+    info_panel.AddText(f"{cent_low} - {cent_up} % {cent_detector_label}")
+    pt_label = (
+        f"{pt_low:.1f}" + r" #leq #it{p}_{T} < " + f"{pt_up:.1f}" + r" GeV/#it{c}"
+    )
     info_panel.AddText(pt_label)
 
     # create 1D histograms
     hSpVsNsigma, hNsigma, hSpVsNsigma_notAveraged = getHistos1D(
-        hSpvsNsigmaVsPtvsCent, pt_bin_low, pt_bin_up, cent_bin_low, cent_bin_up, f'hNsigma_{out_pt_bin}_{qvec_detector_label}', f'hSpVsNsigma_{out_pt_bin}_{qvec_detector_label}', n_rebin=4)
-    setHistStyle(hNsigma, ROOT.kRed+1, linewidth=2)
-    setHistStyle(hSpVsNsigma, ROOT.kAzure+1, linewidth=2)
-    hSpVsNsigma.GetYaxis().SetRangeUser(-2., 2.)
+        hSpvsNsigmaVsPtvsCent,
+        pt_bin_low,
+        pt_bin_up,
+        cent_bin_low,
+        cent_bin_up,
+        f"hNsigma_{out_pt_bin}_{qvec_detector_label}",
+        f"hSpVsNsigma_{out_pt_bin}_{qvec_detector_label}",
+        n_rebin=4,
+    )
+    setHistStyle(hNsigma, ROOT.kRed + 1, linewidth=2)
+    setHistStyle(hSpVsNsigma, ROOT.kAzure + 1, linewidth=2)
+    hSpVsNsigma.GetYaxis().SetRangeUser(-2.0, 2.0)
 
     # # fit with a pol0
     # fit = ROOT.TF1('fit', 'pol0', -1, 1)
@@ -346,7 +397,11 @@ def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_b
     # fit_panel.AddText(f'p_{{0}} = {val:.3f} #pm {err:.3f}')
 
     canvas = getCanvasWithTwoPanels(
-        f'cSpVsNsigma_{out_pt_bin}_{qvec_detector_label}', hSpVsNsigma, hNsigma, bottom_panel=info_panel)
+        f"cSpVsNsigma_{out_pt_bin}_{qvec_detector_label}",
+        hSpVsNsigma,
+        hNsigma,
+        bottom_panel=info_panel,
+    )
 
     hSpVsNsigma.Write()
     hNsigma.Write()
@@ -356,35 +411,53 @@ def getCompleteCanvas(hSpvsNsigmaVsPtvsCent, cent_low, cent_up, pt_bin_low, pt_b
 
 def saveCanvasAsPDF(histo, plots_dir, is2D=False, logScale=False):
     histo_name = histo.GetName()
-    canvas_name = histo_name.replace('h', 'c', 1)
+    canvas_name = histo_name.replace("h", "c", 1)
     canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
     canvas.SetBottomMargin(0.13)
     canvas.SetLeftMargin(0.13)
     if not is2D:
-        histo.Draw('histo')
+        histo.Draw("histo")
     else:
-        histo.Draw('colz')
+        histo.Draw("colz")
     if logScale:
         if not is2D:
             canvas.SetLogy()
         else:
             canvas.SetLogz()
-    canvas.SaveAs(f'{plots_dir}/{canvas_name}.pdf')
+    canvas.SaveAs(f"{plots_dir}/{canvas_name}.pdf")
 
 
 def getValuesFromHisto(histo):
     n_bins = histo.GetXaxis().GetNbins()
     histo_content = []
-    for i_bin in range(1, n_bins+1):
-        histo_content.append(
-            [histo.GetBinContent(i_bin), histo.GetBinError(i_bin)])
+    for i_bin in range(1, n_bins + 1):
+        histo_content.append([histo.GetBinContent(i_bin), histo.GetBinError(i_bin)])
     return histo_content
 
 
 def passBarlow(def_val, varied_val, def_err, varied_err, n_sigma=1):
     numerator = abs(def_val - varied_val)
     denominator = abs(def_err - varied_err)
-    if denominator < 1.e-5:
+    if denominator < 1.0e-5:
         return True
-    return (numerator/denominator) < n_sigma
+    return (numerator / denominator) < n_sigma
 
+
+def get_condition(val, conditions):
+    """
+    @brief returns the first condition for which val < conditions.key
+
+    @param val value to be tested
+    @param conditions dictionary with form {right_edge: string}, with keys in ascending order
+
+    """
+    # Sort the dictionary keys
+    sorted_keys = sorted(conditions.keys())
+
+    # Loop through the keys and find the last key that satisfies val < key
+    for key in sorted_keys:
+        if val < key:
+            return conditions[key]
+
+    # If no condition is found, return None or a default message
+    return None

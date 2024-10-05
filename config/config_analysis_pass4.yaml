@@ -1,0 +1,77 @@
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4/AO2D_merged.root"
+
+input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4/AnalysisResults_merged.root"
+
+resolution_file_name: "resolution_EP.root"
+
+output_dir_name: "../results_pass4/"
+output_file_name: "flow.root"
+output_file_name_qc: "qc.root"
+
+nuclei_tree_name: "O2nucleitable"
+ep_tree_name: "O2nucleitableflow"
+
+mandatory_selections: "fSign < 0 and abs(fEta) < 0.8"
+selection_dict:
+  {
+    "abs(fDCAxy)": "abs(fDCAxy) < 0.1",
+    "abs(fDCAz)": "abs(fDCAz) < 1.",
+    "fTPCnCls": "fTPCnCls > 99",
+    "abs(fZvertex)": "abs(fZvertex) < 10.",
+  }
+ptdep_selection_dict: # the dictionary has as key the right pt limit for the selection
+  {
+    "fAvgItsClusSizeCosLambda": {
+      2.4: "fAvgItsClusSizeCosLambda > 6",
+      2.8: "fAvgItsClusSizeCosLambda > 5.5",
+      100.: "fAvgItsClusSizeCosLambda > 5"
+    }
+  }
+
+centrality_classes:
+  [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50], [50, 60], [60, 80]]
+pt_bins:
+  [
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6],
+  ]
+cent_colours: [633, 797, 418, 402, 433, 862, 874]
+
+cent_detector_label: "FT0C"
+reference_flow_detector: "FT0C"
+
+use_Barlow: True
+
+p_train: [-321.34, 0.6539, 1.591, 0.8225, 2.363]
+resolution_train: 0.09
+n_sigma_plot: 5
+
+do_syst: True
+n_trials: 500
+
+cut_dict_syst:
+  {
+    "abs(fDCAxy)": { "cut_greater": False, "cut_list": [0.05, 0.15, 11] },
+    "abs(fDCAz)": { "cut_greater": False, "cut_list": [0.75, 1.00, 26] },
+    "fTPCnCls": { "cut_greater": True, "cut_list": [100, 130, 7] },
+    "abs(fZvertex)": { "cut_greater": False, "cut_list": [8, 10, 5] },
+  }
+
+n_ptdep_variations_syst: {
+  "fAvgItsClusSizeCosLambda" : 11
+}
+
+ptdep_cut_dict_syst:
+  {
+    "fAvgItsClusSizeCosLambda":
+      {
+        2.4: { "cut_greater": True, "cut_list": [5.5, 6.5] },
+        2.8: { "cut_greater": True, "cut_list": [5., 6.] },
+        100.: { "cut_greater": True, "cut_list": [4.5, 5.5] },
+      },
+  }

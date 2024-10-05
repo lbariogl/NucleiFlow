@@ -6,6 +6,8 @@ import argparse
 import numpy as np
 from itertools import product
 import os
+import copy
+import random
 
 import sys
 
@@ -41,8 +43,7 @@ selection_dict = config["selection_dict"]
 selection_list = selection_dict.values()
 selections = " and ".join(selection_list)
 
-ptdep_selection_dict = config["ptdep_selection_dict"]
-ptdep_selections = ptdep_selection_dict["fAvgItsClusSizeCosLambda"]
+ptdep_selection_dict = config["ptdep_selection_dict"]["fAvgItsClusSizeCosLambda"]
 
 cent_detector_label = config["cent_detector_label"]
 reference_flow_detector = config["reference_flow_detector"]
@@ -123,14 +124,8 @@ for i_cent in range(n_cent_classes):
     flow_maker.data_df = complete_df
     flow_maker.selection_string = selections
     flow_maker.pt_bins = pt_bins[i_cent]
-    n_pt_bins = len(flow_maker.pt_bins) - 1
-    ptdep_selection_string = []
-    for i in range(0, n_pt_bins):
-        bin_centre = (flow_maker.pt_bins[i + 1] + flow_maker.pt_bins[i]) / 2
-        condition = utils.get_condition(bin_centre, ptdep_selections)
-        ptdep_selection_string.append(condition)
 
-    flow_maker.ptdep_selection_string = ptdep_selection_string
+    flow_maker.ptdep_selection_dict = ptdep_selection_dict
 
     flow_maker.cent_limits = centrality_classes[i_cent]
     flow_maker.resolution = resolutions[i_cent]
@@ -163,7 +158,7 @@ for i_cent in range(n_cent_classes):
     default_values.append(flow_maker.getFlowValues())
 
 # Systematic uncertainties
-if do_syst:
+if True:
 
     print("** Starting systematic variations **")
     n_trials = config["n_trials"]
@@ -178,6 +173,9 @@ if do_syst:
 
     cut_dict_syst = config["cut_dict_syst"]
     ptdep_cut_dict_syst = config["ptdep_cut_dict_syst"]
+    n_ptdep_variations_syst = config["n_ptdep_variations_syst"][
+        "fAvgItsClusSizeCosLambda"
+    ]
 
     # Create all possible variations (values) fot all the variables of interest (key)
     cut_string_dict = {}
@@ -191,57 +189,47 @@ if do_syst:
         for cut in cut_arr:
             cut_string_dict[var].append(var + cut_greater_string + str(cut))
 
-    combos = list(product(*list(cut_string_dict.values())))
+    pt_independent_selections = list(product(*list(cut_string_dict.values())))
 
-    ptdep_cut_string_list = []
-    for i_pt, pt_el in enumerate(ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]):
+    ptdep_cut_string_dict = {}
+    n_max_combinations = 0
+    n_pt_independent_selections = len(pt_independent_selections)
+    n_pt_dependent_selections = n_ptdep_variations_syst
+
+    for pt_key, pt_el in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"].items():
         ptdep_cut_greater = pt_el["cut_greater"]
         ptdep_cut_greater_string = " > " if ptdep_cut_greater else " < "
         ptdep_cut_list = pt_el["cut_list"]
         ptdep_cut_arr = np.linspace(
-            ptdep_cut_list[0], ptdep_cut_list[1], ptdep_cut_list[2]
+            ptdep_cut_list[0], ptdep_cut_list[1], n_ptdep_variations_syst
         )
-        ptdep_cut_string_list.append([])
+        ptdep_cut_string_dict[pt_key] = []
         for ptdep_cut in ptdep_cut_arr:
-            ptdep_cut_string_list[i_pt].append(
+            ptdep_cut_string_dict[pt_key].append(
                 "fAvgItsClusSizeCosLambda" + ptdep_cut_greater_string + str(ptdep_cut)
             )
 
-    # ptdep_cut_string_dict = {}
-    # for pt_key, pt_el in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]:
-    #     ptdep_cut_greater = pt_el["cut_greater"]
-    #     ptdep_cut_greater_string = " > " if ptdep_cut_greater else " < "
-    #     ptdep_cut_list = pt_el["cut_list"]
-    #     ptdep_cut_arr = np.linspace(
-    #         ptdep_cut_list[0], ptdep_cut_list[1], ptdep_cut_list[2]
-    #     )
-    #     ptdep_cut_string_dict[pt_key] = []
-    #     for ptdep_cut in ptdep_cut_arr:
-    #         ptdep_cut_string_dict[pt_key].append(
-    #             "fAvgItsClusSizeCosLambda" + ptdep_cut_greater_string + str(ptdep_cut)
-    #         )
+    ptdep_cut_string_dict_list = []
+    for i_variation in range(n_pt_dependent_selections):
+        variation_dict = {}
+        for pt_key in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]:
+            variation_dict[pt_key] = ptdep_cut_string_dict[pt_key][i_variation]
+        ptdep_cut_string_dict_list.append(variation_dict)
 
-    n_ptdep_variations = len(ptdep_cut_string_list[0])
-    n_max_pt_bins = len(pt_bins[0]) - 1
+    n_max_combinations = n_pt_independent_selections * n_pt_dependent_selections
 
-    sorted_ptdep_cut_string_list = []
+    all_complete_selection_indices = list(
+        product(range(n_pt_independent_selections), range(n_pt_dependent_selections))
+    )
+    complete_selection_random_indices = copy.deepcopy(all_complete_selection_indices)
 
-    for i_var in range(0, n_ptdep_variations):
-        pt_var_list = []
-        for i_pt in range(0, n_max_pt_bins):
-            pt_var_list.append(ptdep_cut_string_list[i_pt][i_var])
-        sorted_ptdep_cut_string_list.append(pt_var_list)
-
-    mega_combos = list(product(combos, sorted_ptdep_cut_string_list))
-
-    if n_trials < len(mega_combos):
-        mega_combo_random_indices = np.random.randint(len(mega_combos), size=n_trials)
+    if n_trials < n_max_combinations:
+        random.shuffle(complete_selection_random_indices)
+        complete_selection_random_indices = complete_selection_random_indices[:n_trials]
     else:
         print(
-            f"** Warning: n_trials > n_combinations ({n_trials}, {len(mega_combos)}), taking all the possible combinations **"
+            f"** Warning: n_trials > n_combinations ({n_trials}, {n_max_combinations}), taking all the possible combinations **"
         )
-        mega_combo_random_indices = np.arange(len(combos))
-        np.random.shuffle(mega_combo_random_indices)
 
     # vary selections for each analysis_object, by centrality class
     for i_cent in range(n_cent_classes):
@@ -261,7 +249,9 @@ if do_syst:
                 )
             )
 
-        for i_mega_combo, mega_combo_index in enumerate(mega_combo_random_indices):
+        for i_complete_selection, complete_selection_indices in enumerate(
+            complete_selection_random_indices
+        ):
 
             flow_maker_syst = FlowMaker()
             flow_maker_syst.data_df = complete_df
@@ -270,28 +260,29 @@ if do_syst:
             flow_maker_syst.resolution = resolutions[i_cent]
             flow_maker_syst.ref_detector = reference_flow_detector
 
-            mega_combo_suffix = f"_combo{i_mega_combo}"
+            complete_selection_suffix = f"_sel{i_complete_selection}"
             trial_strings.append("----------------------------------")
-            trial_num_string = (
-                f"Trial: {i_mega_combo} / {len(mega_combo_random_indices)}"
-            )
+            trial_num_string = f"Trial: {i_complete_selection} / {len(complete_selection_random_indices)}"
             trial_strings.append(trial_num_string)
             print(trial_num_string)
-            combo = mega_combos[mega_combo_index][0]
-            sel_string = " & ".join(combo)
+            pt_independent_sel = pt_independent_selections[
+                complete_selection_indices[0]
+            ]
+            sel_string = " & ".join(pt_independent_sel)
             trial_strings.append(str(sel_string))
 
             flow_maker_syst.selection_string = sel_string
-            flow_maker_syst.ptdep_selection_string = mega_combos[mega_combo_index][1]
-            print(f"selections: {flow_maker_syst.selection_string}")
-            print(f"pt-dependent selections: {flow_maker_syst.ptdep_selection_string}")
-            flow_maker_syst.suffix = mega_combo_suffix
+            flow_maker_syst.ptdep_selection_dict = ptdep_cut_string_dict_list[
+                complete_selection_indices[1]
+            ]
+
+            flow_maker_syst.suffix = complete_selection_suffix
 
             flow_maker_syst.make_flow()
             flow_values = flow_maker_syst.getFlowValues()
 
             # write histograms to file
-            trial_dir = cent_dirs[i_cent].mkdir(f"trial_{i_mega_combo}")
+            trial_dir = cent_dirs[i_cent].mkdir(f"trial_{i_complete_selection}")
             flow_maker_syst.output_dir = trial_dir
             flow_maker_syst.dump_to_output_file()
 

@@ -21,8 +21,11 @@ class FlowMaker:
         # data frame
         self.data_df = None
         self.selection_string = ""
-        self.ptdep_selection_string = []
+        self.ptdep_selection_dict = {}
         self.n_sigma_selection = 2
+
+        # defined from self.ptdep_selection_dict
+        self.ptdep_selection_string = []
 
         # variable related members
         self.cent_limits = [30, 50]
@@ -82,6 +85,13 @@ class FlowMaker:
         self._check_members()
 
         n_pt_bins = len(self.pt_bins) - 1
+
+        if self.ptdep_selection_dict:
+            for i in range(0, n_pt_bins):
+                bin_centre = (self.pt_bins[i + 1] + self.pt_bins[i]) / 2
+                condition = utils.get_condition(bin_centre, self.ptdep_selection_dict)
+                self.ptdep_selection_string.append(condition)
+
         pt_bins_arr = np.array(self.pt_bins, dtype=np.float64)
         self.hRawCountsVsPt = ROOT.TH1F(
             f"hRawCountsVsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}{self.suffix}",

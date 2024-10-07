@@ -153,12 +153,13 @@ for i_cent in range(n_cent_classes):
     flow_maker.make_flow()
     flow_maker.dump_to_output_file()
     flow_maker.dump_to_pdf()
+    flow_maker.dump_summary_to_pdf()
 
     flow_makers.append(flow_maker)
     default_values.append(flow_maker.getFlowValues())
 
 # Systematic uncertainties
-if True:
+if do_syst:
 
     print("** Starting systematic variations **")
     n_trials = config["n_trials"]

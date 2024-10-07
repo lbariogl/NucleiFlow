@@ -309,6 +309,157 @@ class FlowMaker:
         utils.saveCanvasAsPDF(self.hPurityVsPt, self.plot_dir)
         utils.saveCanvasAsPDF(self.hRawCountsVsPt, self.plot_dir)
 
+    def dump_summary_to_pdf(self, rows_per_page=3):
+        if not self.plot_dir:
+            raise ValueError("plot_dir not set.")
+        if not os.path.exists(self.plot_dir):
+            os.makedirs(self.plot_dir)
+
+        # Define the name of the final PDF
+        multipage_pdf = f"{self.plot_dir}/v2_and_nSigma_cent_{self.cent_limits[0]}_{self.cent_limits[1]}.pdf"
+
+        # Create a multipage PDF object, first print command with '(' to initiate PDF
+        canvas = ROOT.TCanvas("canvas", "", 595, 842)  # A4 size in portrait
+        canvas.Print(f"{multipage_pdf}[", "pdf")
+
+        total_pt_bins = len(self.pt_bins) - 1
+
+        # Loop through pt bins in groups of rows_per_page
+        for page_start in range(0, total_pt_bins, rows_per_page):
+            # Create a new canvas for each page with A4 size
+            canvas.Divide(
+                2, rows_per_page
+            )  # 2 columns (hNsigma3He and hV2), 3 rows per page
+
+            # Add histograms to the canvas
+            for i in range(rows_per_page):
+                i_pt = page_start + i
+                if i_pt >= total_pt_bins:
+                    break  # Exit the loop if we've exceeded the available bins
+
+                # Draw hNsigma3He in the (2*i+1) section of the canvas
+                canvas.cd(2 * i + 1)
+                self.hNsigma3He[i_pt].SetTitleOffset(1.5)  # Add margin to the histogram
+                self.hNsigma3He[i_pt].GetXaxis().SetTitleOffset(
+                    1.5
+                )  # Add margin to x-axis
+                self.hNsigma3He[i_pt].GetYaxis().SetTitleOffset(
+                    1.5
+                )  # Add margin to y-axis
+                self.hNsigma3He[i_pt].Draw("histo")
+                # Set margins for the current panel
+                ROOT.gPad.SetBottomMargin(
+                    0.30
+                )  # Set bottom margin for the current panel
+                ROOT.gPad.SetLeftMargin(0.30)  # Set left margin for the current panel
+
+                # Draw hV2 in the (2*i+2) section of the canvas
+                canvas.cd(2 * i + 2)
+                self.hV2[i_pt].SetTitleOffset(1.5)  # Add margin to the histogram
+                self.hV2[i_pt].GetXaxis().SetTitleOffset(1.5)  # Add margin to x-axis
+                self.hV2[i_pt].GetYaxis().SetTitleOffset(1.5)  # Add margin to y-axis
+                self.hV2[i_pt].Draw("histo")
+                # Set margins for the current panel
+                ROOT.gPad.SetBottomMargin(
+                    0.30
+                )  # Set bottom margin for the current panel
+                ROOT.gPad.SetLeftMargin(0.30)  # Set left margin for the current panel
+
+                # Add the info panel to hV2
+                pt_bin = [self.pt_bins[i_pt], self.pt_bins[i_pt + 1]]
+                pt_label = (
+                    f"{pt_bin[0]:.2f} "
+                    + r"#leq #it{p}_{T} < "
+                    + f"{pt_bin[1]:.2f}"
+                    + r" GeV/#it{c}"
+                )
+                info_panel_bis = ROOT.TPaveText(0.4, 0.6, 0.6, 0.82, "NDC")
+                info_panel_bis.SetBorderSize(0)
+                info_panel_bis.SetFillStyle(0)
+                info_panel_bis.SetTextAlign(12)
+                info_panel_bis.SetTextFont(42)
+                info_panel_bis.AddText("ALICE")
+                info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+                info_panel_bis.AddText(
+                    f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+                )
+                info_panel_bis.AddText(pt_label)
+
+                self.hV2[i_pt].GetListOfFunctions().Add(info_panel_bis)
+
+            # Add the page to the multipage PDF
+            canvas.Print(f"{multipage_pdf}", "pdf")
+            canvas.Clear()
+
+        # Add remaining histograms (hV2vsPt, hPurityVsPt, hRawCountsVsPt) in one page
+        canvas.Divide(1, 3)  # 1 column, 3 rows
+
+        # Draw hV2vsPt
+        canvas.cd(1)
+        ROOT.gPad.SetBottomMargin(0.15)  # Set bottom margin for the current panel
+        ROOT.gPad.SetLeftMargin(0.15)  # Set left margin for the current panel
+        self.hV2vsPt.Draw("PE")
+        self.hV2vsPt.GetXaxis().SetTitleOffset(1.5)  # Add margin to x-axis
+        self.hV2vsPt.GetYaxis().SetTitleOffset(1.5)  # Add margin to y-axis
+        info_panel_v2 = ROOT.TPaveText(0.2, 0.6, 0.4, 0.82, "NDC")
+        info_panel_v2.SetBorderSize(0)
+        info_panel_v2.SetFillStyle(0)
+        info_panel_v2.SetTextAlign(12)
+        info_panel_v2.SetTextFont(42)
+        info_panel_v2.AddText("ALICE")
+        info_panel_v2.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_v2.AddText(
+            f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+        )
+        info_panel_v2.AddText("hV2vsPt")
+        info_panel_v2.Draw()
+
+        # Draw hPurityVsPt
+        canvas.cd(2)
+        ROOT.gPad.SetBottomMargin(0.15)  # Set bottom margin for the current panel
+        ROOT.gPad.SetLeftMargin(0.15)  # Set left margin for the current panel
+        self.hPurityVsPt.Draw("histo")
+        self.hPurityVsPt.GetXaxis().SetTitleOffset(1.5)  # Add margin to x-axis
+        self.hPurityVsPt.GetYaxis().SetTitleOffset(1.5)  # Add margin to y-axis
+        info_panel_purity = ROOT.TPaveText(0.6, 0.5, 0.8, 0.72, "NDC")
+        info_panel_purity.SetBorderSize(0)
+        info_panel_purity.SetFillStyle(0)
+        info_panel_purity.SetTextAlign(12)
+        info_panel_purity.SetTextFont(42)
+        info_panel_purity.AddText("ALICE")
+        info_panel_purity.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_purity.AddText(
+            f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+        )
+        info_panel_purity.AddText("hPurityVsPt")
+        info_panel_purity.Draw()
+
+        # Draw hRawCountsVsPt
+        canvas.cd(3)
+        ROOT.gPad.SetBottomMargin(0.15)  # Set bottom margin for the current panel
+        ROOT.gPad.SetLeftMargin(0.15)  # Set left margin for the current panel
+        self.hRawCountsVsPt.Draw("histo")
+        self.hRawCountsVsPt.GetXaxis().SetTitleOffset(1.5)  # Add margin to x-axis
+        self.hRawCountsVsPt.GetYaxis().SetTitleOffset(1.5)  # Add margin to y-axis
+        info_panel_raw = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
+        info_panel_raw.SetBorderSize(0)
+        info_panel_raw.SetFillStyle(0)
+        info_panel_raw.SetTextAlign(12)
+        info_panel_raw.SetTextFont(42)
+        info_panel_raw.AddText("ALICE")
+        info_panel_raw.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_raw.AddText(
+            f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+        )
+        info_panel_raw.AddText("hRawCountsVsPt")
+        info_panel_raw.Draw()
+
+        # Add the page to the PDF
+        canvas.Print(f"{multipage_pdf}", "pdf")
+
+        # Close the multipage PDF
+        canvas.Print(f"{multipage_pdf}]", "pdf")
+
     def del_dyn_members(self):
         self.hNsigma3He = []
         self.cNsigma3HeFit = []

@@ -346,24 +346,24 @@ class FlowMaker:
                 self.hNsigma3He[i_pt].GetYaxis().SetTitleOffset(
                     1.5
                 )  # Add margin to y-axis
-                self.hNsigma3He[i_pt].Draw("histo")
+                self.hNsigma3He[i_pt].Draw()
                 # Set margins for the current panel
                 ROOT.gPad.SetBottomMargin(
-                    0.30
+                    0.15
                 )  # Set bottom margin for the current panel
-                ROOT.gPad.SetLeftMargin(0.30)  # Set left margin for the current panel
+                ROOT.gPad.SetLeftMargin(0.15)  # Set left margin for the current panel
 
                 # Draw hV2 in the (2*i+2) section of the canvas
                 canvas.cd(2 * i + 2)
                 self.hV2[i_pt].SetTitleOffset(1.5)  # Add margin to the histogram
                 self.hV2[i_pt].GetXaxis().SetTitleOffset(1.5)  # Add margin to x-axis
                 self.hV2[i_pt].GetYaxis().SetTitleOffset(1.5)  # Add margin to y-axis
-                self.hV2[i_pt].Draw("histo")
+                self.hV2[i_pt].Draw()
                 # Set margins for the current panel
                 ROOT.gPad.SetBottomMargin(
-                    0.30
+                    0.15
                 )  # Set bottom margin for the current panel
-                ROOT.gPad.SetLeftMargin(0.30)  # Set left margin for the current panel
+                ROOT.gPad.SetLeftMargin(0.15)  # Set left margin for the current panel
 
                 # Add the info panel to hV2
                 pt_bin = [self.pt_bins[i_pt], self.pt_bins[i_pt + 1]]

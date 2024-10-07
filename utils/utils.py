@@ -304,8 +304,6 @@ def getCanvasWithTwoPanels(
     pad_top.SetBottomMargin(0.0)
     pad_top.Draw()
     pad_top.cd()
-    histo_1.GetYaxis().SetTitleSize(0.07)
-    histo_1.GetYaxis().SetLabelSize(0.05)
     histo_1.Draw("PE")
     if top_panel:
         histo_1.GetListOfFunctions().Add(top_panel)
@@ -316,10 +314,6 @@ def getCanvasWithTwoPanels(
     pad_bottom.SetBottomMargin(0.3)
     pad_bottom.Draw()
     pad_bottom.cd()
-    histo_2.GetYaxis().SetTitleSize(0.07)
-    histo_2.GetYaxis().SetLabelSize(0.05)
-    histo_2.GetXaxis().SetTitleSize(0.07)
-    histo_2.GetXaxis().SetLabelSize(0.05)
     histo_2.Draw("PE")
     if bottom_panel:
         histo_2.GetListOfFunctions().Add(bottom_panel)

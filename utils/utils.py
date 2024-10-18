@@ -1,6 +1,7 @@
 import ROOT
 from hipe4ml.tree_handler import TreeHandler
 import numpy as np
+import copy
 
 ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
@@ -18,8 +19,6 @@ def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
 
 
 # get average ITS cluster size from its size bitmap
-
-
 def getITSClSize(itsSizeBitmap):
     sum = 0
     nClus = 0
@@ -34,9 +33,8 @@ def getITSClSize(itsSizeBitmap):
 # vectorised version of getITSClSize
 getITSClSize_vectorised = np.vectorize(getITSClSize)
 
+
 # get the sign of the track from the flag
-
-
 def getSign(flags):
     if flags & 256:
         return 1
@@ -47,9 +45,8 @@ def getSign(flags):
 # vectorised version of getSign
 getSign_vectorised = np.vectorize(getSign)
 
-# get
 
-
+# get pid-in-tracking flag
 def trackedAsHe(flags):
     pid_flag = (flags >> 12) & 15
     if pid_flag == 7 or pid_flag == 8:
@@ -61,12 +58,11 @@ def trackedAsHe(flags):
 # vectorised version of getSign
 trackedAsHe_vectorised = np.vectorize(trackedAsHe)
 
+
 # Bethe-Bloch-Aleph function as defined in O2
-
-
 def BBA(x, p):
 
-    bg = x / 2.80839160743
+    bg = x
     # (TMath::Abs(x) / TMath::Sqrt(1 + x*x))
     beta = abs(bg) / np.sqrt(1 + bg * bg)
 
@@ -81,15 +77,26 @@ def BBA(x, p):
 
 
 # Literal form of BBA, to be used inside TF1
-func_string = "([1] - TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3]) - TMath::Log([2] + TMath::Power(1/TMath::Abs(2*x/2.80839160743),[4]))) * [0] / TMath::Power((TMath::Abs(2*x/2.80839160743) / TMath::Sqrt(1 + 2*2*x*x/2.80839160743/2.80839160743)),[3])"
+func_string_to_format = (
+    r"([1] - TMath::Power((TMath::Abs({charge}*x/{mass}) / "
+    r"TMath::Sqrt(1 + {charge}*{charge}*x*x/{mass}/{mass})),[3]) - "
+    r"TMath::Log([2] + TMath::Power(1/TMath::Abs({charge}*x/{mass}),[4]))) * [0] / "
+    r"TMath::Power((TMath::Abs({charge}*x/{mass}) / TMath::Sqrt(1 + "
+    r"{charge}*{charge}*x*x/{mass}/{mass})),[3])"
+)
 
 default_bb_parameters = p_train = [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 
+
 # N-sigma TPC at specific rigidity
-
-
-def getNsigmaTPC(x, tpc_signal, parameters=default_bb_parameters, resolution_perc=0.09):
-    exp_signal = BBA(x, parameters)
+def getNsigmaTPC(
+    x,
+    tpc_signal,
+    parameters=default_bb_parameters,
+    resolution_perc=0.09,
+    mass=2.80839160743,
+):
+    exp_signal = BBA(x / mass, parameters)
     resolution = exp_signal * resolution_perc
     return (tpc_signal - exp_signal) / resolution
 
@@ -97,9 +104,8 @@ def getNsigmaTPC(x, tpc_signal, parameters=default_bb_parameters, resolution_per
 # vectorised version of N-sigma TPC at specific rigidity
 getNsigmaTPC_vectorised = np.vectorize(getNsigmaTPC)
 
+
 # get rapidity
-
-
 def getRapidity(pt, eta, phi, mass=2.80839160743):
     vector = ROOT.TLorentzVector()
     vector.SetPtEtaPhiM(pt, eta, phi, mass)
@@ -109,9 +115,8 @@ def getRapidity(pt, eta, phi, mass=2.80839160743):
 # vectorised version of getRapidity
 getRapidity_vectorised = np.vectorize(getRapidity)
 
+
 # return phi in [-pi, pi]
-
-
 def getCorrectPhi(phi):
     new_phi = phi
     if phi > np.pi:
@@ -121,10 +126,9 @@ def getCorrectPhi(phi):
 
 getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
 
+
 # redifine columns in the complete data-frame
-
-
-def redifineColumns(complete_df):
+def redifineColumns(complete_df, mass=2.80839160743, charge=2):
     print("Redifining columns")
     print("fPt")
     complete_df["fPt"] = 2 * complete_df["fPt"]
@@ -143,15 +147,9 @@ def redifineColumns(complete_df):
     complete_df.drop(columns=["fITSclusterSizes"])
     print("fSign")
     complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
-    # print('fTrackedAsHe')
-    # complete_df.eval(
-    #     'fTrackedAsHe = @trackedAsHe_vectorised(fFlags)', inplace=True)
-    # print('fTPCInnerParam')
-    # complete_df.loc[complete_df['fTrackedAsHe'] == True,
-    #                 'fTPCInnerParam'] = complete_df['fTPCInnerParam']/2
     print("fNsigmaTPC3He")
     complete_df.eval(
-        "fNsigmaTPC3He = @getNsigmaTPC_vectorised(2*fTPCInnerParam, fTPCsignal)",
+        f"fNsigmaTPC3He = @getNsigmaTPC_vectorised({charge}*fTPCInnerParam, fTPCsignal, mass={mass})",
         inplace=True,
     )
     # print('fRapidity')
@@ -159,7 +157,7 @@ def redifineColumns(complete_df):
     #     'fRapidity = @getRapidity_vectorised(fPt, fEta, fPhi)', inplace=True)
     print("fTOFmassSquared")
     complete_df.eval(
-        "fTOFmassSquared = 4 * fTPCInnerParam * fTPCInnerParam * (1/(fBeta * fBeta) - 1)",
+        f"fTOFmassSquared = {charge} * {charge} * fTPCInnerParam * fTPCInnerParam * (1/(fBeta * fBeta) - 1)",
         inplace=True,
     )
     # v2 with event-plane method
@@ -194,49 +192,42 @@ def redifineColumnsLight(complete_df):
     complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
 
 
-def getBBAfunctions(parameters, resolution, n_sigma=5):
+def getBBAfunctions(parameters, resolution, n_sigma=5, mass=2.80839160743, charge=2):
     upper_scale = 1 + resolution * n_sigma
     lower_scale = 1 - resolution * n_sigma
+
+    # Formattazione stringa con i valori corretti
+    func_string = func_string_to_format.format(charge=charge, mass=mass)
+
     func_string_up = f"{upper_scale} * " + func_string
     func_string_down = f"{lower_scale} * " + func_string
 
+    # Creazione delle funzioni
     func_BB_left = ROOT.TF1("func_BB_left", func_string, -6, -0.5, 5)
-    func_BB_left.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
-    )
+    func_BB_left.SetParameters(*parameters)
     func_BB_left.SetLineColor(ROOT.kRed)
 
     func_BB_left_up = ROOT.TF1("func_BB_left_up", func_string_up, -6, -0.5, 5)
-    func_BB_left_up.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
-    )
+    func_BB_left_up.SetParameters(*parameters)
     func_BB_left_up.SetLineColor(ROOT.kRed)
     func_BB_left_up.SetLineStyle(ROOT.kDashed)
 
     func_BB_left_down = ROOT.TF1("func_BB_left_down", func_string_down, -6, -0.5, 5)
-    func_BB_left_down.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
-    )
+    func_BB_left_down.SetParameters(*parameters)
     func_BB_left_down.SetLineColor(ROOT.kRed)
     func_BB_left_down.SetLineStyle(ROOT.kDashed)
 
     func_BB_right = ROOT.TF1("func_BB_right", func_string, 0.5, 6.0, 5)
-    func_BB_right.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
-    )
+    func_BB_right.SetParameters(*parameters)
     func_BB_right.SetLineColor(ROOT.kRed)
 
     func_BB_right_up = ROOT.TF1("func_BB_right_up", func_string_up, 0.5, 6.0, 5)
-    func_BB_right_up.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
-    )
+    func_BB_right_up.SetParameters(*parameters)
     func_BB_right_up.SetLineColor(ROOT.kRed)
     func_BB_right_up.SetLineStyle(ROOT.kDashed)
 
     func_BB_right_down = ROOT.TF1("func_BB_right_down", func_string_down, 0.5, 6.0, 5)
-    func_BB_right_down.SetParameters(
-        parameters[0], parameters[1], parameters[2], parameters[3], parameters[4]
-    )
+    func_BB_right_down.SetParameters(*parameters)
     func_BB_right_down.SetLineColor(ROOT.kRed)
     func_BB_right_down.SetLineStyle(ROOT.kDashed)
 

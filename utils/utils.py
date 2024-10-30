@@ -9,6 +9,9 @@ ROOT.gStyle.SetOptStat(0)
 
 ROOT.gStyle.SetFrameLineColor(ROOT.gStyle.GetCanvasColor())
 
+mass_alpha = 3.7273794066
+mass_helion = 2.80839160743
+
 
 def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
     hist.SetMarkerColor(color)
@@ -85,7 +88,13 @@ func_string_to_format = (
     r"{charge}*{charge}*x*x/{mass}/{mass})),[3])"
 )
 
-default_bb_parameters = p_train = [-321.34, 0.6539, 1.591, 0.8225, 2.363]
+default_bb_parameters = p_train = [
+    -449.90,
+    1.1210,
+    1.9451,
+    0.7336,
+    2.0896,
+]  # [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 
 
 # N-sigma TPC at specific rigidity
@@ -94,7 +103,7 @@ def getNsigmaTPC(
     tpc_signal,
     parameters=default_bb_parameters,
     resolution_perc=0.09,
-    mass=2.80839160743,
+    mass=mass_helion,
 ):
     exp_signal = BBA(x / mass, parameters)
     resolution = exp_signal * resolution_perc
@@ -106,7 +115,7 @@ getNsigmaTPC_vectorised = np.vectorize(getNsigmaTPC)
 
 
 # get rapidity
-def getRapidity(pt, eta, phi, mass=2.80839160743):
+def getRapidity(pt, eta, phi, mass=mass_helion):
     vector = ROOT.TLorentzVector()
     vector.SetPtEtaPhiM(pt, eta, phi, mass)
     return vector.Rapidity()
@@ -127,11 +136,11 @@ def getCorrectPhi(phi):
 getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
 
 
-# redifine columns in the complete data-frame
-def redifineColumns(complete_df, mass=2.80839160743, charge=2):
-    print("Redifining columns")
+# redefine columns in the complete data-frame
+def redefineColumns(complete_df, mass=mass_helion, charge=2):
+    print("Redefining columns")
     print("fPt")
-    complete_df["fPt"] = 2 * complete_df["fPt"]
+    complete_df["fPt"] = charge * complete_df["fPt"]
     print("fPhi")
     complete_df["fPhi"] = getCorrectPhi_vectorised(complete_df["fPhi"])
     print("fCosLambda")
@@ -171,8 +180,8 @@ def redifineColumns(complete_df, mass=2.80839160743, charge=2):
     complete_df.eval("fV2TPCr = cos(2 * (fPhi-fPsiTPCr))", inplace=True)
 
 
-def redifineColumnsLight(complete_df):
-    print("Redifining columns")
+def redefineColumnsLight(complete_df):
+    print("Redefining columns")
     print("fP")
     complete_df.eval("fP = fPt * sinh(fEta)", inplace=True)
     print("fPhi")
@@ -192,7 +201,15 @@ def redifineColumnsLight(complete_df):
     complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
 
 
-def getBBAfunctions(parameters, resolution, n_sigma=5, mass=2.80839160743, charge=2):
+def getBBAfunctions(
+    parameters,
+    resolution,
+    n_sigma=5,
+    mass=mass_helion,
+    charge=2,
+    color=ROOT.kRed,
+    line_width=2,
+):
     upper_scale = 1 + resolution * n_sigma
     lower_scale = 1 - resolution * n_sigma
 
@@ -205,31 +222,37 @@ def getBBAfunctions(parameters, resolution, n_sigma=5, mass=2.80839160743, charg
     # Creazione delle funzioni
     func_BB_left = ROOT.TF1("func_BB_left", func_string, -6, -0.5, 5)
     func_BB_left.SetParameters(*parameters)
-    func_BB_left.SetLineColor(ROOT.kRed)
+    func_BB_left.SetLineColor(color)
+    func_BB_left.SetLineWidth(line_width)
 
     func_BB_left_up = ROOT.TF1("func_BB_left_up", func_string_up, -6, -0.5, 5)
     func_BB_left_up.SetParameters(*parameters)
-    func_BB_left_up.SetLineColor(ROOT.kRed)
+    func_BB_left_up.SetLineColor(color)
     func_BB_left_up.SetLineStyle(ROOT.kDashed)
+    func_BB_left_up.SetLineWidth(line_width)
 
     func_BB_left_down = ROOT.TF1("func_BB_left_down", func_string_down, -6, -0.5, 5)
     func_BB_left_down.SetParameters(*parameters)
-    func_BB_left_down.SetLineColor(ROOT.kRed)
+    func_BB_left_down.SetLineColor(color)
     func_BB_left_down.SetLineStyle(ROOT.kDashed)
+    func_BB_left_down.SetLineWidth(line_width)
 
     func_BB_right = ROOT.TF1("func_BB_right", func_string, 0.5, 6.0, 5)
     func_BB_right.SetParameters(*parameters)
-    func_BB_right.SetLineColor(ROOT.kRed)
+    func_BB_right.SetLineColor(color)
+    func_BB_right.SetLineWidth(line_width)
 
     func_BB_right_up = ROOT.TF1("func_BB_right_up", func_string_up, 0.5, 6.0, 5)
     func_BB_right_up.SetParameters(*parameters)
-    func_BB_right_up.SetLineColor(ROOT.kRed)
+    func_BB_right_up.SetLineColor(color)
     func_BB_right_up.SetLineStyle(ROOT.kDashed)
+    func_BB_right_up.SetLineWidth(line_width)
 
     func_BB_right_down = ROOT.TF1("func_BB_right_down", func_string_down, 0.5, 6.0, 5)
     func_BB_right_down.SetParameters(*parameters)
-    func_BB_right_down.SetLineColor(ROOT.kRed)
+    func_BB_right_down.SetLineColor(color)
     func_BB_right_down.SetLineStyle(ROOT.kDashed)
+    func_BB_right_down.SetLineWidth(line_width)
 
     functions = [
         func_BB_left,

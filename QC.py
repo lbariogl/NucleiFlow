@@ -74,7 +74,7 @@ input_dir_AR_general = input_file_AR.Get("flow-qc/general")
 input_dir_AR_flow_ep = input_file_AR.Get("flow-qc/flow_ep")
 
 # define new columns
-utils.redifineColumns(complete_df)
+utils.redefineColumns(complete_df)
 
 # apply common selections
 complete_df.query(f"{mandatory_selections} and {selections}", inplace=True)
@@ -138,6 +138,43 @@ hPhiMinusPsiFT0C = ROOT.TH1F(
 utils.setHistStyle(hPhiMinusPsiFT0C, ROOT.kRed + 2)
 hV2 = ROOT.TH1F("hV2", r";cos(2(#phi - #Psi_{FTOC}))", 100, -1, 1)
 utils.setHistStyle(hV2, ROOT.kRed + 2)
+
+mass_bin_shift = int(utils.mass_alpha * utils.mass_alpha * 10) / 10.0
+
+hTOFmassSquaredVsPt = ROOT.TH2F(
+    "hTOFmassSquaredVsPt",
+    r";#it{p}_{T} (GeV/#it{c}); m^{2}_{TOF} - m^{2}_{{}^{4}He}(Gev^{2}/c^{4})",
+    160,
+    0.0,
+    8.0,
+    210,
+    4.0 - mass_bin_shift,
+    25.0 - mass_bin_shift,
+)
+
+hNsigmaVsPt = ROOT.TH2F(
+    "hNsigmaVsPt",
+    r";#it{p}_{T} (GeV/#it{c}); n_{\sigma_{TPC}}",
+    160,
+    0.0,
+    8.0,
+    100,
+    -5.0,
+    5.0,
+)
+
+hNsigmaVsTOFmassSquared = ROOT.TH2F(
+    "hNsigmaVsTOFmassSquared",
+    r";n_{\sigma_{TPC}}; m^{2}_{TOF} - m^{2}_{{}^{4}He}(Gev^{2}/c^{4})",
+    100,
+    -5.0,
+    5.0,
+    210,
+    4.0 - mass_bin_shift,
+    25.0 - mass_bin_shift,
+)
+# add line corresponding to expected 4He squared mass
+
 
 # get histograms for EP qc
 hZvtx = input_dir_AR_general.Get("hRecVtxZData")
@@ -205,6 +242,18 @@ for i_pt in range(0, n_pt_bins):
     ):
         hTPCsignalVsPoverZ.Fill(sign * rig, signal)
 
+    print("Filling TOF squared mass and TPC nsigma")
+    for pt, tof_mass_squared, n_sigma_tpc in zip(
+        bin_df["fPt"], bin_df["fTOFmassSquared"], bin_df["fNsigmaTPC3He"]
+    ):
+        hTOFmassSquaredVsPt.Fill(
+            abs(pt), tof_mass_squared - utils.mass_alpha * utils.mass_alpha
+        )
+        hNsigmaVsPt.Fill(abs(pt), n_sigma_tpc)
+        hNsigmaVsTOFmassSquared.Fill(
+            n_sigma_tpc, tof_mass_squared - utils.mass_alpha * utils.mass_alpha
+        )
+
     print("Filling phi")
     for phi, psi_ft0c in zip(bin_df["fPhi"], bin_df["fPsiFT0C"]):
         hPhi.Fill(phi)
@@ -213,12 +262,25 @@ for i_pt in range(0, n_pt_bins):
         hPhiMinusPsiFT0C.Fill(delta_phi)
         hV2.Fill(ROOT.TMath.Cos(2 * delta_phi))
 
-functions = utils.getBBAfunctions(parameters=p_train, resolution=resolution_train)
+functions = utils.getBBAfunctions(
+    parameters=p_train, resolution=resolution_train, n_sigma=1
+)
+
+functions_alpha = utils.getBBAfunctions(
+    parameters=p_train,
+    resolution=resolution_train,
+    n_sigma=3,
+    color=ROOT.kGreen,
+    mass=utils.mass_alpha,
+)
 
 cTPC = ROOT.TCanvas("cTPC", "cTPC", 800, 600)
 hTPCsignalVsPoverZ.Draw("colz")
 
 for f in functions:
+    f.Draw("L SAME")
+
+for f in functions_alpha:
     f.Draw("L SAME")
 
 
@@ -232,6 +294,9 @@ cAvgItsClusSizeCosLambdaPt.Write()
 for i_pt in range(0, n_pt_bins):
     hAvgItsClusSizeCosLambda[i_pt].Write()
 hTPCsignalVsPoverZ.Write()
+hTOFmassSquaredVsPt.Write()
+hNsigmaVsPt.Write()
+hNsigmaVsTOFmassSquared.Write()
 hPhi.Write()
 hPsiFT0C.Write()
 hPhiMinusPsiFT0C.Write()
@@ -259,6 +324,9 @@ utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambdaIntegrated, plot_dir_name)
 for i_pt in range(0, n_pt_bins):
     utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambda[i_pt], plot_dir_name)
 utils.saveCanvasAsPDF(hTPCsignalVsPoverZ, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hTOFmassSquaredVsPt, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hNsigmaVsPt, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hNsigmaVsTOFmassSquared, plot_dir_name, is2D=True)
 utils.saveCanvasAsPDF(hPhi, plot_dir_name)
 utils.saveCanvasAsPDF(hPsiFT0C, plot_dir_name)
 utils.saveCanvasAsPDF(hPhiMinusPsiFT0C, plot_dir_name)

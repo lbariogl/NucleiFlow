@@ -76,7 +76,7 @@ nucleiflow_df = nucleiflow_hdl._full_data_frame
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
 # define new columns
-utils.redifineColumns(complete_df)
+utils.redefineColumns(complete_df)
 
 # apply mandatory selections
 complete_df.query(mandatory_selections, inplace=True)
@@ -150,6 +150,7 @@ for i_cent in range(n_cent_classes):
     flow_maker.plot_dir = plot_dir_name
     flow_maker.color = cent_colours[i_cent]
 
+    flow_maker.create_histograms()
     flow_maker.make_flow()
     flow_maker.dump_to_output_file()
     flow_maker.dump_to_pdf()
@@ -279,6 +280,7 @@ if do_syst:
 
             flow_maker_syst.suffix = complete_selection_suffix
 
+            flow_maker_syst.create_histograms()
             flow_maker_syst.make_flow()
             flow_values = flow_maker_syst.getFlowValues()
 

@@ -242,6 +242,7 @@ class FlowMaker:
 
         for i_pt in range(0, self.n_pt_bins):
             pt_bin = [self.pt_bins[i_pt], self.pt_bins[i_pt + 1]]
+            pt_centre = (self.pt_bins[i_pt] + self.pt_bins[i_pt + 1]) / 2
             pt_sel = f"abs(fPt) > {pt_bin[0]} and abs(fPt) < {pt_bin[1]}"
             if self.ptdep_selection_string:
                 pt_sel = pt_sel + " and " + self.ptdep_selection_string[i_pt]
@@ -289,6 +290,8 @@ class FlowMaker:
             sigma_rootfitter.cent_label = (
                 f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
             )
+            if pt_centre > 3:
+                sigma_rootfitter.exp_bkg = True
             sigma_rootfitter.initialise()
             sigma_rootfitter.fit()
             if self.print_frame:

@@ -219,16 +219,16 @@ class FlowMaker:
                     self.n_V2_bin_limits[1],
                 )
 
-                hV2vsTOFmassSquared2D_tmp = utils.getAverage2D(
-                    hV2vsTOFmassSquared2D_tmp,
+                hV2vsTOFmassSquared_tmp = utils.getAverage2D(
+                    hV2vsTOFmassSquared_tmp,
                     f"hV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
                 )
                 utils.setHistStyle(
-                    hV2vsTOFmassSquared2D_tmp, ROOT.kAzure + 1, linewidth=2
+                    hV2vsTOFmassSquared_tmp, ROOT.kAzure + 1, linewidth=2
                 )
 
-                self.hV2vsNsigma3He2D.append(hV2vsNsigma3He2D_tmp)
-                self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
+                self.hV2vsTOFmassSquared2D.append(hV2vsTOFmassSquared2D_tmp)
+                self.hV2vsTOFmassSquared.append(hV2vsTOFmassSquared_tmp)
 
     def make_flow(self):
 
@@ -278,28 +278,12 @@ class FlowMaker:
                         m2 - utils.mass_alpha * utils.mass_alpha
                     )
 
-            # fit n-sigma distribution
-            sigma_rootfitter = roofitter.RooFitter()
-            sigma_rootfitter.variable_range = self.nsigmaTPC_bin_limits
-            sigma_rootfitter.hist = self.hNsigma3He[i_pt]
-            sigma_rootfitter.integral_range = [
-                -1 * self.n_sigma_selection,
-                self.n_sigma_selection,
-            ]
-            sigma_rootfitter.pt_label = pt_label
-            sigma_rootfitter.cent_label = (
-                f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+            self._make_purity(
+                self.hNsigma3He[i_pt],
+                pt_label=pt_label,
+                pt_centre=pt_centre,
+                pt_thr=3.0,
             )
-            if pt_centre > 3:
-                sigma_rootfitter.exp_bkg = True
-            sigma_rootfitter.initialise()
-            sigma_rootfitter.fit()
-            if self.print_frame:
-                sigma_rootfitter.saveFrameAsPDF(self.plot_dir)
-
-            self.cNsigma3HeFit.append(sigma_rootfitter.canvas)
-
-            self.purity.append(sigma_rootfitter.purity)
 
             # system infopanel
             info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
@@ -337,6 +321,30 @@ class FlowMaker:
         # purity vs pt
         for i_pt in range(0, len(self.pt_bins) - 1):
             self.hPurityVsPt.SetBinContent(i_pt + 1, self.purity[i_pt])
+
+    def _make_purity(self, hist, pt_label, pt_centre, pt_thr):
+        # fit n-sigma distribution
+        sigma_rootfitter = roofitter.RooFitter()
+        sigma_rootfitter.variable_range = self.nsigmaTPC_bin_limits
+        sigma_rootfitter.hist = hist
+        sigma_rootfitter.integral_range = [
+            -1 * self.n_sigma_selection,
+            self.n_sigma_selection,
+        ]
+        sigma_rootfitter.pt_label = pt_label
+        sigma_rootfitter.cent_label = (
+            f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+        )
+        if pt_centre > pt_thr:
+            sigma_rootfitter.no_bkg = True
+        sigma_rootfitter.initialise()
+        sigma_rootfitter.fit()
+        if self.print_frame:
+            sigma_rootfitter.saveFrameAsPDF(self.plot_dir)
+
+        self.cNsigma3HeFit.append(sigma_rootfitter.canvas)
+
+        self.purity.append(sigma_rootfitter.purity)
 
     def getFlowValues(self):
         return utils.getValuesFromHisto(self.hV2vsPt)

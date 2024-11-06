@@ -151,7 +151,7 @@ class FlowMaker:
             info_panel_bis.SetTextAlign(12)
             info_panel_bis.SetTextFont(42)
             info_panel_bis.AddText("ALICE")
-            info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+            info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
             info_panel_bis.AddText(
                 f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
             )
@@ -262,10 +262,6 @@ class FlowMaker:
             # select the correct pt bin
             bin_df = self.data_df.query(bin_sel, inplace=False)
 
-            if not self.tof_analysis:
-                self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(bin_df))
-                self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(bin_df)))
-
             for nSigmaTPC, v2, m2 in zip(
                 bin_df["fNsigmaTPC3He"],
                 bin_df[f"fV2{self.ref_detector}"],
@@ -292,7 +288,7 @@ class FlowMaker:
             info_panel.SetTextAlign(12)
             info_panel.SetTextFont(42)
             info_panel.AddText("ALICE")
-            info_panel.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+            info_panel.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
             info_panel.AddText(
                 f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
             )
@@ -308,6 +304,9 @@ class FlowMaker:
             self.cV2vsNsigma3He.append(canvas)
 
             df_bin_3He = bin_df.query(f"abs(fNsigmaTPC3He) < {self.n_sigma_selection}")
+            if not self.tof_analysis:
+                self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(df_bin_3He))
+                self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(df_bin_3He)))
             for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
                 self.hV2[i_pt].Fill(v2)
 
@@ -350,7 +349,7 @@ class FlowMaker:
         return utils.getValuesFromHisto(self.hV2vsPt)
 
     def nPtBins(self):
-        return len(self.pt_bins) - 1
+        return self.n_pt_bins
 
     def dump_to_output_file(self):
         self.output_dir.cd()
@@ -453,7 +452,7 @@ class FlowMaker:
                 info_panel_bis.SetTextAlign(12)
                 info_panel_bis.SetTextFont(42)
                 info_panel_bis.AddText("ALICE")
-                info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+                info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
                 info_panel_bis.AddText(
                     f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
                 )
@@ -481,7 +480,7 @@ class FlowMaker:
         info_panel_v2.SetTextAlign(12)
         info_panel_v2.SetTextFont(42)
         info_panel_v2.AddText("ALICE")
-        info_panel_v2.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_v2.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
         info_panel_v2.AddText(
             f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
         )
@@ -501,7 +500,7 @@ class FlowMaker:
         info_panel_purity.SetTextAlign(12)
         info_panel_purity.SetTextFont(42)
         info_panel_purity.AddText("ALICE")
-        info_panel_purity.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_purity.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
         info_panel_purity.AddText(
             f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
         )
@@ -521,7 +520,7 @@ class FlowMaker:
         info_panel_raw.SetTextAlign(12)
         info_panel_raw.SetTextFont(42)
         info_panel_raw.AddText("ALICE")
-        info_panel_raw.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_raw.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
         info_panel_raw.AddText(
             f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
         )

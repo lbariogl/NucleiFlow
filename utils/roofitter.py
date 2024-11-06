@@ -317,10 +317,10 @@ class RooFitter:
         )
         self.tot_integral_error = np.sqrt(self.tot_integral)
 
-        if not self.no_bkg:
+        if self.no_bkg:
             self.bkg_integral = 0
             self.bkg_integral_error = 0
-            self.purity = 0
+            self.purity = 1
             self.purity_error = 0
 
         else:

@@ -185,14 +185,7 @@ class FlowMaker:
                 self.n_V2_bin_limits[1],
             )
 
-            hV2vsNsigma3He_tmp = utils.getAverage2D(
-                hV2vsNsigma3He2D_tmp,
-                f"hV2{self.ref_detector}vsNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-            )
-            utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure + 1, linewidth=2)
-
             self.hV2vsNsigma3He2D.append(hV2vsNsigma3He2D_tmp)
-            self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
 
             # TOF analysis
             if self.tof_analysis:
@@ -219,16 +212,7 @@ class FlowMaker:
                     self.n_V2_bin_limits[1],
                 )
 
-                hV2vsTOFmassSquared_tmp = utils.getAverage2D(
-                    hV2vsTOFmassSquared_tmp,
-                    f"hV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-                )
-                utils.setHistStyle(
-                    hV2vsTOFmassSquared_tmp, ROOT.kAzure + 1, linewidth=2
-                )
-
                 self.hV2vsTOFmassSquared2D.append(hV2vsTOFmassSquared2D_tmp)
-                self.hV2vsTOFmassSquared.append(hV2vsTOFmassSquared_tmp)
 
     def make_flow(self):
 
@@ -262,17 +246,18 @@ class FlowMaker:
             # select the correct pt bin
             bin_df = self.data_df.query(bin_sel, inplace=False)
 
-            for nSigmaTPC, v2, m2 in zip(
-                bin_df["fNsigmaTPC3He"],
-                bin_df[f"fV2{self.ref_detector}"],
-                bin_df["fTOFmassSquared"],
+            for nSigmaTPC, v2 in zip(
+                bin_df["fNsigmaTPC3He"], bin_df[f"fV2{self.ref_detector}"]
             ):
                 self.hNsigma3He[i_pt].Fill(nSigmaTPC)
                 self.hV2vsNsigma3He2D[i_pt].Fill(nSigmaTPC, v2)
-                if self.tof_analysis:
-                    self.hTOFmassSquared[i_pt].Fill(
-                        m2 - utils.mass_alpha * utils.mass_alpha
-                    )
+
+            hV2vsNsigma3He_tmp = utils.getAverage2D(
+                self.hV2vsNsigma3He2D[i_pt],
+                f"hV2{self.ref_detector}vsNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+            )
+            utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure + 1, linewidth=2)
+            self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
 
             self._make_purity(
                 self.hNsigma3He[i_pt],
@@ -303,12 +288,33 @@ class FlowMaker:
 
             self.cV2vsNsigma3He.append(canvas)
 
-            df_bin_3He = bin_df.query(f"abs(fNsigmaTPC3He) < {self.n_sigma_selection}")
             if not self.tof_analysis:
-                self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(df_bin_3He))
-                self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(df_bin_3He)))
-            for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
-                self.hV2[i_pt].Fill(v2)
+                df_bin_3He = bin_df.query(
+                    f"abs(fNsigmaTPC3He) < {self.n_sigma_selection}"
+                )
+                if not self.tof_analysis:
+                    self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(df_bin_3He))
+                    self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(df_bin_3He)))
+                for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
+                    self.hV2[i_pt].Fill(v2)
+            else:
+                df_bin_4He = bin_df.query(f"fNsigmaTPC3He > 0")
+                for m2, v2 in zip(
+                    df_bin_4He["fTOFmassSquared"],
+                    df_bin_4He[f"fV2{self.ref_detector}"],
+                ):
+                    centered_m2 = m2 - utils.mass_alpha * utils.mass_alpha
+                    self.hTOFmassSquared[i_pt].Fill(centered_m2)
+                    self.hV2vsTOFmassSquared2D[i_pt].Fill(centered_m2, v2)
+
+                hV2vsTOFmassSquared_tmp = utils.getAverage2D(
+                    self.hV2vsTOFmassSquared2D[i_pt],
+                    f"hV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                )
+                utils.setHistStyle(
+                    hV2vsTOFmassSquared_tmp, ROOT.kAzure + 1, linewidth=2
+                )
+                self.hV2vsTOFmassSquared.append(hV2vsTOFmassSquared_tmp)
 
         # v2 vs Pt
         for i_pt in range(0, len(self.pt_bins) - 1):

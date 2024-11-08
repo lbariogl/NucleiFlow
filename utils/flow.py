@@ -151,7 +151,7 @@ class FlowMaker:
             info_panel_bis.SetTextAlign(12)
             info_panel_bis.SetTextFont(42)
             info_panel_bis.AddText("ALICE")
-            info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+            info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
             info_panel_bis.AddText(
                 f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
             )
@@ -185,14 +185,7 @@ class FlowMaker:
                 self.n_V2_bin_limits[1],
             )
 
-            hV2vsNsigma3He_tmp = utils.getAverage2D(
-                hV2vsNsigma3He2D_tmp,
-                f"hV2{self.ref_detector}vsNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-            )
-            utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure + 1, linewidth=2)
-
             self.hV2vsNsigma3He2D.append(hV2vsNsigma3He2D_tmp)
-            self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
 
             # TOF analysis
             if self.tof_analysis:
@@ -219,16 +212,7 @@ class FlowMaker:
                     self.n_V2_bin_limits[1],
                 )
 
-                hV2vsTOFmassSquared2D_tmp = utils.getAverage2D(
-                    hV2vsTOFmassSquared2D_tmp,
-                    f"hV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-                )
-                utils.setHistStyle(
-                    hV2vsTOFmassSquared2D_tmp, ROOT.kAzure + 1, linewidth=2
-                )
-
-                self.hV2vsNsigma3He2D.append(hV2vsNsigma3He2D_tmp)
-                self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
+                self.hV2vsTOFmassSquared2D.append(hV2vsTOFmassSquared2D_tmp)
 
     def make_flow(self):
 
@@ -242,6 +226,7 @@ class FlowMaker:
 
         for i_pt in range(0, self.n_pt_bins):
             pt_bin = [self.pt_bins[i_pt], self.pt_bins[i_pt + 1]]
+            pt_centre = (self.pt_bins[i_pt] + self.pt_bins[i_pt + 1]) / 2
             pt_sel = f"abs(fPt) > {pt_bin[0]} and abs(fPt) < {pt_bin[1]}"
             if self.ptdep_selection_string:
                 pt_sel = pt_sel + " and " + self.ptdep_selection_string[i_pt]
@@ -261,42 +246,25 @@ class FlowMaker:
             # select the correct pt bin
             bin_df = self.data_df.query(bin_sel, inplace=False)
 
-            if not self.tof_analysis:
-                self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(bin_df))
-                self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(bin_df)))
-
-            for nSigmaTPC, v2, m2 in zip(
-                bin_df["fNsigmaTPC3He"],
-                bin_df[f"fV2{self.ref_detector}"],
-                bin_df["fTOFmassSquared"],
+            for nSigmaTPC, v2 in zip(
+                bin_df["fNsigmaTPC3He"], bin_df[f"fV2{self.ref_detector}"]
             ):
                 self.hNsigma3He[i_pt].Fill(nSigmaTPC)
                 self.hV2vsNsigma3He2D[i_pt].Fill(nSigmaTPC, v2)
-                if self.tof_analysis:
-                    self.hTOFmassSquared[i_pt].Fill(
-                        m2 - utils.mass_alpha * utils.mass_alpha
-                    )
 
-            # fit n-sigma distribution
-            sigma_rootfitter = roofitter.RooFitter()
-            sigma_rootfitter.variable_range = self.nsigmaTPC_bin_limits
-            sigma_rootfitter.hist = self.hNsigma3He[i_pt]
-            sigma_rootfitter.integral_range = [
-                -1 * self.n_sigma_selection,
-                self.n_sigma_selection,
-            ]
-            sigma_rootfitter.pt_label = pt_label
-            sigma_rootfitter.cent_label = (
-                f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+            hV2vsNsigma3He_tmp = utils.getAverage2D(
+                self.hV2vsNsigma3He2D[i_pt],
+                f"hV2{self.ref_detector}vsNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
             )
-            sigma_rootfitter.initialise()
-            sigma_rootfitter.fit()
-            if self.print_frame:
-                sigma_rootfitter.saveFrameAsPDF(self.plot_dir)
+            utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure + 1, linewidth=2)
+            self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
 
-            self.cNsigma3HeFit.append(sigma_rootfitter.canvas)
-
-            self.purity.append(sigma_rootfitter.purity)
+            self._make_purity(
+                self.hNsigma3He[i_pt],
+                pt_label=pt_label,
+                pt_centre=pt_centre,
+                pt_thr=3.0,
+            )
 
             # system infopanel
             info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
@@ -305,7 +273,7 @@ class FlowMaker:
             info_panel.SetTextAlign(12)
             info_panel.SetTextFont(42)
             info_panel.AddText("ALICE")
-            info_panel.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+            info_panel.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
             info_panel.AddText(
                 f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
             )
@@ -320,9 +288,33 @@ class FlowMaker:
 
             self.cV2vsNsigma3He.append(canvas)
 
-            df_bin_3He = bin_df.query(f"abs(fNsigmaTPC3He) < {self.n_sigma_selection}")
-            for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
-                self.hV2[i_pt].Fill(v2)
+            if not self.tof_analysis:
+                df_bin_3He = bin_df.query(
+                    f"abs(fNsigmaTPC3He) < {self.n_sigma_selection}"
+                )
+                if not self.tof_analysis:
+                    self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(df_bin_3He))
+                    self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(df_bin_3He)))
+                for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
+                    self.hV2[i_pt].Fill(v2)
+            else:
+                df_bin_4He = bin_df.query(f"fNsigmaTPC3He > 0")
+                for m2, v2 in zip(
+                    df_bin_4He["fTOFmassSquared"],
+                    df_bin_4He[f"fV2{self.ref_detector}"],
+                ):
+                    centered_m2 = m2 - utils.mass_alpha * utils.mass_alpha
+                    self.hTOFmassSquared[i_pt].Fill(centered_m2)
+                    self.hV2vsTOFmassSquared2D[i_pt].Fill(centered_m2, v2)
+
+                hV2vsTOFmassSquared_tmp = utils.getAverage2D(
+                    self.hV2vsTOFmassSquared2D[i_pt],
+                    f"hV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                )
+                utils.setHistStyle(
+                    hV2vsTOFmassSquared_tmp, ROOT.kAzure + 1, linewidth=2
+                )
+                self.hV2vsTOFmassSquared.append(hV2vsTOFmassSquared_tmp)
 
         # v2 vs Pt
         for i_pt in range(0, len(self.pt_bins) - 1):
@@ -335,11 +327,35 @@ class FlowMaker:
         for i_pt in range(0, len(self.pt_bins) - 1):
             self.hPurityVsPt.SetBinContent(i_pt + 1, self.purity[i_pt])
 
+    def _make_purity(self, hist, pt_label, pt_centre, pt_thr):
+        # fit n-sigma distribution
+        sigma_rootfitter = roofitter.RooFitter()
+        sigma_rootfitter.variable_range = self.nsigmaTPC_bin_limits
+        sigma_rootfitter.hist = hist
+        sigma_rootfitter.integral_range = [
+            -1 * self.n_sigma_selection,
+            self.n_sigma_selection,
+        ]
+        sigma_rootfitter.pt_label = pt_label
+        sigma_rootfitter.cent_label = (
+            f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+        )
+        if pt_centre > pt_thr:
+            sigma_rootfitter.no_bkg = True
+        sigma_rootfitter.initialise()
+        sigma_rootfitter.fit()
+        if self.print_frame:
+            sigma_rootfitter.saveFrameAsPDF(self.plot_dir)
+
+        self.cNsigma3HeFit.append(sigma_rootfitter.canvas)
+
+        self.purity.append(sigma_rootfitter.purity)
+
     def getFlowValues(self):
         return utils.getValuesFromHisto(self.hV2vsPt)
 
     def nPtBins(self):
-        return len(self.pt_bins) - 1
+        return self.n_pt_bins
 
     def dump_to_output_file(self):
         self.output_dir.cd()
@@ -349,12 +365,16 @@ class FlowMaker:
             self.output_dir.cd(f"pt_{bin[0]}_{bin[1]}")
             self.hNsigma3He[i_pt].Write()
             self.cNsigma3HeFit[i_pt].Write()
-            if self.tof_analysis:
-                self.hTOFmassSquared[i_pt].Write()
             self.hV2vsNsigma3He2D[i_pt].Write()
             self.hV2vsNsigma3He[i_pt].Write()
             self.cV2vsNsigma3He[i_pt].Write()
+            if self.tof_analysis:
+                self.hTOFmassSquared[i_pt].Write()
+                self.hV2vsTOFmassSquared2D[i_pt].Write()
+                self.hV2vsTOFmassSquared[i_pt].Write()
+                self.cV2vsTOFmassSquared[i_pt].Write()
             self.hV2[i_pt].Write()
+
         self.output_dir.cd()
         self.hV2vsPt.Write()
         self.hPurityVsPt.Write()
@@ -442,7 +462,7 @@ class FlowMaker:
                 info_panel_bis.SetTextAlign(12)
                 info_panel_bis.SetTextFont(42)
                 info_panel_bis.AddText("ALICE")
-                info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+                info_panel_bis.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
                 info_panel_bis.AddText(
                     f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
                 )
@@ -470,7 +490,7 @@ class FlowMaker:
         info_panel_v2.SetTextAlign(12)
         info_panel_v2.SetTextFont(42)
         info_panel_v2.AddText("ALICE")
-        info_panel_v2.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_v2.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
         info_panel_v2.AddText(
             f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
         )
@@ -490,7 +510,7 @@ class FlowMaker:
         info_panel_purity.SetTextAlign(12)
         info_panel_purity.SetTextFont(42)
         info_panel_purity.AddText("ALICE")
-        info_panel_purity.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_purity.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
         info_panel_purity.AddText(
             f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
         )
@@ -510,7 +530,7 @@ class FlowMaker:
         info_panel_raw.SetTextAlign(12)
         info_panel_raw.SetTextFont(42)
         info_panel_raw.AddText("ALICE")
-        info_panel_raw.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
+        info_panel_raw.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
         info_panel_raw.AddText(
             f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
         )

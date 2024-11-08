@@ -67,7 +67,7 @@ for dir_name in input_dir_names:
     dataset_dir = output_file.mkdir(dir_name)
 
     # define new columns
-    utils.redefineColumnsLight(nuclei_df)
+    utils.redefineColumnsLight(nuclei_df, charge=2)
 
     # apply mandatory selections
     nuclei_df.query(mandatory_selections + " and " + selections, inplace=True)

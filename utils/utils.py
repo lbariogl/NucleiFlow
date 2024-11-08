@@ -180,8 +180,10 @@ def redefineColumns(complete_df, mass=mass_helion, charge=2):
     complete_df.eval("fV2TPCr = cos(2 * (fPhi-fPsiTPCr))", inplace=True)
 
 
-def redefineColumnsLight(complete_df):
+def redefineColumnsLight(complete_df, charge=2):
     print("Redefining columns")
+    print("fPt")
+    complete_df["fPt"] = charge * complete_df["fPt"]
     print("fP")
     complete_df.eval("fP = fPt * sinh(fEta)", inplace=True)
     print("fPhi")

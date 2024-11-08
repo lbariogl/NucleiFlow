@@ -365,12 +365,16 @@ class FlowMaker:
             self.output_dir.cd(f"pt_{bin[0]}_{bin[1]}")
             self.hNsigma3He[i_pt].Write()
             self.cNsigma3HeFit[i_pt].Write()
-            if self.tof_analysis:
-                self.hTOFmassSquared[i_pt].Write()
             self.hV2vsNsigma3He2D[i_pt].Write()
             self.hV2vsNsigma3He[i_pt].Write()
             self.cV2vsNsigma3He[i_pt].Write()
+            if self.tof_analysis:
+                self.hTOFmassSquared[i_pt].Write()
+                self.hV2vsTOFmassSquared2D[i_pt].Write()
+                self.hV2vsTOFmassSquared[i_pt].Write()
+                self.cV2vsTOFmassSquared[i_pt].Write()
             self.hV2[i_pt].Write()
+
         self.output_dir.cd()
         self.hV2vsPt.Write()
         self.hPurityVsPt.Write()

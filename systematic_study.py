@@ -43,8 +43,9 @@ selection_dict = config["selection_dict"]
 standard_selection_list = selection_dict.values()
 standard_selections = " and ".join(standard_selection_list)
 
-ptdep_selection_dict = config["ptdep_selection_dict"]
-standard_ptdep_selections = ptdep_selection_dict["fAvgItsClusSizeCosLambda"]
+standard_ptdep_selection_dict = config["ptdep_selection_dict"][
+    "fAvgItsClusSizeCosLambda"
+]
 
 cent_detector_label = config["cent_detector_label"]
 
@@ -73,9 +74,23 @@ res_0_10 = hResolution.GetBinContent(1)
 res_10_20 = hResolution.GetBinContent(2)
 res_20_40 = (hResolution.GetBinContent(3) + hResolution.GetBinContent(4)) / 2
 res_40_60 = (hResolution.GetBinContent(5) + hResolution.GetBinContent(6)) / 2
+
+res_20_30 = hResolution.GetBinContent(3)
+res_30_40 = hResolution.GetBinContent(4)
+res_40_50 = hResolution.GetBinContent(5)
+res_50_60 = hResolution.GetBinContent(6)
 res_60_80 = (hResolution.GetBinContent(7) + hResolution.GetBinContent(8)) / 2
 
-resolutions = [res_0_10, res_10_20, res_20_40, res_40_60, res_60_80]
+# resolutions = [res_0_10, res_10_20, res_20_40, res_40_60]
+resolutions = [
+    res_0_10,
+    res_10_20,
+    res_20_30,
+    res_30_40,
+    res_40_50,
+    res_50_60,
+    res_60_80,
+]
 
 # get Standard Spectrum
 standard_file_name = f"{output_dir_name}/" + config["output_file_name"]
@@ -156,44 +171,40 @@ for var in cut_dict_syst:
 
 # pt-dependent selections
 ptdep_cut_dict_syst = config["ptdep_cut_dict_syst"]
+n_ptdep_variations_syst = config["n_ptdep_variations_syst"]["fAvgItsClusSizeCosLambda"]
 
-ptdep_cut_string_list = []
-for i_pt, pt_el in enumerate(ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]):
+ptdep_cut_string_dict = {}
+
+for pt_key, pt_el in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"].items():
     ptdep_cut_greater = pt_el["cut_greater"]
     ptdep_cut_greater_string = " > " if ptdep_cut_greater else " < "
     ptdep_cut_list = pt_el["cut_list"]
-    ptdep_cut_arr = np.linspace(ptdep_cut_list[0], ptdep_cut_list[1], ptdep_cut_list[2])
-    ptdep_cut_string_list.append([])
-    for i_ptdep_cut, ptdep_cut in enumerate(ptdep_cut_arr):
-        ptdep_cut_string_list[i_pt].append(
+    ptdep_cut_arr = np.linspace(
+        ptdep_cut_list[0], ptdep_cut_list[1], n_ptdep_variations_syst
+    )
+    ptdep_cut_string_dict[pt_key] = []
+    for ptdep_cut in ptdep_cut_arr:
+        ptdep_cut_string_dict[pt_key].append(
             "fAvgItsClusSizeCosLambda" + ptdep_cut_greater_string + str(ptdep_cut)
         )
 
-n_ptdep_variations = len(ptdep_cut_string_list[0])
-n_max_pt_bins = len(pt_bins[0]) - 1
+ptdep_cut_string_dict_list = []
+for i_variation in range(n_ptdep_variations_syst):
+    variation_dict = {}
+    for pt_key in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]:
+        variation_dict[pt_key] = ptdep_cut_string_dict[pt_key][i_variation]
+    ptdep_cut_string_dict_list.append(variation_dict)
 
-sorted_ptdep_cut_string_list = []
+
+n_ptdep_variations = len(ptdep_cut_string_dict_list)
+
 cut_label_dict["fAvgItsClusSizeCosLambda"] = []
-variation_list = [
-    "- 0.5",
-    "- 0.4",
-    "- 0.3",
-    "- 0.2",
-    "- 0.1",
-    "",
-    "+ 0.1",
-    "+ 0.2",
-    "+ 0.3",
-    "+ 0.4",
-    "+ 0.5",
-]
+for i_var in range(n_ptdep_variations):
 
-for i_var in range(0, n_ptdep_variations):
-    pt_var_list = []
-    for i_pt in range(0, n_max_pt_bins):
-        pt_var_list.append(ptdep_cut_string_list[i_pt][i_var])
-    sorted_ptdep_cut_string_list.append(pt_var_list)
-    cut_label_dict["fAvgItsClusSizeCosLambda"].append(f"> def. {variation_list[i_var]}")
+    index = int(i_var - (n_ptdep_variations - 1) / 2)
+
+    ptdep_suffix_string = f"fAvgItsClusSizeCosLambda > def. + {index}*step"
+    cut_label_dict["fAvgItsClusSizeCosLambda"].append(ptdep_suffix_string)
 
 
 print("  ** separated cuts **")
@@ -253,9 +264,10 @@ for i_cent in range(n_cent_classes):
 
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = cut
-            flow_maker_syst.ptdep_selection_string = standard_ptdep_selections
+            flow_maker_syst.ptdep_selection_dict = standard_ptdep_selection_dict
             flow_maker_syst.suffix = var_suffix
 
+            flow_maker_syst.create_histograms()
             flow_maker_syst.make_flow()
             flow_values = flow_maker_syst.getFlowValues()
             # write histograms to file
@@ -313,9 +325,9 @@ for i_cent in range(n_cent_classes):
             )
         )
 
-    for i_cut, cut in enumerate(sorted_ptdep_cut_string_list):
+    for i_cut in range(n_ptdep_variations):
 
-        print(f"{var}: {i_cut} / {len(sorted_ptdep_cut_string_list)} ==> {cut}")
+        print(f"{var}: {i_cut} / {n_ptdep_variations}")
 
         output_dir_varied = var_dir.mkdir(f"{i_cut}")
 
@@ -327,9 +339,10 @@ for i_cent in range(n_cent_classes):
 
         var_suffix = f"_{var}_{i_cut}"
         flow_maker_syst.selection_string = standard_selections
-        flow_maker_syst.ptdep_selection_string = cut
+        flow_maker_syst.ptdep_selection_dict = ptdep_cut_string_dict_list[i_cut]
         flow_maker_syst.suffix = var_suffix
 
+        flow_maker_syst.create_histograms()
         flow_maker_syst.make_flow()
         flow_values = flow_maker_syst.getFlowValues()
         # write histograms to file
@@ -347,7 +360,7 @@ for i_cent in range(n_cent_classes):
 
     dict_hist_abs_syst[var] = histo_v2_syst
 
-    # get color paletter
+    # get color palette
     cols = ROOT.TColor.GetPalette()
 
     cent_dirs[i_cent].cd()
@@ -444,7 +457,7 @@ for i_cent in range(n_cent_classes):
             canvas_syst.Write()
             canvas_syst.SaveAs(f"{cent_syst_dir_name}/{canvas_syst.GetName()}.pdf")
 
-            # absative syst vs pt
+            # absolute syst vs pt
             if histo.Integral() > 2:
                 histo_abs_syst.SetBinContent(i_histo + 1, histo.GetRMS())
                 histo_abs_syst.SetBinError(i_histo + 1, 0)

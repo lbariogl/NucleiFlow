@@ -72,7 +72,6 @@ class FlowMaker:
         self.print_frame = False
 
         # purity
-        self.purity = []
         self.hPurityVsPt = None
 
     def _check_members(self):
@@ -259,12 +258,13 @@ class FlowMaker:
             utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure + 1, linewidth=2)
             self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
 
-            self._make_purity(
-                self.hNsigma3He[i_pt],
-                pt_label=pt_label,
-                pt_centre=pt_centre,
-                pt_thr=3.0,
-            )
+            if not self.tof_analysis:
+                self._make_purity(
+                    self.hNsigma3He[i_pt],
+                    pt_label=pt_label,
+                    pt_centre=pt_centre,
+                    pt_thr=3.0,
+                )
 
             # system infopanel
             info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
@@ -292,9 +292,8 @@ class FlowMaker:
                 df_bin_3He = bin_df.query(
                     f"abs(fNsigmaTPC3He) < {self.n_sigma_selection}"
                 )
-                if not self.tof_analysis:
-                    self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(df_bin_3He))
-                    self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(df_bin_3He)))
+                self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(df_bin_3He))
+                self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(df_bin_3He)))
                 for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
                     self.hV2[i_pt].Fill(v2)
             else:
@@ -316,16 +315,23 @@ class FlowMaker:
                 )
                 self.hV2vsTOFmassSquared.append(hV2vsTOFmassSquared_tmp)
 
+                tof_panel = info_panel.Clone()
+
+                canvas = utils.getCanvasWithTwoPanels(
+                    f"cV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                    self.hV2vsTOFmassSquared[i_pt],
+                    self.hTOFmassSquared[i_pt],
+                    bottom_panel=tof_panel,
+                )
+
+                self.cV2vsTOFmassSquared.append(canvas)
+
         # v2 vs Pt
-        for i_pt in range(0, len(self.pt_bins) - 1):
+        for i_pt in range(0, self.n_pt_bins):
             self.hV2vsPt.SetBinContent(i_pt + 1, self.hV2[i_pt].GetMean())
             self.hV2vsPt.SetBinError(i_pt + 1, self.hV2[i_pt].GetMeanError())
 
         self.hV2vsPt.Scale(1 / self.resolution)
-
-        # purity vs pt
-        for i_pt in range(0, len(self.pt_bins) - 1):
-            self.hPurityVsPt.SetBinContent(i_pt + 1, self.purity[i_pt])
 
     def _make_purity(self, hist, pt_label, pt_centre, pt_thr):
         # fit n-sigma distribution
@@ -349,7 +355,9 @@ class FlowMaker:
 
         self.cNsigma3HeFit.append(sigma_rootfitter.canvas)
 
-        self.purity.append(sigma_rootfitter.purity)
+        self.hPurityVsPt.SetBinContent(
+            self.hPurityVsPt.FindBin(pt_centre), sigma_rootfitter.purity
+        )
 
     def getFlowValues(self):
         return utils.getValuesFromHisto(self.hV2vsPt)
@@ -358,13 +366,13 @@ class FlowMaker:
         return self.n_pt_bins
 
     def dump_to_output_file(self):
+        print("dump_to_output_file")
         self.output_dir.cd()
-        for i_pt in range(0, len(self.pt_bins) - 1):
+        for i_pt in range(0, self.n_pt_bins):
             bin = [self.pt_bins[i_pt], self.pt_bins[i_pt + 1]]
             self.output_dir.mkdir(f"pt_{bin[0]}_{bin[1]}")
             self.output_dir.cd(f"pt_{bin[0]}_{bin[1]}")
             self.hNsigma3He[i_pt].Write()
-            self.cNsigma3HeFit[i_pt].Write()
             self.hV2vsNsigma3He2D[i_pt].Write()
             self.hV2vsNsigma3He[i_pt].Write()
             self.cV2vsNsigma3He[i_pt].Write()
@@ -373,6 +381,8 @@ class FlowMaker:
                 self.hV2vsTOFmassSquared2D[i_pt].Write()
                 self.hV2vsTOFmassSquared[i_pt].Write()
                 self.cV2vsTOFmassSquared[i_pt].Write()
+            else:
+                self.cNsigma3HeFit[i_pt].Write()
             self.hV2[i_pt].Write()
 
         self.output_dir.cd()
@@ -381,11 +391,12 @@ class FlowMaker:
         self.hRawCountsVsPt.Write()
 
     def dump_to_pdf(self):
+        print("dump_to_pdf")
         if not self.plot_dir:
             raise ValueError("plot_dir not set.")
         if not os.path.exists(self.plot_dir):
             os.makedirs(self.plot_dir)
-        for i_pt in range(0, len(self.pt_bins) - 1):
+        for i_pt in range(0, self.n_pt_bins):
             utils.saveCanvasAsPDF(self.hNsigma3He[i_pt], self.plot_dir)
             utils.saveCanvasAsPDF(self.hV2[i_pt], self.plot_dir)
         utils.saveCanvasAsPDF(self.hV2vsPt, self.plot_dir)
@@ -393,6 +404,7 @@ class FlowMaker:
         utils.saveCanvasAsPDF(self.hRawCountsVsPt, self.plot_dir)
 
     def dump_summary_to_pdf(self, rows_per_page=3):
+        print("dump_summary_to_pdf")
         if not self.plot_dir:
             raise ValueError("plot_dir not set.")
         if not os.path.exists(self.plot_dir):
@@ -405,7 +417,7 @@ class FlowMaker:
         canvas = ROOT.TCanvas("canvas", "", 595, 842)  # A4 size in portrait
         canvas.Print(f"{multipage_pdf}[", "pdf")
 
-        total_pt_bins = len(self.pt_bins) - 1
+        total_pt_bins = self.n_pt_bins
 
         # Loop through pt bins in groups of rows_per_page
         for page_start in range(0, total_pt_bins, rows_per_page):
@@ -555,6 +567,5 @@ class FlowMaker:
         self.cV2vsTOFmassSquared = []
         self.hV2 = []
         self.hV2vsPt = None
-        self.hPurityVsP = None
+        self.hPurityVsPt = None
         self.hRawCountsVsPt = None
-        self.purity = []

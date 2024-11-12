@@ -38,6 +38,9 @@ output_file_name = config["output_file_name"]
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
+# Tof analysis (True for 4He)
+tof_analysis = config["tof_analysis"]
+
 mandatory_selections = config["mandatory_selections"]
 selection_dict = config["selection_dict"]
 selection_list = selection_dict.values()
@@ -97,8 +100,12 @@ res_40_50 = hResolution.GetBinContent(5)
 res_50_60 = hResolution.GetBinContent(6)
 res_60_80 = (hResolution.GetBinContent(7) + hResolution.GetBinContent(8)) / 2
 
+res_0_20 = (hResolution.GetBinContent(1) + hResolution.GetBinContent(2)) / 2
+res_20_50 = (hResolution.GetBinContent(3) + hResolution.GetBinContent(5)) / 3
+res_50_80 = (hResolution.GetBinContent(6) + hResolution.GetBinContent(8)) / 3
+
 # resolutions = [res_0_10, res_10_20, res_20_40, res_40_60]
-resolutions = [
+resolutions_3He = [
     res_0_10,
     res_10_20,
     res_20_30,
@@ -107,6 +114,8 @@ resolutions = [
     res_50_60,
     res_60_80,
 ]
+
+resolutions_4He = [res_0_20, res_20_50, res_50_80]
 
 # Flow measurement
 output_file.cd()
@@ -120,15 +129,24 @@ cent_dirs = []
 cent_plots_dir_names = []
 
 for i_cent in range(n_cent_classes):
+    print("*****************************")
+    print(
+        f" cent class: {centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]}"
+    )
+    print("*****************************")
     flow_maker = FlowMaker()
     flow_maker.data_df = complete_df
     flow_maker.selection_string = selections
+    flow_maker.tof_analysis = tof_analysis
     flow_maker.pt_bins = pt_bins[i_cent]
 
     flow_maker.ptdep_selection_dict = ptdep_selection_dict
 
     flow_maker.cent_limits = centrality_classes[i_cent]
-    flow_maker.resolution = resolutions[i_cent]
+    if tof_analysis:
+        flow_maker.resolution = resolutions_4He[i_cent]
+    else:
+        flow_maker.resolution = resolutions_3He[i_cent]
     flow_maker.print_frame = True
     flow_maker.ref_detector = reference_flow_detector
 
@@ -257,9 +275,13 @@ if do_syst:
 
             flow_maker_syst = FlowMaker()
             flow_maker_syst.data_df = complete_df
+            flow_maker_syst.tof_analysis = tof_analysis
             flow_maker_syst.pt_bins = pt_bins[i_cent]
             flow_maker_syst.cent_limits = centrality_classes[i_cent]
-            flow_maker_syst.resolution = resolutions[i_cent]
+            if tof_analysis:
+                flow_maker_syst.resolution = resolutions_4He[i_cent]
+            else:
+                flow_maker_syst.resolution = resolutions_3He[i_cent]
             flow_maker_syst.ref_detector = reference_flow_detector
 
             complete_selection_suffix = f"_sel{i_complete_selection}"

@@ -38,6 +38,9 @@ output_file_name = output_file_name[:-5] + "_separated.root"
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
+# Tof analysis (True for 4He)
+tof_analysis = config["tof_analysis"]
+
 mandatory_selections = config["mandatory_selections"]
 selection_dict = config["selection_dict"]
 standard_selection_list = selection_dict.values()
@@ -258,6 +261,7 @@ for i_cent in range(n_cent_classes):
 
             flow_maker_syst = FlowMaker()
             flow_maker_syst.data_df = complete_df
+            flow_maker_syst.tof_analysis = tof_analysis
             flow_maker_syst.pt_bins = pt_bins[i_cent]
             flow_maker_syst.cent_limits = centrality_classes[i_cent]
             flow_maker_syst.resolution = resolutions[i_cent]
@@ -333,6 +337,7 @@ for i_cent in range(n_cent_classes):
 
         flow_maker_syst = FlowMaker()
         flow_maker_syst.data_df = complete_df
+        flow_maker_syst.tof_analysis = tof_analysis
         flow_maker_syst.pt_bins = pt_bins[i_cent]
         flow_maker_syst.cent_limits = centrality_classes[i_cent]
         flow_maker_syst.resolution = resolutions[i_cent]

@@ -137,7 +137,9 @@ getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
 
 
 # redefine columns in the complete data-frame
-def redefineColumns(complete_df, mass=mass_helion, charge=2):
+def redefineColumns(
+    complete_df, mass=mass_helion, charge=2, parameters=default_bb_parameters
+):
     print("Redefining columns")
     print("fPt")
     complete_df["fPt"] = charge * complete_df["fPt"]
@@ -157,9 +159,14 @@ def redefineColumns(complete_df, mass=mass_helion, charge=2):
     print("fSign")
     complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
     print("fNsigmaTPC3He")
-    complete_df.eval(
-        f"fNsigmaTPC3He = @getNsigmaTPC_vectorised({charge}*fTPCInnerParam, fTPCsignal, mass={mass})",
-        inplace=True,
+    complete_df["fNsigmaTPC3He"] = complete_df.apply(
+        lambda row: getNsigmaTPC(
+            charge * row["fTPCInnerParam"],
+            row["fTPCsignal"],
+            mass=mass,
+            parameters=parameters,
+        ),
+        axis=1,
     )
     # print('fRapidity')
     # complete_df.eval(

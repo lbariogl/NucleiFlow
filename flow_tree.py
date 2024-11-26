@@ -38,6 +38,10 @@ output_file_name = config["output_file_name"]
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
+# n-sigma TPC bins
+n_nsigmaTPC_bins = config["n_nsigmaTPC_bins"]
+nsigmaTPC_bin_limits = config["nsigmaTPC_bin_limits"]
+
 # Tof analysis (True for 4He)
 tof_analysis = config["tof_analysis"]
 
@@ -79,7 +83,7 @@ nucleiflow_df = nucleiflow_hdl._full_data_frame
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
 # define new columns
-utils.redefineColumns(complete_df)
+utils.redefineColumns(complete_df, mass=utils.mass_helion, parameters=p_train)
 
 # apply mandatory selections
 complete_df.query(mandatory_selections, inplace=True)
@@ -138,6 +142,8 @@ for i_cent in range(n_cent_classes):
     flow_maker.data_df = complete_df
     flow_maker.selection_string = selections
     flow_maker.tof_analysis = tof_analysis
+    flow_maker.n_nsigmaTPC_bins = n_nsigmaTPC_bins
+    flow_maker.nsigmaTPC_bin_limits = nsigmaTPC_bin_limits
     flow_maker.pt_bins = pt_bins[i_cent]
 
     flow_maker.ptdep_selection_dict = ptdep_selection_dict
@@ -397,7 +403,7 @@ if do_syst:
 
 print("Making final plots")
 cV2 = ROOT.TCanvas("cV2", "cV2", 800, 600)
-frame = cV2.DrawFrame(1.7, -0.2, 9, 1.0, r";#it{p}_{T} (GeV/#it{c}); v_{2}")
+frame = cV2.DrawFrame(1.7, -0.1, 9, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{2}")
 cV2.cd()
 legend = ROOT.TLegend(0.61, 0.58, 0.87, 0.81, "FT0C centrality", "brNDC")
 legend.SetBorderSize(0)

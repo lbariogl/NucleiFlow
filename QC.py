@@ -43,7 +43,7 @@ ptdep_selection_dict = config["ptdep_selection_dict"]["fAvgItsClusSizeCosLambda"
 cent_detector_label = config["cent_detector_label"]
 
 centrality_classes = config["centrality_classes"]
-pt_bins = config["pt_bins"][0]
+pt_bins = config["qc_pt_bins"]
 n_pt_bins = len(pt_bins) - 1
 cent_colours = config["cent_colours"]
 

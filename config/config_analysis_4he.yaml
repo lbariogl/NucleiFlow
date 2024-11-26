@@ -17,7 +17,8 @@ selection_dict:
     "abs(fDCAxy)": "abs(fDCAxy) < 0.1",
     "abs(fDCAz)": "abs(fDCAz) < 1.",
     "fTPCnCls": "fTPCnCls > 99",
-    "abs(fZvertex)": "abs(fZvertex) < 10.",
+    "abs(fZvertex)": "abs(fZvertex) < 10."
+    # "fTOFmassSquared": "fTOFmassSquared > 5.8870634207"
   }
 ptdep_selection_dict: # the dictionary has as key the right pt limit for the selection
   {
@@ -28,16 +29,21 @@ ptdep_selection_dict: # the dictionary has as key the right pt limit for the sel
     }
   }
 
-tof_analysis: True
+n_nsigmaTPC_bins: 50
+nsigmaTPC_bin_limits: [-5.0, 5.0]
+
+tof_analysis: False
 
 centrality_classes:
   [[0, 20], [20, 50], [50, 80]]
 
+qc_pt_bins: [0., 2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2]
+
 pt_bins:
   [
-    [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2],
-    [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2],
-    [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4, 7.2],
+    [1.2, 1.6, 2, 2.4, 2.8, 3.2, 4., 4.8],
+    [1.2, 1.6, 2, 2.4, 2.8, 3.2, 4., 4.8],
+    [1.2, 1.6, 2, 2.4, 2.8, 3.2, 4., 4.8],
   ]
 cent_colours: [633, 797, 418, 402, 433, 862, 874]
 
@@ -52,6 +58,11 @@ p_train: [-449.90,
     1.9451,
     0.7336,
     2.0896,]
+p_alpha: [-586.66,
+    1.859,
+    4.435,
+    0.282,
+    3.201,]
 resolution_train: 0.09
 n_sigma_plot: 5
 

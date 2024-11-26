@@ -25,9 +25,9 @@ class RooFitter:
 
         # signal
         self.n_signal = None
-        self.n_signal_limits = [1e2, 0, 1e4]
+        self.n_signal_limits = [1e2, 1e-4, 1e4]
         self.mu_signal = None
-        self.mu_signal_limits = [0, -1.5, 1.5]
+        self.mu_signal_limits = [0, -1.5, 2]
         self.sigma_signal = None
         self.sigma_signal_limits = [0.1, 0.01, 1.5]
         self.alpha_left_signal = None
@@ -44,7 +44,7 @@ class RooFitter:
 
         # gaussian background
         self.mu_background = None
-        self.mu_background_limits = [-4.0, -5.0, -3.0]
+        self.mu_background_limits = [-4.0, -5.0, -1.0]
         self.sigma_background = None
         self.sigma_background_limits = [1.0, 0.5, 1.5]
         self.alpha_left_background = None

@@ -1,10 +1,10 @@
-input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4/AO2D_merged.root"
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4/alternative/AO2D_merged.root"
 
 input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4/AnalysisResults_merged.root"
 
-resolution_file_name: "../results_pass4/resolution_EP.root"
+resolution_file_name: "../results_pass4_alternative/resolution_Qvec.root"
 
-output_dir_name: "../results_pass4/"
+output_dir_name: "../results_pass4_alternative/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 
@@ -40,10 +40,10 @@ qc_pt_bins: [0., 2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6.
 
 pt_bins:
   [
-    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8.],
-    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8.],
-    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8.],
-    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 8.],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 8.],
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6.4, 7.2],
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6.4, 7.2],
     [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6],
@@ -64,7 +64,7 @@ p_train: [-449.90,
 resolution_train: 0.09
 n_sigma_plot: 5
 
-do_syst: True
+do_syst: False
 n_trials: 500
 
 cut_dict_syst:

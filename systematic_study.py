@@ -99,8 +99,10 @@ resolutions = [
 standard_file_name = f"{output_dir_name}/" + config["output_file_name"]
 standard_file = ROOT.TFile(standard_file_name)
 
+do_alternative_systematic = False
+
 # get alternative flow table
-input_file_alternative = ROOT.TFile("../results_pass3_new_alternative/flow.root")
+input_file_alternative = ROOT.TFile("../results_pass4_alternative/flow.root")
 
 n_cent_classes = len(centrality_classes)
 
@@ -470,6 +472,9 @@ for i_cent in range(n_cent_classes):
         cent_dirs[i_cent].cd(f"{var}")
         histo_abs_syst.Smooth(5)
         histo_abs_syst.Write()
+
+if not do_alternative_systematic:
+    exit(1)
 
 # evaluate systematic from different table
 

@@ -48,25 +48,25 @@ def getResolution(histo_resolution, det1_det2_name, det2_det3_name, det1_det3_na
     histo_resolution.GetYaxis().SetRangeUser(0.0, 1.0)
     n_bins = histo_resolution.GetNbinsX()
     for ibin in range(1, n_bins + 1):
-        val1 = hProfile_dict[det1_det2_name].GetBinContent(ibin)
-        val2 = hProfile_dict[det2_det3_name].GetBinContent(ibin)
-        val3 = hProfile_dict[det1_det3_name].GetBinContent(ibin)
+        val1_2 = hProfile_dict[det1_det2_name].GetBinContent(ibin)
+        val2_3 = hProfile_dict[det2_det3_name].GetBinContent(ibin)
+        val1_3 = hProfile_dict[det1_det3_name].GetBinContent(ibin)
 
-        err1 = hProfile_dict[det1_det2_name].GetBinError(ibin)
-        err2 = hProfile_dict[det2_det3_name].GetBinError(ibin)
-        err3 = hProfile_dict[det1_det3_name].GetBinError(ibin)
+        err1_2 = hProfile_dict[det1_det2_name].GetBinError(ibin)
+        err2_3 = hProfile_dict[det2_det3_name].GetBinError(ibin)
+        err1_3 = hProfile_dict[det1_det3_name].GetBinError(ibin)
 
-        if val2 > 0:
-            val = val1 * val3 / val2
+        if val2_3 > 0:
+            val = val1_2 * val1_3 / val2_3
         else:
             val = -999
 
-        if val2 > 0 and val1 > 0 and val2 > 0:
+        if val2_3 > 0 and val1_2 > 0 and val2_3 > 0:
             err = (
                 np.sqrt(
-                    err1 * err1 / val1 / val1
-                    + err2 * err2 / val2 / val2
-                    + err3 * err3 / val3 / val3
+                    err1_2 * err1_2 / val1_2 / val1_2
+                    + err2_3 * err2_3 / val2_3 / val2_3
+                    + err1_3 * err1_3 / val1_3 / val1_3
                 )
                 * val
             )
@@ -85,6 +85,7 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     else:
         directory = "flow_qvec"
         suffix = "Qvec"
+
     # first combination
     det1_det2_name = f"{det_name1}_{det_name2}"
     if det1_det2_name not in hSP_dict.keys():
@@ -103,7 +104,6 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
         )
         hSP_dict[det1_det2_name].Draw("colz")
         hProfile_dict[det1_det2_name].Draw("pe same")
-    y_title1 = r"#LT " + hSP_dict[det1_det2_name].GetYaxis().GetTitle() + r" #GT"
 
     # second combination
     det2_det3_name = f"{det_name2}_{det_name3}"
@@ -123,7 +123,6 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
         )
         hSP_dict[det2_det3_name].Draw("colz")
         hProfile_dict[det2_det3_name].Draw("pe same")
-    y_title2 = r"#LT " + hSP_dict[det2_det3_name].GetYaxis().GetTitle() + r" #GT"
 
     # third combination
     det1_det3_name = f"{det_name1}_{det_name3}"
@@ -143,7 +142,6 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
         )
         hSP_dict[det1_det3_name].Draw("colz")
         hProfile_dict[det1_det3_name].Draw("pe same")
-    y_title3 = r"#LT " + hSP_dict[det1_det3_name].GetYaxis().GetTitle() + r" #GT"
 
     # evaluate resolutions
     n_bins = hSP_dict[det1_det2_name].GetNbinsX()
@@ -154,15 +152,8 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     cent_axis_title = hSP_dict[det1_det2_name].GetXaxis().GetTitle()
 
     resolution_name1 = f"{det_name1}_{det_name2}_{det_name3}"
-    resolution_title1 = (
-        r"["
-        + f"{y_title1}"
-        + r" #upoint"
-        + f"{y_title2}"
-        + r" / "
-        + f"{y_title3}"
-        + r"]^{1/2}"
-    )
+    resolution_title1 = r"R_{2} " + f"({det_name1}#; {det_name2}, {det_name3})"
+
     hResolution_dict[resolution_name1] = ROOT.TH1F(
         f"hResolution_{resolution_name1}",
         f";{cent_axis_title};{resolution_title1}",
@@ -179,15 +170,8 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     utils.setHistStyle(hResolution_dict[resolution_name1], ROOT.kRed)
 
     resolution_name2 = f"{det_name2}_{det_name3}_{det_name1}"
-    resolution_title2 = (
-        r"["
-        + f"{y_title2}"
-        + r" #upoint"
-        + f"{y_title3}"
-        + r" / "
-        + f"{y_title1}"
-        + r"]^{1/2}"
-    )
+    resolution_title2 = r"R_{2} " + f"({det_name2}#; {det_name1}, {det_name3})"
+
     hResolution_dict[resolution_name2] = ROOT.TH1F(
         f"hResolution_{resolution_name2}",
         f";{cent_axis_title};{resolution_title2}",
@@ -204,15 +188,8 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     utils.setHistStyle(hResolution_dict[resolution_name2], ROOT.kRed)
 
     resolution_name3 = f"{det_name3}_{det_name1}_{det_name2}"
-    resolution_title3 = (
-        r"["
-        + f"{y_title3}"
-        + r" #upoint"
-        + f"{y_title1}"
-        + r" / "
-        + f"{y_title2}"
-        + r"]^{1/2}"
-    )
+    resolution_title3 = r"R_{2} " + f"({det_name3}#; {det_name1}, {det_name2})"
+
     hResolution_dict[resolution_name3] = ROOT.TH1F(
         f"hResolution_{resolution_name3}",
         f";{cent_axis_title};{resolution_title3}",
@@ -222,8 +199,8 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     )
     getResolution(
         hResolution_dict[resolution_name3],
-        det1_det2_name,
         det1_det3_name,
+        det1_det2_name,
         det2_det3_name,
     )
     utils.setHistStyle(hResolution_dict[resolution_name3], ROOT.kRed)

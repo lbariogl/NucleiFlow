@@ -403,7 +403,7 @@ if do_syst:
 
 print("Making final plots")
 cV2 = ROOT.TCanvas("cV2", "cV2", 800, 600)
-frame = cV2.DrawFrame(1.7, -0.1, 9, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{2}")
+frame = cV2.DrawFrame(1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{2}")
 cV2.cd()
 legend = ROOT.TLegend(0.61, 0.58, 0.87, 0.81, "FT0C centrality", "brNDC")
 legend.SetBorderSize(0)

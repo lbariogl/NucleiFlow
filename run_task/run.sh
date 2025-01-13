@@ -1,4 +1,5 @@
 o2-analysis-lf-epvector -b --configuration json://configuration.json --shm-segment-size 25000000000 --aod-memory-rate-limit 25000000000 | \
+o2-analysis-tracks-extra-v002-converter -b --configuration json://configuration.json --shm-segment-size 25000000000 --aod-memory-rate-limit 25000000000 | \
 o2-analysis-pid-tof-base -b --configuration json://configuration.json --shm-segment-size 25000000000 --aod-memory-rate-limit 25000000000 | \
 o2-analysis-ft0-corrected-table -b --configuration json://configuration.json --shm-segment-size 25000000000 --aod-memory-rate-limit 25000000000 | \
 o2-analysis-timestamp -b --configuration json://configuration.json --shm-segment-size 25000000000 --aod-memory-rate-limit 25000000000 | \

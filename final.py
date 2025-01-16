@@ -45,7 +45,7 @@ output_dir_plots_name = output_dir_name + "final_plots/"
 if not os.path.exists(output_dir_plots_name):
     os.makedirs(output_dir_plots_name)
 
-do_alternative_syst = False
+do_alternative_syst = True
 
 
 stat_list = []
@@ -140,7 +140,7 @@ for i_cent in range(0, n_cent):
 
     cV2_cent = ROOT.TCanvas(f"cV2_{cent_name}", f"cV2_{cent_name}", 800, 600)
     frame_cent = cV2_cent.DrawFrame(
-        1.7, -0.1, 9, 1.2, r";#it{p}_{T} (GeV/#it{c}); v_{2}"
+        1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{2}"
     )
     cV2_cent.SetBottomMargin(0.13)
     cV2_cent.SetBorderSize(0)
@@ -178,7 +178,7 @@ info_panel_total.SetTextSize(0.04)
 info_panel_total.AddText(r"ALICE Preliminary")
 info_panel_total.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
 info_panel_total.AddText(r"{}^{3}#bar{He}, |#eta| < 0.8")
-frame = cV2.DrawFrame(1.7, -0.1, 9.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP}")
+frame = cV2.DrawFrame(1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP}")
 cV2.SetBottomMargin(0.13)
 cV2.SetLeftMargin(0.13)
 cV2.SetBorderSize(0)
@@ -204,6 +204,8 @@ cV2.SaveAs(f"{output_dir_plots_name}{cV2.GetName()}.pdf")
 
 # systematic uncertainties
 
+syst_axis_limits = [0.025, 0.025, 0.025, 0.025, 0.06, 0.06, 0.06]
+
 for i_cent in range(n_cent):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
     cent_label = (
@@ -222,8 +224,8 @@ for i_cent in range(n_cent):
     cAbsSyst.DrawFrame(
         1.7,
         0.0,
-        9,
-        0.025,
+        12.0,
+        syst_axis_limits[i_cent],
         f"{cent_label}" + r";#it{p}_{T} (GeV/#it{c}); systematic uncertainty",
     )
     for var in separated_abs_syst_dict:

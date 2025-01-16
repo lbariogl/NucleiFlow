@@ -424,7 +424,7 @@ cV2.Write()
 cV2.SaveAs(f"{output_dir_name}/plots/{cV2.GetName()}.pdf")
 
 cPurity = ROOT.TCanvas("cPurity", "cPurity", 800, 600)
-frame = cPurity.DrawFrame(1.7, 0.5, 9, 1.1, r";#it{p}_{T} (GeV/#it{c}); purity")
+frame = cPurity.DrawFrame(1.7, 0.5, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); purity")
 cPurity.cd()
 legend_purity = ROOT.TLegend(0.23, 0.22, 0.49, 0.57, "FT0C centrality", "brNDC")
 legend_purity.SetBorderSize(0)
@@ -443,3 +443,37 @@ legend_purity.Draw()
 output_file.cd()
 cPurity.Write()
 cPurity.SaveAs(f"{output_dir_name}/plots/{cPurity.GetName()}.pdf")
+
+cRawCounts = ROOT.TCanvas("cRawCounts", "cRawCounts", 800, 600)
+frame = cRawCounts.DrawFrame(1.7, 0.5, 12.0, 25000, r";#it{p}_{T} (GeV/#it{c}); counts")
+cRawCounts.cd()
+legend_raw = ROOT.TLegend(0.61, 0.49, 0.87, 0.84, "FT0C centrality", "brNDC")
+legend_raw.SetBorderSize(0)
+legend_raw.SetNColumns(2)
+
+cent_rebins = []
+for cent in centrality_classes:
+    cent_rebins.append(cent[0])
+cent_rebins.append(centrality_classes[-1][1])
+cent_rebins_arr = np.array(cent_rebins, dtype=np.float64)
+
+hRawCounts = ROOT.TH1F(
+    "hRawCounts", ";FTOC centrality (%); counts;", n_cent_classes, cent_rebins_arr
+)
+utils.setHistStyle(hRawCounts, ROOT.kRed)
+
+for i_cent in range(n_cent_classes):
+    cent_label = (
+        f"{flow_makers[i_cent].cent_limits[0]} - {flow_makers[i_cent].cent_limits[1]}"
+        + r"%"
+    )
+    legend_raw.AddEntry(flow_makers[i_cent].hRawCountsVsPt, cent_label, "PF")
+    flow_makers[i_cent].hRawCountsVsPt.Draw("SAME")
+    hRawCounts.SetBinContent(i_cent + 1, flow_makers[i_cent].hRawCountsVsPt.Integral())
+
+legend_raw.Draw()
+
+output_file.cd()
+cRawCounts.Write()
+cRawCounts.SaveAs(f"{output_dir_name}/plots/{cRawCounts.GetName()}.pdf")
+hRawCounts.Write()

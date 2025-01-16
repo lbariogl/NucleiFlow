@@ -44,7 +44,7 @@ class RooFitter:
 
         # gaussian background
         self.mu_background = None
-        self.mu_background_limits = [-4.0, -5.0, -1.0]
+        self.mu_background_limits = [-4.0, -5.0, -2.0]
         self.sigma_background = None
         self.sigma_background_limits = [1.0, 0.5, 1.5]
         self.alpha_left_background = None

@@ -99,7 +99,7 @@ resolutions = [
 standard_file_name = f"{output_dir_name}/" + config["output_file_name"]
 standard_file = ROOT.TFile(standard_file_name)
 
-do_alternative_systematic = False
+do_alternative_systematic = True
 
 # get alternative flow table
 input_file_alternative = ROOT.TFile("../results_pass4_alternative/flow.root")
@@ -385,7 +385,7 @@ for i_cent in range(n_cent_classes):
         cent_dirs[i_cent].cd(f"{var}")
         canvas_dict[var].cd()
         canvas_title = f"{var}" + r";#it{p}_{T} (GeV/#it{c}); v_{2}"
-        canvas_dict[var].DrawFrame(1.7, -0.2, 9.0, 1.0, canvas_title)
+        canvas_dict[var].DrawFrame(1.7, -0.2, 12.0, 1.0, canvas_title)
         period = int(cols.GetSize() / len(histos))
         for i_histo, histo in enumerate(histos):
             utils.setHistStyle(histo, cols.At(i_histo * period))
@@ -393,7 +393,8 @@ for i_cent in range(n_cent_classes):
             histo.Draw("PE SAME")
         legend_dict[var].AddEntry(default_v2_histos[i_cent], "std", "PE")
         default_v2_histos[i_cent].Draw("PE SAME")
-        legend_dict[var].Draw()
+        if i_cent < n_cent_classes - 2:
+            legend_dict[var].Draw()
         legend_dict[var].SetNColumns(5)
         canvas_dict[var].Write()
         canvas_dict[var].SaveAs(

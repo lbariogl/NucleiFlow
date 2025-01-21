@@ -118,6 +118,20 @@ for i_pt in range(0, n_pt_bins):
     )
     hAvgItsClusSizeCosLambda.append(hAvgItsClusSizeCosLambda_tmp)
 
+hNsigmaITSvsP = ROOT.TH2F(
+    "hNsigmaITSvsP",
+    r";n#sigma_{ITS}; #it{p} (GeV/#it{c})",
+    120,
+    0.0,
+    12.0,
+    500,
+    -5.0,
+    5.0,
+)
+
+for p, n_sigma_its in zip(complete_df["fP"], complete_df["fNsigmaITS3He"]):
+    hNsigmaITSvsP.Fill(p, n_sigma_its)
+
 hTPCsignalVsPoverZ = ROOT.TH2F(
     "hTPCsignalVsPoverZ",
     r";#it{p}/z (GeV/#it{c}); d#it{E} / d#it{x} (a.u.)",
@@ -288,6 +302,7 @@ for f in functions_alpha:
 qc_dir = output_file.mkdir("QC")
 qc_dir.cd()
 hEta.Write()
+hNsigmaITSvsP.Write()
 hAvgItsClusSize.Write()
 hAvgItsClusSizeCosLambdaIntegrated.Write()
 cAvgItsClusSizeCosLambdaPt.Write()
@@ -326,6 +341,7 @@ for i_pt in range(0, n_pt_bins):
 utils.saveCanvasAsPDF(hTPCsignalVsPoverZ, plot_dir_name, is2D=True)
 utils.saveCanvasAsPDF(hTOFmassSquaredVsPt, plot_dir_name, is2D=True)
 utils.saveCanvasAsPDF(hNsigmaVsPt, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hNsigmaITSvsP, plot_dir_name, is2D=True)
 utils.saveCanvasAsPDF(hNsigmaVsTOFmassSquared, plot_dir_name, is2D=True)
 utils.saveCanvasAsPDF(hPhi, plot_dir_name)
 utils.saveCanvasAsPDF(hPsiFT0C, plot_dir_name)

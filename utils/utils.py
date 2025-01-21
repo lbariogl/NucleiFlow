@@ -1,7 +1,7 @@
 import ROOT
 from hipe4ml.tree_handler import TreeHandler
 import numpy as np
-import copy
+from scipy import special
 
 ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
@@ -113,6 +113,39 @@ def getNsigmaTPC(
 # vectorised version of N-sigma TPC at specific rigidity
 getNsigmaTPC_vectorised = np.vectorize(getNsigmaTPC)
 
+# its n-sigma
+
+its_signal_parameters = [2.8752, 1.1246, 5.0259]
+its_resolution_parameters = [0.2431, -0.3293, 1.533]
+
+
+def expSignal(p, mass=mass_helion):
+    inverseMass = 1.0 / mass
+    bg = abs(p) * inverseMass
+    return (
+        its_signal_parameters[0] / (np.power(bg, its_signal_parameters[1]))
+        + its_signal_parameters[2]
+    )
+
+
+def expResolution(p, mass=mass_helion):
+    inverseMass = 1.0 / mass
+    bg = abs(p) * inverseMass
+    relRes = its_resolution_parameters[0] * special.erf(
+        (bg - its_resolution_parameters[1]) / its_resolution_parameters[2]
+    )
+    return relRes
+
+
+def getNsigmaITS(avgTtsClusterSizeCosLambda, p):
+    exp = expSignal(p)
+    resolution = expResolution(p) * exp
+    return (avgTtsClusterSizeCosLambda - exp) / resolution
+
+
+# vectorised version of N-sigma TPC at specific rigidity
+getNsigmaITS_vectorised = np.vectorize(getNsigmaITS)
+
 
 # get rapidity
 def getRapidity(pt, eta, phi, mass=mass_helion):
@@ -143,6 +176,8 @@ def redefineColumns(
     print("Redefining columns")
     print("fPt")
     complete_df["fPt"] = charge * complete_df["fPt"]
+    print("fP")
+    complete_df.eval("fP = fPt * cosh(fEta)", inplace=True)
     print("fPhi")
     complete_df["fPhi"] = getCorrectPhi_vectorised(complete_df["fPhi"])
     print("fCosLambda")
@@ -166,6 +201,11 @@ def redefineColumns(
             mass=mass,
             parameters=parameters,
         ),
+        axis=1,
+    )
+    print("fNsigmaITS3He")
+    complete_df["fNsigmaITS3He"] = complete_df.apply(
+        lambda row: getNsigmaITS(row["fAvgItsClusSizeCosLambda"], row["fP"]),
         axis=1,
     )
     # print('fRapidity')

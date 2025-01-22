@@ -18,14 +18,15 @@ selection_dict:
     "abs(fDCAz)": "abs(fDCAz) < 1.",
     "fTPCnCls": "fTPCnCls > 99",
     "abs(fZvertex)": "abs(fZvertex) < 10.",
+    "fNsigmaITS3He": "fNsigmaITS3He > - 1"
   }
 ptdep_selection_dict: # the dictionary has as key the right pt limit for the selection
   {
-    "fAvgItsClusSizeCosLambda": {
-      2.4: "fAvgItsClusSizeCosLambda > 6",
-      2.8: "fAvgItsClusSizeCosLambda > 5.5",
-      100.: "fAvgItsClusSizeCosLambda > 5"
-    }
+    # "fAvgItsClusSizeCosLambda": {
+    #   2.4: "fAvgItsClusSizeCosLambda > 6",
+    #   2.8: "fAvgItsClusSizeCosLambda > 5.5",
+    #   100.: "fAvgItsClusSizeCosLambda > 5"
+    # }
   }
 
 n_nsigmaTPC_bins: 50

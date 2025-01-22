@@ -38,7 +38,7 @@ mandatory_selections = config["mandatory_selections"]
 selection_dict = config["selection_dict"]
 selection_list = selection_dict.values()
 selections = " and ".join(selection_list)
-ptdep_selection_dict = config["ptdep_selection_dict"]["fAvgItsClusSizeCosLambda"]
+# ptdep_selection_dict = config["ptdep_selection_dict"]["fAvgItsClusSizeCosLambda"]
 
 cent_detector_label = config["cent_detector_label"]
 
@@ -82,41 +82,41 @@ complete_df.query(f"{mandatory_selections} and {selections}", inplace=True)
 # Create QC histograms
 hEta = ROOT.TH1F("hEta", ";#eta;", 200, -1.0, 1.0)
 utils.setHistStyle(hEta, ROOT.kRed + 2)
-hAvgItsClusSize = ROOT.TH1F(
-    "hAvgItsClusSize", r";#LT ITS cluster size #GT; counts", 100, 0, 20
-)
-utils.setHistStyle(hAvgItsClusSize, ROOT.kRed + 2)
+# hAvgItsClusSize = ROOT.TH1F(
+#     "hAvgItsClusSize", r";#LT ITS cluster size #GT; counts", 100, 0, 20
+# )
+# utils.setHistStyle(hAvgItsClusSize, ROOT.kRed + 2)
 
-hAvgItsClusSizeCosLambdaIntegrated = ROOT.TH1F(
-    "hAvgItsClusSizeCosLambdaIntegrated",
-    r";#LT ITS cluster size #GT #times Cos(#lambda); counts",
-    100,
-    0,
-    20,
-)
-utils.setHistStyle(hAvgItsClusSizeCosLambdaIntegrated, ROOT.kRed + 2)
-hAvgItsClusSizeCosLambda = []
+# hAvgItsClusSizeCosLambdaIntegrated = ROOT.TH1F(
+#     "hAvgItsClusSizeCosLambdaIntegrated",
+#     r";#LT ITS cluster size #GT #times Cos(#lambda); counts",
+#     100,
+#     0,
+#     20,
+# )
+# utils.setHistStyle(hAvgItsClusSizeCosLambdaIntegrated, ROOT.kRed + 2)
+# hAvgItsClusSizeCosLambda = []
 
-cols = ROOT.TColor.GetPalette()
-period = int(cols.GetSize() / n_pt_bins)
-for i_pt in range(0, n_pt_bins):
-    pt_label = (
-        f"{pt_bins[i_pt]:.1f}"
-        + r" #leq #it{p}_{T} < "
-        + f"{pt_bins[i_pt+1]:.1f}"
-        + r" GeV/#it{c}"
-    )
-    hAvgItsClusSizeCosLambda_tmp = ROOT.TH1F(
-        f"hAvgItsClusSizeCosLambda_pt{i_pt}",
-        pt_label + r";#LT ITS cluster size #GT #times Cos(#lambda); counts",
-        100,
-        0,
-        20,
-    )
-    utils.setHistStyle(
-        hAvgItsClusSizeCosLambda_tmp, cols.At(i_pt * period), linewidth=2
-    )
-    hAvgItsClusSizeCosLambda.append(hAvgItsClusSizeCosLambda_tmp)
+# cols = ROOT.TColor.GetPalette()
+# period = int(cols.GetSize() / n_pt_bins)
+# for i_pt in range(0, n_pt_bins):
+#     pt_label = (
+#         f"{pt_bins[i_pt]:.1f}"
+#         + r" #leq #it{p}_{T} < "
+#         + f"{pt_bins[i_pt+1]:.1f}"
+#         + r" GeV/#it{c}"
+#     )
+# hAvgItsClusSizeCosLambda_tmp = ROOT.TH1F(
+#     f"hAvgItsClusSizeCosLambda_pt{i_pt}",
+#     pt_label + r";#LT ITS cluster size #GT #times Cos(#lambda); counts",
+#     100,
+#     0,
+#     20,
+# )
+# utils.setHistStyle(
+#     hAvgItsClusSizeCosLambda_tmp, cols.At(i_pt * period), linewidth=2
+# )
+# hAvgItsClusSizeCosLambda.append(hAvgItsClusSizeCosLambda_tmp)
 
 hNsigmaITSvsP = ROOT.TH2F(
     "hNsigmaITSvsP",
@@ -135,8 +135,8 @@ for p, n_sigma_its in zip(complete_df["fP"], complete_df["fNsigmaITS3He"]):
 hTPCsignalVsPoverZ = ROOT.TH2F(
     "hTPCsignalVsPoverZ",
     r";#it{p}/z (GeV/#it{c}); d#it{E} / d#it{x} (a.u.)",
-    600,
-    -6.0,
+    300,
+    0.0,
     6.0,
     1400,
     0.0,
@@ -202,39 +202,39 @@ hDeltaPsi_FT0C_TPCr = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_TPCr_EP")
 hDeltaPsi_FT0C_FT0A = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_FT0A_EP")
 hDeltaPsi_TPCl_TPCr = input_dir_AR_flow_ep.Get("hDeltaPsi_TPCl_TPCr_EP")
 
-cAvgItsClusSizeCosLambdaPt = ROOT.TCanvas(
-    "cAvgItsClusSizeCosLambdaPt", "cAvgItsClusSizeCosLambdaPt", 800, 600
-)
-cAvgItsClusSizeCosLambdaPt.DrawFrame(
-    0, 0, 20, 4000, r";#LT ITS cluster size #GT #times Cos(#lambda); counts"
-)
-legend = ROOT.TLegend(0.6, 0.61, 0.86, 0.88, "", "brNDC")
-legend.SetBorderSize(0)
+# cAvgItsClusSizeCosLambdaPt = ROOT.TCanvas(
+#     "cAvgItsClusSizeCosLambdaPt", "cAvgItsClusSizeCosLambdaPt", 800, 600
+# )
+# cAvgItsClusSizeCosLambdaPt.DrawFrame(
+#     0, 0, 20, 4000, r";#LT ITS cluster size #GT #times Cos(#lambda); counts"
+# )
+# legend = ROOT.TLegend(0.6, 0.61, 0.86, 0.88, "", "brNDC")
+# legend.SetBorderSize(0)
 
-for i_pt in range(0, n_pt_bins):
-    # select the correct pt bin
-    pt_sel = f"abs(fPt) > {pt_bins[i_pt]} and abs(fPt) < {pt_bins[i_pt+1]}"
-    bin_df = complete_df.query(pt_sel, inplace=False)
-    for avgClus in bin_df["fAvgItsClusSizeCosLambda"]:
-        hAvgItsClusSizeCosLambda[i_pt].Fill(avgClus)
-    cAvgItsClusSizeCosLambdaPt.cd()
-    hAvgItsClusSizeCosLambda[i_pt].Draw("same")
-    legend.AddEntry(
-        hAvgItsClusSizeCosLambda[i_pt], hAvgItsClusSizeCosLambda[i_pt].GetTitle(), "PE"
-    )
-legend.Draw()
+# for i_pt in range(0, n_pt_bins):
+#     # select the correct pt bin
+#     pt_sel = f"abs(fPt) > {pt_bins[i_pt]} and abs(fPt) < {pt_bins[i_pt+1]}"
+#     bin_df = complete_df.query(pt_sel, inplace=False)
+#     for avgClus in bin_df["fAvgItsClusSizeCosLambda"]:
+#         hAvgItsClusSizeCosLambda[i_pt].Fill(avgClus)
+#     cAvgItsClusSizeCosLambdaPt.cd()
+#     hAvgItsClusSizeCosLambda[i_pt].Draw("same")
+#     legend.AddEntry(
+#         hAvgItsClusSizeCosLambda[i_pt], hAvgItsClusSizeCosLambda[i_pt].GetTitle(), "PE"
+#     )
+# legend.Draw()
 
-# define list of pt-dependent selections
-ptdep_selection_list = []
-for i in range(0, n_pt_bins):
-    bin_centre = (pt_bins[i + 1] + pt_bins[i]) / 2
-    condition = utils.get_condition(bin_centre, ptdep_selection_dict)
-    ptdep_selection_list.append(condition)
+# # define list of pt-dependent selections
+# ptdep_selection_list = []
+# for i in range(0, n_pt_bins):
+#     bin_centre = (pt_bins[i + 1] + pt_bins[i]) / 2
+#     condition = utils.get_condition(bin_centre, ptdep_selection_dict)
+#     ptdep_selection_list.append(condition)
 
 # filling QC-plots after pt-dependent selections
 for i_pt in range(0, n_pt_bins):
     # select the correct pt bin
-    pt_sel = f"abs(fPt) > {pt_bins[i_pt]} and abs(fPt) < {pt_bins[i_pt+1]} and {ptdep_selection_list[i_pt]}"
+    pt_sel = f"abs(fPt) > {pt_bins[i_pt]} and abs(fPt) < {pt_bins[i_pt+1]}"  # and {ptdep_selection_list[i_pt]}"
     bin_df = complete_df.query(pt_sel, inplace=False)
 
     # Fill QC histograms
@@ -242,19 +242,17 @@ for i_pt in range(0, n_pt_bins):
     for eta in bin_df["fEta"]:
         hEta.Fill(eta)
 
-    print("Filling cluster size")
-    for avgClus in bin_df["fAvgItsClusSize"]:
-        hAvgItsClusSize.Fill(avgClus)
+    # print("Filling cluster size")
+    # for avgClus in bin_df["fAvgItsClusSize"]:
+    #     hAvgItsClusSize.Fill(avgClus)
 
-    print("Filling cluster size * cos(lambda)")
-    for avgClus in bin_df["fAvgItsClusSizeCosLambda"]:
-        hAvgItsClusSizeCosLambdaIntegrated.Fill(avgClus)
+    # print("Filling cluster size * cos(lambda)")
+    # for avgClus in bin_df["fAvgItsClusSizeCosLambda"]:
+    #     hAvgItsClusSizeCosLambdaIntegrated.Fill(avgClus)
 
     print("Filling specific energy loss")
-    for rig, sign, signal in zip(
-        bin_df["fTPCInnerParam"], bin_df["fSign"], bin_df["fTPCsignal"]
-    ):
-        hTPCsignalVsPoverZ.Fill(sign * rig, signal)
+    for rig, signal in zip(bin_df["fTPCInnerParam"], bin_df["fTPCsignal"]):
+        hTPCsignalVsPoverZ.Fill(rig, signal)
 
     print("Filling TOF squared mass and TPC nsigma")
     for pt, tof_mass_squared, n_sigma_tpc in zip(
@@ -303,11 +301,11 @@ qc_dir = output_file.mkdir("QC")
 qc_dir.cd()
 hEta.Write()
 hNsigmaITSvsP.Write()
-hAvgItsClusSize.Write()
-hAvgItsClusSizeCosLambdaIntegrated.Write()
-cAvgItsClusSizeCosLambdaPt.Write()
-for i_pt in range(0, n_pt_bins):
-    hAvgItsClusSizeCosLambda[i_pt].Write()
+# hAvgItsClusSize.Write()
+# hAvgItsClusSizeCosLambdaIntegrated.Write()
+# cAvgItsClusSizeCosLambdaPt.Write()
+# for i_pt in range(0, n_pt_bins):
+#     hAvgItsClusSizeCosLambda[i_pt].Write()
 hTPCsignalVsPoverZ.Write()
 hTOFmassSquaredVsPt.Write()
 hNsigmaVsPt.Write()
@@ -334,10 +332,10 @@ if not os.path.exists(plot_dir_name):
     os.makedirs(plot_dir_name)
 
 utils.saveCanvasAsPDF(hEta, plot_dir_name)
-utils.saveCanvasAsPDF(hAvgItsClusSize, plot_dir_name)
-utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambdaIntegrated, plot_dir_name)
-for i_pt in range(0, n_pt_bins):
-    utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambda[i_pt], plot_dir_name)
+# utils.saveCanvasAsPDF(hAvgItsClusSize, plot_dir_name)
+# utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambdaIntegrated, plot_dir_name)
+# for i_pt in range(0, n_pt_bins):
+#     utils.saveCanvasAsPDF(hAvgItsClusSizeCosLambda[i_pt], plot_dir_name)
 utils.saveCanvasAsPDF(hTPCsignalVsPoverZ, plot_dir_name, is2D=True)
 utils.saveCanvasAsPDF(hTOFmassSquaredVsPt, plot_dir_name, is2D=True)
 utils.saveCanvasAsPDF(hNsigmaVsPt, plot_dir_name, is2D=True)
@@ -348,7 +346,7 @@ utils.saveCanvasAsPDF(hPsiFT0C, plot_dir_name)
 utils.saveCanvasAsPDF(hPhiMinusPsiFT0C, plot_dir_name)
 utils.saveCanvasAsPDF(hV2, plot_dir_name)
 cTPC.SaveAs(f"{plot_dir_name}/cTPC.pdf")
-cAvgItsClusSizeCosLambdaPt.SaveAs(f"{plot_dir_name}/cAvgItsClusSizeCosLambdaPt.pdf")
+# cAvgItsClusSizeCosLambdaPt.SaveAs(f"{plot_dir_name}/cAvgItsClusSizeCosLambdaPt.pdf")
 utils.saveCanvasAsPDF(hZvtx, plot_dir_name)
 utils.saveCanvasAsPDF(hCentFT0C, plot_dir_name)
 utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCl, plot_dir_name, is2D=True, logScale=True)

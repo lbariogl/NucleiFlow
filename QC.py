@@ -1,9 +1,9 @@
 import ROOT
-from hipe4ml.tree_handler import TreeHandler
 import pandas as pd
 import yaml
 import argparse
 import os
+import re
 
 import sys
 
@@ -38,6 +38,16 @@ mandatory_selections = config["mandatory_selections"]
 selection_dict = config["selection_dict"]
 selection_list = selection_dict.values()
 selections = " and ".join(selection_list)
+
+pattern = r"\s*and\s+(abs\(fNsigmaTPC3He\)\s*<\s*(\d+\.?\d*))"
+
+# Search and extract the match without "and"
+match = re.search(pattern, selections)
+nSigmaTPC_selection_string = match.group(1).strip() if match else ""
+n_sigma_selection_from_string = float(match.group(2)) if match else None
+
+selections = re.sub(pattern, "", selections).strip()
+
 # ptdep_selection_dict = config["ptdep_selection_dict"]["fAvgItsClusSizeCosLambda"]
 
 cent_detector_label = config["cent_detector_label"]
@@ -60,11 +70,9 @@ if not os.path.exists(output_dir_name):
 output_file = ROOT.TFile(f"{output_dir_name}/{output_file_name}", "recreate")
 
 # get a unique df from nuclei and ep trees
-nuclei_hdl = TreeHandler(input_file_name, f"{nuclei_tree_name};", folder_name="DF*")
-nuclei_df = nuclei_hdl._full_data_frame
+nuclei_df = utils.get_df_from_tree(input_file_name, nuclei_tree_name)
 
-nucleiflow_hdl = TreeHandler(input_file_name, f"{ep_tree_name};", folder_name="DF*")
-nucleiflow_df = nucleiflow_hdl._full_data_frame
+nucleiflow_df = utils.get_df_from_tree(input_file_name, ep_tree_name)
 
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
@@ -82,45 +90,10 @@ complete_df.query(f"{mandatory_selections} and {selections}", inplace=True)
 # Create QC histograms
 hEta = ROOT.TH1F("hEta", ";#eta;", 200, -1.0, 1.0)
 utils.setHistStyle(hEta, ROOT.kRed + 2)
-# hAvgItsClusSize = ROOT.TH1F(
-#     "hAvgItsClusSize", r";#LT ITS cluster size #GT; counts", 100, 0, 20
-# )
-# utils.setHistStyle(hAvgItsClusSize, ROOT.kRed + 2)
-
-# hAvgItsClusSizeCosLambdaIntegrated = ROOT.TH1F(
-#     "hAvgItsClusSizeCosLambdaIntegrated",
-#     r";#LT ITS cluster size #GT #times Cos(#lambda); counts",
-#     100,
-#     0,
-#     20,
-# )
-# utils.setHistStyle(hAvgItsClusSizeCosLambdaIntegrated, ROOT.kRed + 2)
-# hAvgItsClusSizeCosLambda = []
-
-# cols = ROOT.TColor.GetPalette()
-# period = int(cols.GetSize() / n_pt_bins)
-# for i_pt in range(0, n_pt_bins):
-#     pt_label = (
-#         f"{pt_bins[i_pt]:.1f}"
-#         + r" #leq #it{p}_{T} < "
-#         + f"{pt_bins[i_pt+1]:.1f}"
-#         + r" GeV/#it{c}"
-#     )
-# hAvgItsClusSizeCosLambda_tmp = ROOT.TH1F(
-#     f"hAvgItsClusSizeCosLambda_pt{i_pt}",
-#     pt_label + r";#LT ITS cluster size #GT #times Cos(#lambda); counts",
-#     100,
-#     0,
-#     20,
-# )
-# utils.setHistStyle(
-#     hAvgItsClusSizeCosLambda_tmp, cols.At(i_pt * period), linewidth=2
-# )
-# hAvgItsClusSizeCosLambda.append(hAvgItsClusSizeCosLambda_tmp)
 
 hNsigmaITSvsP = ROOT.TH2F(
     "hNsigmaITSvsP",
-    r";n#sigma_{ITS}; #it{p} (GeV/#it{c})",
+    r"; #it{p} (GeV/#it{c}); n#sigma_{ITS}",
     120,
     0.0,
     12.0,
@@ -275,7 +248,7 @@ for i_pt in range(0, n_pt_bins):
         hV2.Fill(ROOT.TMath.Cos(2 * delta_phi))
 
 functions = utils.getBBAfunctions(
-    parameters=p_train, resolution=resolution_train, n_sigma=1
+    parameters=p_train, resolution=resolution_train, n_sigma=2
 )
 
 functions_alpha = utils.getBBAfunctions(
@@ -289,11 +262,11 @@ functions_alpha = utils.getBBAfunctions(
 cTPC = ROOT.TCanvas("cTPC", "cTPC", 800, 600)
 hTPCsignalVsPoverZ.Draw("colz")
 
-for f in functions:
+for f in functions[3:]:
     f.Draw("L SAME")
 
-for f in functions_alpha:
-    f.Draw("L SAME")
+# for f in functions_alpha:
+#     f.Draw("L SAME")
 
 
 # Saving histograms to file

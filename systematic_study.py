@@ -1,5 +1,4 @@
 import ROOT
-from hipe4ml.tree_handler import TreeHandler
 import pandas as pd
 import yaml
 import argparse
@@ -102,7 +101,7 @@ standard_file = ROOT.TFile(standard_file_name)
 do_alternative_systematic = True
 
 # get alternative flow table
-input_file_alternative = ROOT.TFile("../results_pass4_alternative/flow.root")
+input_file_alternative = ROOT.TFile("../results_pass4_alternative_local/flow.root")
 
 n_cent_classes = len(centrality_classes)
 
@@ -130,11 +129,9 @@ for i_cent in range(n_cent_classes):
 
 
 # get a unique df from nuclei and ep trees
-nuclei_hdl = TreeHandler(input_file_name, f"{nuclei_tree_name};", folder_name="DF*")
-nuclei_df = nuclei_hdl._full_data_frame
+nuclei_df = utils.get_df_from_tree(input_file_name, nuclei_tree_name)
 
-nucleiflow_hdl = TreeHandler(input_file_name, f"{ep_tree_name};", folder_name="DF*")
-nucleiflow_df = nucleiflow_hdl._full_data_frame
+nucleiflow_df = utils.get_df_from_tree(input_file_name, ep_tree_name)
 
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
@@ -179,37 +176,37 @@ ptdep_cut_dict_syst = config["ptdep_cut_dict_syst"]
 n_ptdep_variations_syst = config["n_ptdep_variations_syst"]["fAvgItsClusSizeCosLambda"]
 
 ptdep_cut_string_dict = {}
-
-for pt_key, pt_el in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"].items():
-    ptdep_cut_greater = pt_el["cut_greater"]
-    ptdep_cut_greater_string = " > " if ptdep_cut_greater else " < "
-    ptdep_cut_list = pt_el["cut_list"]
-    ptdep_cut_arr = np.linspace(
-        ptdep_cut_list[0], ptdep_cut_list[1], n_ptdep_variations_syst
-    )
-    ptdep_cut_string_dict[pt_key] = []
-    for ptdep_cut in ptdep_cut_arr:
-        ptdep_cut_string_dict[pt_key].append(
-            "fAvgItsClusSizeCosLambda" + ptdep_cut_greater_string + str(ptdep_cut)
-        )
-
 ptdep_cut_string_dict_list = []
-for i_variation in range(n_ptdep_variations_syst):
-    variation_dict = {}
-    for pt_key in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]:
-        variation_dict[pt_key] = ptdep_cut_string_dict[pt_key][i_variation]
-    ptdep_cut_string_dict_list.append(variation_dict)
 
+if n_ptdep_variations_syst != 0:
+    for pt_key, pt_el in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"].items():
+        ptdep_cut_greater = pt_el["cut_greater"]
+        ptdep_cut_greater_string = " > " if ptdep_cut_greater else " < "
+        ptdep_cut_list = pt_el["cut_list"]
+        ptdep_cut_arr = np.linspace(
+            ptdep_cut_list[0], ptdep_cut_list[1], n_ptdep_variations_syst
+        )
+        ptdep_cut_string_dict[pt_key] = []
+        for ptdep_cut in ptdep_cut_arr:
+            ptdep_cut_string_dict[pt_key].append(
+                "fAvgItsClusSizeCosLambda" + ptdep_cut_greater_string + str(ptdep_cut)
+            )
 
-n_ptdep_variations = len(ptdep_cut_string_dict_list)
+    for i_variation in range(n_ptdep_variations_syst):
+        variation_dict = {}
+        for pt_key in ptdep_cut_dict_syst["fAvgItsClusSizeCosLambda"]:
+            variation_dict[pt_key] = ptdep_cut_string_dict[pt_key][i_variation]
+        ptdep_cut_string_dict_list.append(variation_dict)
 
-cut_label_dict["fAvgItsClusSizeCosLambda"] = []
-for i_var in range(n_ptdep_variations):
+    n_ptdep_variations = len(ptdep_cut_string_dict_list)
 
-    index = int(i_var - (n_ptdep_variations - 1) / 2)
+    cut_label_dict["fAvgItsClusSizeCosLambda"] = []
+    for i_var in range(n_ptdep_variations):
 
-    ptdep_suffix_string = f"fAvgItsClusSizeCosLambda > def. + {index}*step"
-    cut_label_dict["fAvgItsClusSizeCosLambda"].append(ptdep_suffix_string)
+        index = int(i_var - (n_ptdep_variations - 1) / 2)
+
+        ptdep_suffix_string = f"fAvgItsClusSizeCosLambda > def. + {index}*step"
+        cut_label_dict["fAvgItsClusSizeCosLambda"].append(ptdep_suffix_string)
 
 
 print("  ** separated cuts **")
@@ -262,6 +259,7 @@ for i_cent in range(n_cent_classes):
             output_dir_varied = var_dir.mkdir(f"{i_cut}")
 
             flow_maker_syst = FlowMaker()
+            flow_maker_syst.silent_mode = True
             flow_maker_syst.data_df = complete_df
             flow_maker_syst.tof_analysis = tof_analysis
             flow_maker_syst.pt_bins = pt_bins[i_cent]
@@ -270,7 +268,7 @@ for i_cent in range(n_cent_classes):
 
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = cut
-            flow_maker_syst.ptdep_selection_dict = standard_ptdep_selection_dict
+            # flow_maker_syst.ptdep_selection_dict = standard_ptdep_selection_dict
             flow_maker_syst.suffix = var_suffix
 
             flow_maker_syst.create_histograms()
@@ -302,70 +300,72 @@ for i_cent in range(n_cent_classes):
         dict_hist_abs_syst[var] = histo_v2_syst
 
     # pt-dependent cuts
-    print(f"var: fAvgItsClusSizeCosLambda")
-    var = "fAvgItsClusSizeCosLambda"
-    var_dir = cent_dirs[i_cent].mkdir(var)
+    if n_ptdep_variations_syst != 0:
+        print(f"var: fAvgItsClusSizeCosLambda")
+        var = "fAvgItsClusSizeCosLambda"
+        var_dir = cent_dirs[i_cent].mkdir(var)
 
-    v2_dict[var] = []
-    canvas_dict[var] = ROOT.TCanvas(
-        f"c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
-        f"c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
-        800,
-        600,
-    )
-    legend_dict[var] = ROOT.TLegend(0.16, 0.61, 0.86, 0.88, "", "brNDC")
-    legend_dict[var].SetBorderSize(0)
-
-    histo_v2_syst = []
-    n_pt_bins = len(pt_bins[i_cent]) - 1
-    for i_pt in range(0, n_pt_bins):
-        histo_v2_syst.append(
-            ROOT.TH1F(
-                f"hV2syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
-                ";v_{2}",
-                20,
-                default_v2_values[i_cent][i_pt][0]
-                - 3 * default_v2_values[i_cent][i_pt][1],
-                default_v2_values[i_cent][i_pt][0]
-                + 3 * default_v2_values[i_cent][i_pt][1],
-            )
+        v2_dict[var] = []
+        canvas_dict[var] = ROOT.TCanvas(
+            f"c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
+            f"c{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
+            800,
+            600,
         )
+        legend_dict[var] = ROOT.TLegend(0.16, 0.61, 0.86, 0.88, "", "brNDC")
+        legend_dict[var].SetBorderSize(0)
 
-    for i_cut in range(n_ptdep_variations):
+        histo_v2_syst = []
+        n_pt_bins = len(pt_bins[i_cent]) - 1
+        for i_pt in range(0, n_pt_bins):
+            histo_v2_syst.append(
+                ROOT.TH1F(
+                    f"hV2syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
+                    ";v_{2}",
+                    20,
+                    default_v2_values[i_cent][i_pt][0]
+                    - 3 * default_v2_values[i_cent][i_pt][1],
+                    default_v2_values[i_cent][i_pt][0]
+                    + 3 * default_v2_values[i_cent][i_pt][1],
+                )
+            )
 
-        print(f"{var}: {i_cut} / {n_ptdep_variations}")
+        for i_cut in range(n_ptdep_variations):
 
-        output_dir_varied = var_dir.mkdir(f"{i_cut}")
+            print(f"{var}: {i_cut} / {n_ptdep_variations}")
 
-        flow_maker_syst = FlowMaker()
-        flow_maker_syst.data_df = complete_df
-        flow_maker_syst.tof_analysis = tof_analysis
-        flow_maker_syst.pt_bins = pt_bins[i_cent]
-        flow_maker_syst.cent_limits = centrality_classes[i_cent]
-        flow_maker_syst.resolution = resolutions[i_cent]
+            output_dir_varied = var_dir.mkdir(f"{i_cut}")
 
-        var_suffix = f"_{var}_{i_cut}"
-        flow_maker_syst.selection_string = standard_selections
-        flow_maker_syst.ptdep_selection_dict = ptdep_cut_string_dict_list[i_cut]
-        flow_maker_syst.suffix = var_suffix
+            flow_maker_syst = FlowMaker()
+            flow_maker_syst.silent_mode = True
+            flow_maker_syst.data_df = complete_df
+            flow_maker_syst.tof_analysis = tof_analysis
+            flow_maker_syst.pt_bins = pt_bins[i_cent]
+            flow_maker_syst.cent_limits = centrality_classes[i_cent]
+            flow_maker_syst.resolution = resolutions[i_cent]
 
-        flow_maker_syst.create_histograms()
-        flow_maker_syst.make_flow()
-        flow_values = flow_maker_syst.getFlowValues()
-        # write histograms to file
-        flow_maker_syst.output_dir = output_dir_varied
-        flow_maker_syst.dump_to_output_file()
+            var_suffix = f"_{var}_{i_cut}"
+            flow_maker_syst.selection_string = standard_selections
+            flow_maker_syst.ptdep_selection_dict = ptdep_cut_string_dict_list[i_cut]
+            flow_maker_syst.suffix = var_suffix
 
-        for i_pt in range(0, flow_maker_syst.nPtBins()):
-            histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
+            flow_maker_syst.create_histograms()
+            flow_maker_syst.make_flow()
+            flow_values = flow_maker_syst.getFlowValues()
+            # write histograms to file
+            flow_maker_syst.output_dir = output_dir_varied
+            flow_maker_syst.dump_to_output_file()
 
-        histo = copy.deepcopy(flow_maker_syst.hV2vsPt)
+            for i_pt in range(0, flow_maker_syst.nPtBins()):
+                histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
 
-        v2_dict[var].append(histo)
+            histo = copy.deepcopy(flow_maker_syst.hV2vsPt)
 
-        del flow_maker_syst
+            v2_dict[var].append(histo)
 
-    dict_hist_abs_syst[var] = histo_v2_syst
+            del flow_maker_syst
+
+        dict_hist_abs_syst[var] = histo_v2_syst
 
     # get color palette
     cols = ROOT.TColor.GetPalette()

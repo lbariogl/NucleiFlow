@@ -1,5 +1,6 @@
 import ROOT
-from hipe4ml.tree_handler import TreeHandler
+import uproot
+import pandas as pd
 import numpy as np
 from scipy import special
 
@@ -25,12 +26,14 @@ def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
 def getITSClSize(itsSizeBitmap):
     sum = 0
     nClus = 0
+    max_cluster_size = 0
     for i_layer in range(0, 7):
         size = (itsSizeBitmap >> i_layer * 4) & 15
+        max_cluster_size = np.maximum(max_cluster_size, size)
         if size > 0:
             nClus = nClus + 1
             sum += size
-    return sum / nClus
+    return (sum - max_cluster_size) / (nClus - 1)
 
 
 # vectorised version of getITSClSize
@@ -115,8 +118,8 @@ getNsigmaTPC_vectorised = np.vectorize(getNsigmaTPC)
 
 # its n-sigma
 
-its_signal_parameters = [2.8752, 1.1246, 5.0259]
-its_resolution_parameters = [0.2431, -0.3293, 1.533]
+its_signal_parameters = [2.3512, 1.8035, 5.1436]
+its_resolution_parameters = [0.0874, -1.8280, 0.5064]
 
 
 def expSignal(p, mass=mass_helion):
@@ -167,6 +170,44 @@ def getCorrectPhi(phi):
 
 
 getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
+
+
+def get_df_from_tree(input_file_name, tree_name):
+
+    # create empty data-frame
+    df = pd.DataFrame()
+
+    # list of folders in the file
+    file_folders = uproot.open(input_file_name).keys()
+
+    # filter folders: only folders without tree_name, not containing "/", and ending with ";1"
+    file_folders = [folder for folder in file_folders if "/" not in folder]
+
+    # first we sort to have as first one the last cycle
+    file_folders.sort(reverse=True)
+
+    # check if there are multiple cycles of the same tree, keep only last one
+    file_folders_to_remove = []
+    for ifolder, folder in enumerate(file_folders[1:]):
+        obj_nocycle = folder.split(";")[0]
+        if obj_nocycle in file_folders[ifolder]:
+            file_folders_to_remove.append(folder)
+    for folder_to_remove in file_folders_to_remove:
+        file_folders.remove(folder_to_remove)
+
+    # loop over the folders
+    for folder in file_folders:
+        df = pd.concat(
+            [
+                df,
+                uproot.open(f"{input_file_name}:{folder}/{tree_name}").arrays(
+                    library="pd"
+                ),
+            ],
+            ignore_index=True,
+            copy=False,
+        )
+    return df
 
 
 # redefine columns in the complete data-frame
@@ -245,7 +286,14 @@ def redefineColumnsLight(complete_df, charge=2):
     complete_df.eval(
         "fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda", inplace=True
     )
+    print("fNsigmaITS3He")
+    complete_df["fNsigmaITS3He"] = complete_df.apply(
+        lambda row: getNsigmaITS(row["fAvgItsClusSizeCosLambda"], row["fP"]),
+        axis=1,
+    )
     complete_df.drop(columns=["fITSclusterSizes"])
+    complete_df.drop(columns=["fAvgItsClusSize"])
+    complete_df.drop(columns=["fAvgItsClusSizeCosLambda"])
     print("fSign")
     complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
 

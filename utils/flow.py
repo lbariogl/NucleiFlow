@@ -3,7 +3,7 @@ import utils as utils
 import os
 import ROOT
 import numpy as np
-import copy
+import re
 
 import sys
 
@@ -49,9 +49,6 @@ class FlowMaker:
         self.hNsigma3He = []
         self.cNsigma3HeFit = []
         self.hTOFmassSquared = []
-        self.hV2vsNsigma3He2D = []
-        self.hV2vsNsigma3He = []
-        self.cV2vsNsigma3He = []
         self.hV2vsTOFmassSquared2D = []
         self.hV2vsTOFmassSquared = []
         self.cV2vsTOFmassSquared = []
@@ -73,6 +70,9 @@ class FlowMaker:
 
         # purity
         self.hPurityVsPt = None
+
+        # disable plots for systematics
+        self.silent_mode = False
 
     def _check_members(self):
 
@@ -115,14 +115,15 @@ class FlowMaker:
         )
         utils.setHistStyle(self.hV2vsPt, self.color)
 
-        self.hPurityVsPt = ROOT.TH1F(
-            f"hPurityVsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}{self.suffix}",
-            r"; #it{p}_{T} (GeV/#it{c}); purity",
-            self.n_pt_bins,
-            pt_bins_arr,
-        )
-        self.hPurityVsPt.GetYaxis().SetRangeUser(0.0, 1.1)
-        utils.setHistStyle(self.hPurityVsPt, self.color)
+        if not self.silent_mode:
+            self.hPurityVsPt = ROOT.TH1F(
+                f"hPurityVsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}{self.suffix}",
+                r"; #it{p}_{T} (GeV/#it{c}); purity",
+                self.n_pt_bins,
+                pt_bins_arr,
+            )
+            self.hPurityVsPt.GetYaxis().SetRangeUser(0.0, 1.1)
+            utils.setHistStyle(self.hPurityVsPt, self.color)
 
         for i_pt in range(0, self.n_pt_bins):
 
@@ -160,31 +161,18 @@ class FlowMaker:
             utils.setHistStyle(hV2_tmp, ROOT.kAzure + 1, linewidth=2)
             self.hV2.append(hV2_tmp)
 
-            # TPC analysis
-            hNsigma3He_tmp = ROOT.TH1F(
-                f"hNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-                pt_label + r";n#sigma^{TPC} (a.u.); counts",
-                self.n_nsigmaTPC_bins,
-                self.nsigmaTPC_bin_limits[0],
-                self.nsigmaTPC_bin_limits[1],
-            )
-            utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed + 1, linewidth=2)
+            if not self.silent_mode:
+                # TPC analysis
+                hNsigma3He_tmp = ROOT.TH1F(
+                    f"hNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                    pt_label + r";n#sigma^{TPC} (a.u.); counts",
+                    self.n_nsigmaTPC_bins,
+                    self.nsigmaTPC_bin_limits[0],
+                    self.nsigmaTPC_bin_limits[1],
+                )
+                utils.setHistStyle(hNsigma3He_tmp, ROOT.kRed + 1, linewidth=2)
 
-            self.hNsigma3He.append(hNsigma3He_tmp)
-
-            histo_title_nsigma_tpc = r";n#sigma^{TPC} (a.u.); cos(2(#phi - #Psi))"
-            hV2vsNsigma3He2D_tmp = ROOT.TH2F(
-                f"hV2{self.ref_detector}vsNsigma3He2D_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-                histo_title_nsigma_tpc,
-                self.n_nsigmaTPC_bins,
-                self.nsigmaTPC_bin_limits[0],
-                self.nsigmaTPC_bin_limits[1],
-                self.n_V2_bins,
-                self.n_V2_bin_limits[0],
-                self.n_V2_bin_limits[1],
-            )
-
-            self.hV2vsNsigma3He2D.append(hV2vsNsigma3He2D_tmp)
+                self.hNsigma3He.append(hNsigma3He_tmp)
 
             # TOF analysis
             if self.tof_analysis:
@@ -231,7 +219,26 @@ class FlowMaker:
                 pt_sel = pt_sel + " and " + self.ptdep_selection_string[i_pt]
             cent_sel = f"fCentFT0C > {self.cent_limits[0]} and fCentFT0C < {self.cent_limits[1]}"
             if self.selection_string:
-                bin_sel = f"{cent_sel} and {pt_sel} and {self.selection_string}"
+
+                # Regular expression to match "and abs(fNsigmaTPC3He) <" followed by a number
+                pattern = r"\s*and\s+(abs\(fNsigmaTPC3He\)\s*<\s*(\d+\.?\d*))"
+
+                # Search and extract the match without "and"
+                match = re.search(pattern, self.selection_string)
+                nSigmaTPC_selection_string = match.group(1).strip() if match else ""
+                n_sigma_selection_from_string = float(match.group(2)) if match else None
+
+                if n_sigma_selection_from_string:
+                    self.n_sigma_selection = n_sigma_selection_from_string
+
+                # Remove the matched part from the original string
+                selections_cleaned = re.sub(pattern, "", self.selection_string).strip()
+
+                print("Cleaned selections:", selections_cleaned)
+                print("Extracted condition:", nSigmaTPC_selection_string)
+                print("Extracted number:", n_sigma_selection_from_string)
+
+                bin_sel = f"{cent_sel} and {pt_sel} and {selections_cleaned}"
             else:
                 bin_sel = f"{cent_sel} and {pt_sel}"
 
@@ -245,48 +252,18 @@ class FlowMaker:
             # select the correct pt bin
             bin_df = self.data_df.query(bin_sel, inplace=False)
 
-            for nSigmaTPC, v2 in zip(
-                bin_df["fNsigmaTPC3He"], bin_df[f"fV2{self.ref_detector}"]
-            ):
-                self.hNsigma3He[i_pt].Fill(nSigmaTPC)
-                self.hV2vsNsigma3He2D[i_pt].Fill(nSigmaTPC, v2)
+            if not self.silent_mode:
+                for nSigmaTPC in bin_df["fNsigmaTPC3He"]:
+                    self.hNsigma3He[i_pt].Fill(nSigmaTPC)
 
-            hV2vsNsigma3He_tmp = utils.getAverage2D(
-                self.hV2vsNsigma3He2D[i_pt],
-                f"hV2{self.ref_detector}vsNsigma3He_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-            )
-            utils.setHistStyle(hV2vsNsigma3He_tmp, ROOT.kAzure + 1, linewidth=2)
-            self.hV2vsNsigma3He.append(hV2vsNsigma3He_tmp)
-
-            if not self.tof_analysis:
-                self._make_purity(
-                    self.hNsigma3He[i_pt],
-                    pt_label=pt_label,
-                    pt_centre=pt_centre,
-                    pt_thr=3.0,
-                )
-
-            # system infopanel
-            info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
-            info_panel.SetBorderSize(0)
-            info_panel.SetFillStyle(0)
-            info_panel.SetTextAlign(12)
-            info_panel.SetTextFont(42)
-            info_panel.AddText("ALICE")
-            info_panel.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
-            info_panel.AddText(
-                f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
-            )
-            info_panel.AddText(pt_label)
-
-            canvas = utils.getCanvasWithTwoPanels(
-                f"cV2{self.ref_detector}vsNsigma_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-                self.hV2vsNsigma3He[i_pt],
-                self.hNsigma3He[i_pt],
-                bottom_panel=info_panel,
-            )
-
-            self.cV2vsNsigma3He.append(canvas)
+            if not self.silent_mode:
+                if not self.tof_analysis:
+                    self._make_purity(
+                        self.hNsigma3He[i_pt],
+                        pt_label=pt_label,
+                        pt_centre=pt_centre,
+                        pt_thr=3.0,
+                    )
 
             if not self.tof_analysis:
                 df_bin_3He = bin_df.query(
@@ -297,10 +274,9 @@ class FlowMaker:
                 for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
                     self.hV2[i_pt].Fill(v2)
             else:
-                df_bin_4He = bin_df.query(f"fNsigmaTPC3He > 0")
                 for m2, v2 in zip(
-                    df_bin_4He["fTOFmassSquared"],
-                    df_bin_4He[f"fV2{self.ref_detector}"],
+                    bin_df["fTOFmassSquared"],
+                    bin_df[f"fV2{self.ref_detector}"],
                 ):
                     centered_m2 = m2 - utils.mass_alpha * utils.mass_alpha
                     self.hTOFmassSquared[i_pt].Fill(centered_m2)
@@ -315,7 +291,17 @@ class FlowMaker:
                 )
                 self.hV2vsTOFmassSquared.append(hV2vsTOFmassSquared_tmp)
 
-                tof_panel = info_panel.Clone()
+                tof_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
+                tof_panel.SetBorderSize(0)
+                tof_panel.SetFillStyle(0)
+                tof_panel.SetTextAlign(12)
+                tof_panel.SetTextFont(42)
+                tof_panel.AddText("ALICE")
+                tof_panel.AddText(r"PbPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
+                tof_panel.AddText(
+                    f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
+                )
+                tof_panel.AddText(pt_label)
 
                 canvas = utils.getCanvasWithTwoPanels(
                     f"cV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
@@ -372,22 +358,21 @@ class FlowMaker:
             bin = [self.pt_bins[i_pt], self.pt_bins[i_pt + 1]]
             self.output_dir.mkdir(f"pt_{bin[0]}_{bin[1]}")
             self.output_dir.cd(f"pt_{bin[0]}_{bin[1]}")
-            self.hNsigma3He[i_pt].Write()
-            self.hV2vsNsigma3He2D[i_pt].Write()
-            self.hV2vsNsigma3He[i_pt].Write()
-            self.cV2vsNsigma3He[i_pt].Write()
-            if self.tof_analysis:
-                self.hTOFmassSquared[i_pt].Write()
-                self.hV2vsTOFmassSquared2D[i_pt].Write()
-                self.hV2vsTOFmassSquared[i_pt].Write()
-                self.cV2vsTOFmassSquared[i_pt].Write()
-            else:
-                self.cNsigma3HeFit[i_pt].Write()
-            self.hV2[i_pt].Write()
+            if not self.silent_mode:
+                self.hNsigma3He[i_pt].Write()
+                if self.tof_analysis:
+                    self.hTOFmassSquared[i_pt].Write()
+                    self.hV2vsTOFmassSquared2D[i_pt].Write()
+                    self.hV2vsTOFmassSquared[i_pt].Write()
+                    self.cV2vsTOFmassSquared[i_pt].Write()
+                else:
+                    self.cNsigma3HeFit[i_pt].Write()
+                self.hV2[i_pt].Write()
 
         self.output_dir.cd()
         self.hV2vsPt.Write()
-        self.hPurityVsPt.Write()
+        if not self.silent_mode:
+            self.hPurityVsPt.Write()
         self.hRawCountsVsPt.Write()
 
     def dump_to_pdf(self):
@@ -400,7 +385,8 @@ class FlowMaker:
             utils.saveCanvasAsPDF(self.hNsigma3He[i_pt], self.plot_dir)
             utils.saveCanvasAsPDF(self.hV2[i_pt], self.plot_dir)
         utils.saveCanvasAsPDF(self.hV2vsPt, self.plot_dir)
-        utils.saveCanvasAsPDF(self.hPurityVsPt, self.plot_dir)
+        if not self.silent_mode:
+            utils.saveCanvasAsPDF(self.hPurityVsPt, self.plot_dir)
         utils.saveCanvasAsPDF(self.hRawCountsVsPt, self.plot_dir)
 
     def dump_summary_to_pdf(self, rows_per_page=3):
@@ -559,9 +545,6 @@ class FlowMaker:
         self.hNsigma3He = []
         self.cNsigma3HeFit = []
         self.hTOFmassSquared = []
-        self.hV2vsNsigma3He2D = []
-        self.hV2vsNsigma3He = []
-        self.cV2vsNsigma3He = []
         self.hV2vsTOFmassSquared2D = []
         self.hV2vsTOFmassSquared = []
         self.cV2vsTOFmassSquared = []

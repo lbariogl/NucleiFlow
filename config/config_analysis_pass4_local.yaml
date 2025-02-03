@@ -66,7 +66,7 @@ p_train: [-449.90,
 resolution_train: 0.09
 n_sigma_plot: 5
 
-do_syst: False
+do_syst: True
 n_trials: 500
 
 cut_dict_syst:
@@ -76,7 +76,7 @@ cut_dict_syst:
     "fTPCnCls": { "cut_greater": True, "cut_list": [100, 130, 7] },
     "abs(fZvertex)": { "cut_greater": False, "cut_list": [8, 10, 5] },
     "fNsigmaITS3He": {"cut_greater": True, "cut_list": [-1.1, -0.9, 5] },
-    # "abs(fNsigmaTPC3He)": {"cut_greater": False, "cut_list": [2., 1.8, 5] }
+    "abs(fNsigmaTPC3He)": {"cut_greater": False, "cut_list": [2., 1.8, 5] }
   }
 
 n_ptdep_variations_syst: {

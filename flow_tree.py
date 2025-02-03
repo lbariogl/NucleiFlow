@@ -16,7 +16,7 @@ import utils as utils
 
 parser = argparse.ArgumentParser(description="Configure the parameters of the script.")
 parser.add_argument(
-    "--config-file",
+    "--config",
     dest="config_file",
     help="path to the YAML file with configuration.",
     default="",
@@ -304,7 +304,7 @@ if do_syst:
             pt_independent_sel = pt_independent_selections[
                 complete_selection_indices[0]
             ]
-            sel_string = " & ".join(pt_independent_sel)
+            sel_string = " and ".join(pt_independent_sel)
             trial_strings.append(str(sel_string))
 
             flow_maker_syst.selection_string = sel_string
@@ -412,7 +412,7 @@ print("Making final plots")
 cV2 = ROOT.TCanvas("cV2", "cV2", 800, 600)
 frame = cV2.DrawFrame(1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{2}")
 cV2.cd()
-legend = ROOT.TLegend(0.61, 0.58, 0.87, 0.81, "FT0C centrality", "brNDC")
+legend = ROOT.TLegend(0.66, 0.62, 0.92, 0.85, "FT0C centrality", "brNDC")
 legend.SetBorderSize(0)
 legend.SetNColumns(2)
 

@@ -12,7 +12,7 @@ import utils as utils
 
 parser = argparse.ArgumentParser(description="Configure the parameters of the script.")
 parser.add_argument(
-    "--config-file",
+    "--config",
     dest="config_file",
     help="path to the YAML file with configuration.",
     default="",
@@ -160,8 +160,6 @@ hNsigmaVsTOFmassSquared = ROOT.TH2F(
     4.0 - mass_bin_shift,
     25.0 - mass_bin_shift,
 )
-# add line corresponding to expected 4He squared mass
-
 
 # get histograms for EP qc
 hZvtx = input_dir_AR_general.Get("hRecVtxZData")
@@ -175,34 +173,111 @@ hDeltaPsi_FT0C_TPCr = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_TPCr_EP")
 hDeltaPsi_FT0C_FT0A = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_FT0A_EP")
 hDeltaPsi_TPCl_TPCr = input_dir_AR_flow_ep.Get("hDeltaPsi_TPCl_TPCr_EP")
 
-# cAvgItsClusSizeCosLambdaPt = ROOT.TCanvas(
-#     "cAvgItsClusSizeCosLambdaPt", "cAvgItsClusSizeCosLambdaPt", 800, 600
-# )
-# cAvgItsClusSizeCosLambdaPt.DrawFrame(
-#     0, 0, 20, 4000, r";#LT ITS cluster size #GT #times Cos(#lambda); counts"
-# )
-# legend = ROOT.TLegend(0.6, 0.61, 0.86, 0.88, "", "brNDC")
-# legend.SetBorderSize(0)
+# get histrogram for FT0C distrubution
+hPsiFT0C_2D = input_dir_AR_flow_ep.Get("hPsi_FT0C_EP")
+vPsiFT0C = []
+yMaxPsi = 0
+legend_psi_FT0C = ROOT.TLegend(
+    0.40, 0.22, 0.70, 0.45, "FTOC centrality classes", "brNDC"
+)
+legend_psi_FT0C.SetNColumns(2)
+FT0C_dir = output_file.mkdir("FT0C")
 
-# for i_pt in range(0, n_pt_bins):
-#     # select the correct pt bin
-#     pt_sel = f"abs(fPt) > {pt_bins[i_pt]} and abs(fPt) < {pt_bins[i_pt+1]}"
-#     bin_df = complete_df.query(pt_sel, inplace=False)
-#     for avgClus in bin_df["fAvgItsClusSizeCosLambda"]:
-#         hAvgItsClusSizeCosLambda[i_pt].Fill(avgClus)
-#     cAvgItsClusSizeCosLambdaPt.cd()
-#     hAvgItsClusSizeCosLambda[i_pt].Draw("same")
-#     legend.AddEntry(
-#         hAvgItsClusSizeCosLambda[i_pt], hAvgItsClusSizeCosLambda[i_pt].GetTitle(), "PE"
-#     )
-# legend.Draw()
+for i_cent, cent in enumerate(centrality_classes):
+    left_bin = hPsiFT0C_2D.GetXaxis().FindBin(cent[0])
+    right_bin = hPsiFT0C_2D.GetXaxis().FindBin(cent[1]) - 1
+    hPsiFT0C = hPsiFT0C_2D.ProjectionY(
+        f"hFT0C_{cent[0]}_{cent[1]}", left_bin, right_bin
+    )
+    utils.setHistStyle(hPsiFT0C, cent_colours[i_cent])
+    hPsiFT0C.Scale(1.0 / hPsiFT0C.Integral())
+    vPsiFT0C.append(hPsiFT0C)
+    loc_max = hPsiFT0C.GetMaximum()
+    if loc_max > yMaxPsi:
+        yMaxPsi = loc_max
+    legend_psi_FT0C.AddEntry(hPsiFT0C, f"{cent[0]}-{cent[1]}%", "l")
 
-# # define list of pt-dependent selections
-# ptdep_selection_list = []
-# for i in range(0, n_pt_bins):
-#     bin_centre = (pt_bins[i + 1] + pt_bins[i]) / 2
-#     condition = utils.get_condition(bin_centre, ptdep_selection_dict)
-#     ptdep_selection_list.append(condition)
+cPsiFT0C = ROOT.TCanvas("cPsiFT0C", "cPsiFT0C", 800, 600)
+cPsiFT0C.DrawFrame(-3.5, 0, 3.5, yMaxPsi * 1.1, r";#Psi_{2}^{FT0C}; norm. counts")
+for i_cent, hPsiFT0C in enumerate(vPsiFT0C):
+    hPsiFT0C.Draw("L SAME")
+    FT0C_dir.cd()
+    hPsiFT0C.Write()
+legend_psi_FT0C.Draw("SAME")
+cPsiFT0C.SaveAs(f"{output_dir_name}/qc_plots/cPsiFT0C.pdf")
+FT0C_dir.cd()
+cPsiFT0C.Write()
+
+# get histrogram for TPCl distrubution
+hPsiTPCl_2D = input_dir_AR_flow_ep.Get("hPsi_TPCl_EP")
+vPsiTPCl = []
+yMaxPsi = 0
+legend_psi_TPCl = ROOT.TLegend(
+    0.40, 0.22, 0.70, 0.45, "TPCl centrality classes", "brNDC"
+)
+legend_psi_TPCl.SetNColumns(2)
+TPCl_dir = output_file.mkdir("TPCl")
+
+for i_cent, cent in enumerate(centrality_classes):
+    left_bin = hPsiTPCl_2D.GetXaxis().FindBin(cent[0])
+    right_bin = hPsiTPCl_2D.GetXaxis().FindBin(cent[1]) - 1
+    hPsiTPCl = hPsiTPCl_2D.ProjectionY(
+        f"hTPCl_{cent[0]}_{cent[1]}", left_bin, right_bin
+    )
+    utils.setHistStyle(hPsiTPCl, cent_colours[i_cent])
+    hPsiTPCl.Scale(1.0 / hPsiTPCl.Integral())
+    vPsiTPCl.append(hPsiTPCl)
+    loc_max = hPsiTPCl.GetMaximum()
+    if loc_max > yMaxPsi:
+        yMaxPsi = loc_max
+    legend_psi_TPCl.AddEntry(hPsiTPCl, f"{cent[0]}-{cent[1]}%", "l")
+
+cPsiTPCl = ROOT.TCanvas("cPsiTPCl", "cPsiTPCl", 800, 600)
+cPsiTPCl.DrawFrame(-3.5, 0, 3.5, yMaxPsi * 1.1, r";#Psi_{2}^{TPCl}; norm. counts")
+for i_cent, hPsiTPCl in enumerate(vPsiTPCl):
+    hPsiTPCl.Draw("L SAME")
+    TPCl_dir.cd()
+    hPsiTPCl.Write()
+legend_psi_TPCl.Draw("SAME")
+cPsiTPCl.SaveAs(f"{output_dir_name}/qc_plots/cPsiTPCl.pdf")
+TPCl_dir.cd()
+cPsiTPCl.Write()
+
+# get histrogram for TPCr distrubution
+hPsiTPCr_2D = input_dir_AR_flow_ep.Get("hPsi_TPCr_EP")
+vPsiTPCr = []
+yMaxPsi = 0
+legend_psi_TPCr = ROOT.TLegend(
+    0.40, 0.22, 0.70, 0.45, "TPCr centrality classes", "brNDC"
+)
+legend_psi_TPCr.SetNColumns(2)
+TPCr_dir = output_file.mkdir("TPCr")
+
+for i_cent, cent in enumerate(centrality_classes):
+    left_bin = hPsiTPCr_2D.GetXaxis().FindBin(cent[0])
+    right_bin = hPsiTPCr_2D.GetXaxis().FindBin(cent[1]) - 1
+    hPsiTPCr = hPsiTPCr_2D.ProjectionY(
+        f"hTPCr_{cent[0]}_{cent[1]}", left_bin, right_bin
+    )
+    utils.setHistStyle(hPsiTPCr, cent_colours[i_cent])
+    hPsiTPCr.Scale(1.0 / hPsiTPCr.Integral())
+    vPsiTPCr.append(hPsiTPCr)
+    loc_max = hPsiTPCr.GetMaximum()
+    if loc_max > yMaxPsi:
+        yMaxPsi = loc_max
+    legend_psi_TPCr.AddEntry(hPsiTPCr, f"{cent[0]}-{cent[1]}%", "l")
+
+cPsiTPCr = ROOT.TCanvas("cPsiTPCr", "cPsiTPCr", 800, 600)
+cPsiTPCr.DrawFrame(-3.5, 0, 3.5, yMaxPsi * 1.1, r";#Psi_{2}^{TPCr}; norm. counts")
+for i_cent, hPsiTPCr in enumerate(vPsiTPCr):
+    hPsiTPCr.Draw("L SAME")
+    TPCr_dir.cd()
+    hPsiTPCr.Write()
+legend_psi_TPCr.Draw("SAME")
+cPsiTPCr.SaveAs(f"{output_dir_name}/qc_plots/cPsiTPCr.pdf")
+TPCr_dir.cd()
+cPsiTPCr.Write()
+
 
 # filling QC-plots after pt-dependent selections
 for i_pt in range(0, n_pt_bins):

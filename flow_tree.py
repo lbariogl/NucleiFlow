@@ -1,5 +1,4 @@
 import ROOT
-from hipe4ml.tree_handler import TreeHandler
 import pandas as pd
 import yaml
 import argparse
@@ -17,7 +16,7 @@ import utils as utils
 
 parser = argparse.ArgumentParser(description="Configure the parameters of the script.")
 parser.add_argument(
-    "--config-file",
+    "--config",
     dest="config_file",
     help="path to the YAML file with configuration.",
     default="",
@@ -74,11 +73,9 @@ output_file = ROOT.TFile(f"{output_dir_name}/{output_file_name}", "recreate")
 
 
 # get a unique df from nuclei and ep trees
-nuclei_hdl = TreeHandler(input_file_name, f"{nuclei_tree_name};", folder_name="DF*")
-nuclei_df = nuclei_hdl._full_data_frame
+nuclei_df = utils.get_df_from_tree(input_file_name, nuclei_tree_name)
 
-nucleiflow_hdl = TreeHandler(input_file_name, f"{ep_tree_name};", folder_name="DF*")
-nucleiflow_df = nucleiflow_hdl._full_data_frame
+nucleiflow_df = utils.get_df_from_tree(input_file_name, ep_tree_name)
 
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
@@ -242,11 +239,19 @@ if do_syst:
             variation_dict[pt_key] = ptdep_cut_string_dict[pt_key][i_variation]
         ptdep_cut_string_dict_list.append(variation_dict)
 
-    n_max_combinations = n_pt_independent_selections * n_pt_dependent_selections
+    if n_pt_dependent_selections != 0:
+        n_max_combinations = n_pt_independent_selections * n_pt_dependent_selections
+        all_complete_selection_indices = list(
+            product(
+                range(n_pt_independent_selections), range(n_pt_dependent_selections)
+            )
+        )
+    else:
+        n_max_combinations = n_pt_independent_selections
+        all_complete_selection_indices = list(
+            product(range(n_pt_independent_selections), [-1])
+        )
 
-    all_complete_selection_indices = list(
-        product(range(n_pt_independent_selections), range(n_pt_dependent_selections))
-    )
     complete_selection_random_indices = copy.deepcopy(all_complete_selection_indices)
 
     if n_trials < n_max_combinations:
@@ -280,6 +285,7 @@ if do_syst:
         ):
 
             flow_maker_syst = FlowMaker()
+            flow_maker_syst.silent_mode = True
             flow_maker_syst.data_df = complete_df
             flow_maker_syst.tof_analysis = tof_analysis
             flow_maker_syst.pt_bins = pt_bins[i_cent]
@@ -298,13 +304,14 @@ if do_syst:
             pt_independent_sel = pt_independent_selections[
                 complete_selection_indices[0]
             ]
-            sel_string = " & ".join(pt_independent_sel)
+            sel_string = " and ".join(pt_independent_sel)
             trial_strings.append(str(sel_string))
 
             flow_maker_syst.selection_string = sel_string
-            flow_maker_syst.ptdep_selection_dict = ptdep_cut_string_dict_list[
-                complete_selection_indices[1]
-            ]
+            flow_maker_syst.ptdep_selection_dict = {}
+            # ptdep_cut_string_dict_list[
+            #     complete_selection_indices[1]
+            # ]
 
             flow_maker_syst.suffix = complete_selection_suffix
 
@@ -405,7 +412,7 @@ print("Making final plots")
 cV2 = ROOT.TCanvas("cV2", "cV2", 800, 600)
 frame = cV2.DrawFrame(1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{2}")
 cV2.cd()
-legend = ROOT.TLegend(0.61, 0.58, 0.87, 0.81, "FT0C centrality", "brNDC")
+legend = ROOT.TLegend(0.66, 0.62, 0.92, 0.85, "FT0C centrality", "brNDC")
 legend.SetBorderSize(0)
 legend.SetNColumns(2)
 

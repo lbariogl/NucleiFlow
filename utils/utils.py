@@ -1,7 +1,8 @@
 import ROOT
-from hipe4ml.tree_handler import TreeHandler
+import uproot
+import pandas as pd
 import numpy as np
-import copy
+from scipy import special
 
 ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
@@ -25,12 +26,14 @@ def setHistStyle(hist, color, marker=20, fillstyle=0, linewidth=1):
 def getITSClSize(itsSizeBitmap):
     sum = 0
     nClus = 0
+    max_cluster_size = 0
     for i_layer in range(0, 7):
         size = (itsSizeBitmap >> i_layer * 4) & 15
+        max_cluster_size = np.maximum(max_cluster_size, size)
         if size > 0:
             nClus = nClus + 1
             sum += size
-    return sum / nClus
+    return (sum - max_cluster_size) / (nClus - 1)
 
 
 # vectorised version of getITSClSize
@@ -113,6 +116,39 @@ def getNsigmaTPC(
 # vectorised version of N-sigma TPC at specific rigidity
 getNsigmaTPC_vectorised = np.vectorize(getNsigmaTPC)
 
+# its n-sigma
+
+its_signal_parameters = [2.3512, 1.8035, 5.1436]
+its_resolution_parameters = [0.0874, -1.8280, 0.5064]
+
+
+def expSignal(p, mass=mass_helion):
+    inverseMass = 1.0 / mass
+    bg = abs(p) * inverseMass
+    return (
+        its_signal_parameters[0] / (np.power(bg, its_signal_parameters[1]))
+        + its_signal_parameters[2]
+    )
+
+
+def expResolution(p, mass=mass_helion):
+    inverseMass = 1.0 / mass
+    bg = abs(p) * inverseMass
+    relRes = its_resolution_parameters[0] * special.erf(
+        (bg - its_resolution_parameters[1]) / its_resolution_parameters[2]
+    )
+    return relRes
+
+
+def getNsigmaITS(avgTtsClusterSizeCosLambda, p):
+    exp = expSignal(p)
+    resolution = expResolution(p) * exp
+    return (avgTtsClusterSizeCosLambda - exp) / resolution
+
+
+# vectorised version of N-sigma TPC at specific rigidity
+getNsigmaITS_vectorised = np.vectorize(getNsigmaITS)
+
 
 # get rapidity
 def getRapidity(pt, eta, phi, mass=mass_helion):
@@ -136,6 +172,44 @@ def getCorrectPhi(phi):
 getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
 
 
+def get_df_from_tree(input_file_name, tree_name):
+
+    # create empty data-frame
+    df = pd.DataFrame()
+
+    # list of folders in the file
+    file_folders = uproot.open(input_file_name).keys()
+
+    # filter folders: only folders without tree_name, not containing "/", and ending with ";1"
+    file_folders = [folder for folder in file_folders if "/" not in folder]
+
+    # first we sort to have as first one the last cycle
+    file_folders.sort(reverse=True)
+
+    # check if there are multiple cycles of the same tree, keep only last one
+    file_folders_to_remove = []
+    for ifolder, folder in enumerate(file_folders[1:]):
+        obj_nocycle = folder.split(";")[0]
+        if obj_nocycle in file_folders[ifolder]:
+            file_folders_to_remove.append(folder)
+    for folder_to_remove in file_folders_to_remove:
+        file_folders.remove(folder_to_remove)
+
+    # loop over the folders
+    for folder in file_folders:
+        df = pd.concat(
+            [
+                df,
+                uproot.open(f"{input_file_name}:{folder}/{tree_name}").arrays(
+                    library="pd"
+                ),
+            ],
+            ignore_index=True,
+            copy=False,
+        )
+    return df
+
+
 # redefine columns in the complete data-frame
 def redefineColumns(
     complete_df, mass=mass_helion, charge=2, parameters=default_bb_parameters
@@ -143,6 +217,8 @@ def redefineColumns(
     print("Redefining columns")
     print("fPt")
     complete_df["fPt"] = charge * complete_df["fPt"]
+    print("fP")
+    complete_df.eval("fP = fPt * cosh(fEta)", inplace=True)
     print("fPhi")
     complete_df["fPhi"] = getCorrectPhi_vectorised(complete_df["fPhi"])
     print("fCosLambda")
@@ -166,6 +242,11 @@ def redefineColumns(
             mass=mass,
             parameters=parameters,
         ),
+        axis=1,
+    )
+    print("fNsigmaITS3He")
+    complete_df["fNsigmaITS3He"] = complete_df.apply(
+        lambda row: getNsigmaITS(row["fAvgItsClusSizeCosLambda"], row["fP"]),
         axis=1,
     )
     # print('fRapidity')
@@ -205,7 +286,14 @@ def redefineColumnsLight(complete_df, charge=2):
     complete_df.eval(
         "fAvgItsClusSizeCosLambda = fAvgItsClusSize * fCosLambda", inplace=True
     )
+    print("fNsigmaITS3He")
+    complete_df["fNsigmaITS3He"] = complete_df.apply(
+        lambda row: getNsigmaITS(row["fAvgItsClusSizeCosLambda"], row["fP"]),
+        axis=1,
+    )
     complete_df.drop(columns=["fITSclusterSizes"])
+    complete_df.drop(columns=["fAvgItsClusSize"])
+    complete_df.drop(columns=["fAvgItsClusSizeCosLambda"])
     print("fSign")
     complete_df.eval("fSign = @getSign_vectorised(fFlags)", inplace=True)
 

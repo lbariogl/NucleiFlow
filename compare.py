@@ -10,7 +10,7 @@ old_centrality_classes = [[0, 10], [10, 20], [20, 40], [40, 60]]
 old_v2_stat = []
 old_v2_syst = []
 
-old_file = ROOT.TFile("../results_pass3_new/final.root")
+old_file = ROOT.TFile("../on_ali50xl/results_pass3_new/final.root")
 
 for cent_limits in old_centrality_classes:
     cent_dir = old_file.Get(f"cent_{cent_limits[0]}_{cent_limits[1]}")
@@ -32,7 +32,7 @@ new_centrality_classes = [
 new_cent_colours = [633, 797, 418, 402, 433, 862, 874]
 
 new_v2_stat = []
-new_file = ROOT.TFile("../results_pass4/flow.root")
+new_file = ROOT.TFile("../results_pass4_local/flow.root")
 
 for cent_limits in new_centrality_classes:
     cent_dir = new_file.Get(f"cent_{cent_limits[0]}_{cent_limits[1]}")
@@ -40,7 +40,7 @@ for cent_limits in new_centrality_classes:
     hV2_tmp.SetMarkerStyle(25)
     new_v2_stat.append(hV2_tmp)
 
-output_file = ROOT.TFile("../results_pass4/comp_pass3_pass4.root", "RECREATE")
+output_file = ROOT.TFile("../results_pass4_local/comp_pass3_pass4.root", "RECREATE")
 
 cV2 = ROOT.TCanvas("cV2_comp", "cV2_comp", 800, 600)
 info_panel_total = ROOT.TPaveText(0.16, 0.71, 0.36, 0.87, "NDC")
@@ -102,7 +102,7 @@ info_panel_total.Draw()
 
 output_file.cd()
 cV2.Write()
-cV2.SaveAs(f"../results_pass4/plots/{cV2.GetName()}.pdf")
+cV2.SaveAs(f"../results_pass4_local/plots/{cV2.GetName()}.pdf")
 
 
 def getHistos(file_name, histo_name, color, marker):
@@ -176,23 +176,23 @@ def getHistos(file_name, histo_name, color, marker):
     return hStat, hSyst
 
 
-proton_1020_file_name = "../results_pass4/v2_proton/proton_1020.root"
+proton_1020_file_name = "../on_ali50xl/results_pass4/v2_proton/proton_1020.root"
 hProton_1020_stat, hProton_1020_syst = getHistos(
     proton_1020_file_name, "hProton_1020", color=797, marker=25
 )
-proton_2030_file_name = "../results_pass4/v2_proton/proton_2030.root"
+proton_2030_file_name = "../on_ali50xl/results_pass4/v2_proton/proton_2030.root"
 hProton_2030_stat, hProton_2030_syst = getHistos(
     proton_2030_file_name, "hProton_2030", color=418, marker=25
 )
-proton_3040_file_name = "../results_pass4/v2_proton/proton_3040.root"
+proton_3040_file_name = "../on_ali50xl/results_pass4/v2_proton/proton_3040.root"
 hProton_3040_stat, hProton_3040_syst = getHistos(
     proton_3040_file_name, "hProton_3040", color=402, marker=21
 )
-proton_4050_file_name = "../results_pass4/v2_proton/proton_4050.root"
+proton_4050_file_name = "../on_ali50xl/results_pass4/v2_proton/proton_4050.root"
 hProton_4050_stat, hProton_4050_syst = getHistos(
     proton_4050_file_name, "hProton_4050", color=433, marker=25
 )
-proton_5060_file_name = "../results_pass4/v2_proton/proton_5060.root"
+proton_5060_file_name = "../on_ali50xl/results_pass4/v2_proton/proton_5060.root"
 hProton_5060_stat, hProton_5060_syst = getHistos(
     proton_5060_file_name, "hProton_5060", color=862, marker=25
 )
@@ -327,4 +327,4 @@ info_panel_proton.Draw()
 
 output_file.cd()
 cV2_proton.Write()
-cV2_proton.SaveAs(f"../results_pass4/plots/{cV2_proton.GetName()}.pdf")
+cV2_proton.SaveAs(f"../results_pass4_local/plots/{cV2_proton.GetName()}.pdf")

@@ -212,7 +212,11 @@ def get_df_from_tree(input_file_name, tree_name):
 
 # redefine columns in the complete data-frame
 def redefineColumns(
-    complete_df, mass=mass_helion, charge=2, parameters=default_bb_parameters
+    complete_df,
+    mass=mass_helion,
+    charge=2,
+    parameters=default_bb_parameters,
+    useSP=False,
 ):
     print("Redefining columns")
     print("fPt")
@@ -258,14 +262,28 @@ def redefineColumns(
         inplace=True,
     )
     # v2 with event-plane method
-    print("fV2FT0C")
-    complete_df.eval("fV2FT0C = cos(2 * (fPhi-fPsiFT0C))", inplace=True)
-    print("fV2FT0A")
-    complete_df.eval("fV2FT0A = cos(2 * (fPhi-fPsiFT0A))", inplace=True)
-    print("fV2TPCl")
-    complete_df.eval("fV2TPCl = cos(2 * (fPhi-fPsiTPCl))", inplace=True)
-    print("fV2TPCr")
-    complete_df.eval("fV2TPCr = cos(2 * (fPhi-fPsiTPCr))", inplace=True)
+    if useSP:
+        print("fV2FT0C")
+        complete_df.eval("fV2FT0C = fQFT0C * cos(2 * (fPhi-fPsiFT0C))", inplace=True)
+        print("fV2FT0A")
+        complete_df.eval("fV2FT0A = fQFT0A * cos(2 * (fPhi-fPsiFT0A))", inplace=True)
+        print("fV2TPCl")
+        complete_df.eval("fV2TPCl = fQTPCl * cos(2 * (fPhi-fPsiTPCl))", inplace=True)
+        print("fV2TPCr")
+        complete_df.eval("fV2TPCr = fQTPCr * cos(2 * (fPhi-fPsiTPCr))", inplace=True)
+        print("fV2TPC")
+        complete_df.eval("fV2TPC = fQTPC * cos(2 * (fPhi-fPsiTPC))", inplace=True)
+    else:
+        print("fV2FT0C")
+        complete_df.eval("fV2FT0C = cos(2 * (fPhi-fPsiFT0C))", inplace=True)
+        print("fV2FT0A")
+        complete_df.eval("fV2FT0A = cos(2 * (fPhi-fPsiFT0A))", inplace=True)
+        print("fV2TPCl")
+        complete_df.eval("fV2TPCl = cos(2 * (fPhi-fPsiTPCl))", inplace=True)
+        print("fV2TPCr")
+        complete_df.eval("fV2TPCr = cos(2 * (fPhi-fPsiTPCr))", inplace=True)
+        print("fV2TPC")
+        complete_df.eval("fV2TPC = cos(2 * (fPhi-fPsiTPC))", inplace=True)
 
 
 def redefineColumnsLight(complete_df, charge=2):

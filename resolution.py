@@ -31,12 +31,17 @@ input_file = ROOT.TFile(input_file_AR_name)
 
 ref_names = ["FT0C", "FT0A", "TPCl", "TPCr"]
 
-use_EP = False
+use_EP_tables = False
 
-hSP_dict = {}
-hProfile_dict = {}
-cSpProfile_dict = {}
-hResolution_dict = {}
+hSP_dict_EP = {}
+hProfile_dict_EP = {}
+cSpProfile_dict_EP = {}
+hResolution_dict_EP = {}
+
+hSP_dict_SP = {}
+hProfile_dict_SP = {}
+cSpProfile_dict_SP = {}
+hResolution_dict_SP = {}
 
 cent_bins = np.array(
     [0.0, 10.0, 20.0, 30.0, 40.0, 50.0, 60.0, 70.0, 80.0, 90.0, 100.0], dtype=np.float64
@@ -77,30 +82,50 @@ def getResolution(histo_resolution, det1_det2_name, det2_det3_name, det1_det3_na
             histo_resolution.SetBinError(ibin, np.sqrt(err))
 
 
-def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
+def doAllPlots(
+    det_name1,
+    det_name2,
+    det_name3,
+    ep_table=True,
+    use_SP=False,
+    hSP_dict=hSP_dict_EP,
+    hProfile_dict=hProfile_dict_EP,
+    cSpProfile_dict=cSpProfile_dict_EP,
+    hResolution_dict=hResolution_dict_EP,
+):
 
-    if ep_method:
+    if ep_table:
         directory = "flow_ep"
-        suffix = "EP"
+        input_suffix = "EP"
     else:
         directory = "flow_qvec"
-        suffix = "Qvec"
+        input_suffix = "Qvec"
+
+    if use_SP:
+        histo_name = "hScalarProduct"
+        output_suffix = "SP"
+    else:
+        histo_name = "hNormalisedScalarProduct"
+        output_suffix = "EP"
 
     # first combination
     det1_det2_name = f"{det_name1}_{det_name2}"
     if det1_det2_name not in hSP_dict.keys():
         hSP_dict[det1_det2_name] = input_file.Get(
-            f"flow-qc/{directory}/hNormalisedScalarProduct_{det1_det2_name}_{suffix}"
+            f"flow-qc/{directory}/{histo_name}_{det1_det2_name}_{input_suffix}"
         )
         hSP_dict[det1_det2_name].RebinX(10)
 
         hProfile_dict[det1_det2_name] = hSP_dict[det1_det2_name].ProfileX(
-            f"hProfile_{det1_det2_name}"
+            f"hProfile_{det1_det2_name}_{output_suffix}"
         )
         utils.setHistStyle(hProfile_dict[det1_det2_name], ROOT.kRed)
 
         cSpProfile_dict[det1_det2_name] = ROOT.TCanvas(
-            f"cSpProfile_{det1_det2_name}", f"cSpProfile_{det1_det2_name}", 800, 600
+            f"cSpProfile_{det1_det2_name}_{output_suffix}",
+            f"cSpProfile_{det1_det2_name}_{output_suffix}",
+            800,
+            600,
         )
         hSP_dict[det1_det2_name].Draw("colz")
         hProfile_dict[det1_det2_name].Draw("pe same")
@@ -109,17 +134,20 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     det2_det3_name = f"{det_name2}_{det_name3}"
     if det2_det3_name not in hSP_dict.keys():
         hSP_dict[det2_det3_name] = input_file.Get(
-            f"flow-qc/{directory}/hNormalisedScalarProduct_{det2_det3_name}_{suffix}"
+            f"flow-qc/{directory}/{histo_name}_{det2_det3_name}_{input_suffix}"
         )
         hSP_dict[det2_det3_name].RebinX(10)
 
         hProfile_dict[det2_det3_name] = hSP_dict[det2_det3_name].ProfileX(
-            f"hProfile_{det2_det3_name}"
+            f"hProfile_{det2_det3_name}_{output_suffix}"
         )
         utils.setHistStyle(hProfile_dict[det2_det3_name], ROOT.kRed)
 
         cSpProfile_dict[det2_det3_name] = ROOT.TCanvas(
-            f"cSpProfile_{det2_det3_name}", f"cSpProfile_{det2_det3_name}", 800, 600
+            f"cSpProfile_{det2_det3_name}_{output_suffix}",
+            f"cSpProfile_{det2_det3_name}_{output_suffix}",
+            800,
+            600,
         )
         hSP_dict[det2_det3_name].Draw("colz")
         hProfile_dict[det2_det3_name].Draw("pe same")
@@ -128,17 +156,20 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     det1_det3_name = f"{det_name1}_{det_name3}"
     if det1_det3_name not in hSP_dict.keys():
         hSP_dict[det1_det3_name] = input_file.Get(
-            f"flow-qc/{directory}/hNormalisedScalarProduct_{det1_det3_name}_{suffix}"
+            f"flow-qc/{directory}/{histo_name}_{det1_det3_name}_{input_suffix}"
         )
         hSP_dict[det1_det3_name].RebinX(10)
 
         hProfile_dict[det1_det3_name] = hSP_dict[det1_det3_name].ProfileX(
-            f"hProfile_{det1_det3_name}"
+            f"hProfile_{det1_det3_name}_{output_suffix}"
         )
         utils.setHistStyle(hProfile_dict[det1_det3_name], ROOT.kRed)
 
         cSpProfile_dict[det1_det3_name] = ROOT.TCanvas(
-            f"cSpProfile_{det1_det3_name}", f"cSpProfile_{det1_det3_name}", 800, 600
+            f"cSpProfile_{det1_det3_name}_{output_suffix}",
+            f"cSpProfile_{det1_det3_name}_{output_suffix}",
+            800,
+            600,
         )
         hSP_dict[det1_det3_name].Draw("colz")
         hProfile_dict[det1_det3_name].Draw("pe same")
@@ -155,7 +186,7 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     resolution_title1 = r"R_{2} " + f"({det_name1}#; {det_name2}, {det_name3})"
 
     hResolution_dict[resolution_name1] = ROOT.TH1F(
-        f"hResolution_{resolution_name1}",
+        f"hResolution_{resolution_name1}_{output_suffix}",
         f";{cent_axis_title};{resolution_title1}",
         n_bins,
         cent_axis_limits[0],
@@ -173,7 +204,7 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     resolution_title2 = r"R_{2} " + f"({det_name2}#; {det_name1}, {det_name3})"
 
     hResolution_dict[resolution_name2] = ROOT.TH1F(
-        f"hResolution_{resolution_name2}",
+        f"hResolution_{resolution_name2}_{output_suffix}",
         f";{cent_axis_title};{resolution_title2}",
         n_bins,
         cent_axis_limits[0],
@@ -191,7 +222,7 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
     resolution_title3 = r"R_{2} " + f"({det_name3}#; {det_name1}, {det_name2})"
 
     hResolution_dict[resolution_name3] = ROOT.TH1F(
-        f"hResolution_{resolution_name3}",
+        f"hResolution_{resolution_name3}_{output_suffix}",
         f";{cent_axis_title};{resolution_title3}",
         n_bins,
         cent_axis_limits[0],
@@ -212,23 +243,46 @@ def doAllPlots(det_name1, det_name2, det_name3, ep_method=True):
 det_combos = list(combinations(ref_names, 3))
 
 for det_combo in det_combos:
-    doAllPlots(det_combo[0], det_combo[1], det_combo[2], use_EP)
+    doAllPlots(det_combo[0], det_combo[1], det_combo[2], use_EP_tables)
+    doAllPlots(
+        det_combo[0],
+        det_combo[1],
+        det_combo[2],
+        use_EP_tables,
+        use_SP=True,
+        hSP_dict=hSP_dict_SP,
+        hProfile_dict=hProfile_dict_SP,
+        cSpProfile_dict=cSpProfile_dict_SP,
+        hResolution_dict=hResolution_dict_SP,
+    )
 
-if use_EP:
+if use_EP_tables:
     output_file_name = output_dir + "resolution_EP.root"
 else:
     output_file_name = output_dir + "resolution_Qvec.root"
 
 output_file = ROOT.TFile(output_file_name, "recreate")
-SP_dir = output_file.mkdir("SP")
-Resolution_dir = output_file.mkdir("Resolution")
+SP_dir_EP = output_file.mkdir("SP_normalised")
+SP_dir_SP = output_file.mkdir("SP")
+Resolution_EP_dir = output_file.mkdir("Resolution_EP")
+Resolution_SP_dir = output_file.mkdir("Resolution_SP")
 
-SP_dir.cd()
-for key in hSP_dict.keys():
-    hSP_dict[key].Write()
-    hProfile_dict[key].Write()
-    cSpProfile_dict[key].Write()
+SP_dir_EP.cd()
+for key in hSP_dict_EP.keys():
+    hSP_dict_EP[key].Write()
+    hProfile_dict_EP[key].Write()
+    cSpProfile_dict_EP[key].Write()
 
-Resolution_dir.cd()
-for res in hResolution_dict.values():
+SP_dir_SP.cd()
+for key in hSP_dict_SP.keys():
+    hSP_dict_SP[key].Write()
+    hProfile_dict_SP[key].Write()
+    cSpProfile_dict_SP[key].Write()
+
+Resolution_EP_dir.cd()
+for res in hResolution_dict_EP.values():
+    res.Write()
+
+Resolution_SP_dir.cd()
+for res in hResolution_dict_SP.values():
     res.Write()

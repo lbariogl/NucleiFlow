@@ -37,6 +37,8 @@ output_file_name = config["output_file_name"]
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
+useEP = config["useEP"]
+
 # n-sigma TPC bins
 n_nsigmaTPC_bins = config["n_nsigmaTPC_bins"]
 nsigmaTPC_bin_limits = config["nsigmaTPC_bin_limits"]
@@ -87,7 +89,11 @@ complete_df.query(mandatory_selections, inplace=True)
 
 # Get resolution from file
 resolution_file = ROOT.TFile(resolution_file_name)
-hResolution = resolution_file.Get("Resolution/hResolution_FT0C_TPCl_TPCr")
+if useEP:
+    res_histo_name = "Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP"
+else:
+    res_histo_name = "Resolution_SP/hResolution_FT0C_TPCl_TPCr_SP"
+hResolution = resolution_file.Get(res_histo_name)
 hResolution.SetDirectory(0)
 
 res_0_10 = hResolution.GetBinContent(1)

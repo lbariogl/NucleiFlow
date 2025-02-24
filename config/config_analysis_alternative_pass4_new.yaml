@@ -1,10 +1,10 @@
-input_file_name: "../LHC24_PbPb_pass4/AO2D_alternative.root"
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D_asternative.root"
 
-input_file_AR_name: "../LHC24_PbPb_pass4/AnalysisResults_aternative.root"
+input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.root"
 
-resolution_file_name: "../on_ali50xl/results_pass4/resolution_Qvec.root"
+resolution_file_name: "../results_pass4_new/resolution_Qvec.root"
 
-output_dir_name: "../results_pass4_alternative_local/"
+output_dir_name: "../results_pass4_alternative_new/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 
@@ -69,7 +69,7 @@ resolution_train: 0.09
 n_sigma_plot: 5
 
 do_syst: False
-n_trials: 100
+n_trials: 500
 
 cut_dict_syst:
   {

@@ -37,7 +37,7 @@ output_file_name = config["output_file_name"]
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
-useEP = config["useEP"]
+useSP = config["useSP"]
 
 # n-sigma TPC bins
 n_nsigmaTPC_bins = config["n_nsigmaTPC_bins"]
@@ -82,17 +82,19 @@ nucleiflow_df = utils.get_df_from_tree(input_file_name, ep_tree_name)
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
 # define new columns
-utils.redefineColumns(complete_df, mass=utils.mass_helion, parameters=p_train)
+utils.redefineColumns(
+    complete_df, mass=utils.mass_helion, parameters=p_train, useSP=useSP
+)
 
 # apply mandatory selections
 complete_df.query(mandatory_selections, inplace=True)
 
 # Get resolution from file
 resolution_file = ROOT.TFile(resolution_file_name)
-if useEP:
-    res_histo_name = "Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP"
-else:
+if useSP:
     res_histo_name = "Resolution_SP/hResolution_FT0C_TPCl_TPCr_SP"
+else:
+    res_histo_name = "Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP"
 hResolution = resolution_file.Get(res_histo_name)
 hResolution.SetDirectory(0)
 

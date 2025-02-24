@@ -1,10 +1,10 @@
-input_file_name: "../LHC24_PbPb_pass4/AO2D_alternative.root"
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D.root"
 
-input_file_AR_name: "../LHC24_PbPb_pass4/AnalysisResults_aternative.root"
+input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.root"
 
-resolution_file_name: "../on_ali50xl/results_pass4/resolution_Qvec.root"
+resolution_file_name: "../results_pass4_new/resolution_EP.root"
 
-output_dir_name: "../results_pass4_alternative_local/"
+output_dir_name: "../results_pass4_new/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 
@@ -20,7 +20,7 @@ selection_dict:
     "abs(fDCAz)": "abs(fDCAz) < 1.",
     "fTPCnCls": "fTPCnCls > 99",
     "abs(fZvertex)": "abs(fZvertex) < 10.",
-    "fNsigmaITS3He": "fNsigmaITS3He > - 1.5",
+    "fNsigmaITS3He": "fNsigmaITS3He > - 1",
     "abs(fNsigmaTPC3He)": "abs(fNsigmaTPC3He) < 2.",
   }
 ptdep_selection_dict: # the dictionary has as key the right pt limit for the selection
@@ -68,8 +68,8 @@ p_train: [-449.90,
 resolution_train: 0.09
 n_sigma_plot: 5
 
-do_syst: False
-n_trials: 100
+do_syst: True
+n_trials: 500
 
 cut_dict_syst:
   {
@@ -77,7 +77,7 @@ cut_dict_syst:
     "abs(fDCAz)": { "cut_greater": False, "cut_list": [0.75, 1.00, 26] },
     "fTPCnCls": { "cut_greater": True, "cut_list": [100, 130, 7] },
     "abs(fZvertex)": { "cut_greater": False, "cut_list": [8, 10, 5] },
-    "fNsigmaITS3He": {"cut_greater": True, "cut_list": [-1.1, -0.9, 3] },
+    "fNsigmaITS3He": {"cut_greater": True, "cut_list": [-1.1, -0.9, 5] },
     "abs(fNsigmaTPC3He)": {"cut_greater": False, "cut_list": [2., 1.8, 5] }
   }
 

@@ -34,7 +34,7 @@ output_file_name = config["output_file_name_qc"]
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
-useEP = config["useEP"]
+useSP = config["useSP"]
 
 mandatory_selections = config["mandatory_selections"]
 selection_dict = config["selection_dict"]
@@ -408,10 +408,10 @@ utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name, is2D=True, logScale=Tr
 
 # resolution plot
 resolution_file = ROOT.TFile(resolution_file_name)
-if useEP:
-    res_histo_name = "Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP"
-else:
+if useSP:
     res_histo_name = "Resolution_SP/hResolution_FT0C_TPCl_TPCr_SP"
+else:
+    res_histo_name = "Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP"
 hResolution = resolution_file.Get(res_histo_name)
 hResolution.SetDirectory(0)
 hResolution.SetTitle(r";FT0C percentile (%); R_{2}")

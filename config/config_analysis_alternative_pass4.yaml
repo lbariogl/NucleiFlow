@@ -11,7 +11,7 @@ output_file_name_qc: "qc.root"
 nuclei_tree_name: "O2nucleitable"
 ep_tree_name: "O2nucleitableflow"
 
-useEP : True
+useSP : False
 
 mandatory_selections: "fSign < 0 and abs(fEta) < 0.8 and fTPCchi2 > 0.5"
 selection_dict:

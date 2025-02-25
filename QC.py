@@ -53,6 +53,8 @@ selections = re.sub(pattern, "", selections).strip()
 # ptdep_selection_dict = config["ptdep_selection_dict"]["fAvgItsClusSizeCosLambda"]
 
 cent_detector_label = config["cent_detector_label"]
+reference_flow_detector = config["reference_flow_detector"]
+resolution_flow_detectors = config["resolution_flow_detectors"]
 
 centrality_classes = config["centrality_classes"]
 pt_bins = config["qc_pt_bins"]
@@ -409,14 +411,21 @@ utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name, is2D=True, logScale=Tr
 # resolution plot
 resolution_file = ROOT.TFile(resolution_file_name)
 if useSP:
-    res_histo_name = "Resolution_SP/hResolution_FT0C_TPCl_TPCr_SP"
+    res_histo_name = f"Resolution_SP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_SP"
 else:
-    res_histo_name = "Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP"
+    res_histo_name = f"Resolution_EP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_EP"
 hResolution = resolution_file.Get(res_histo_name)
 hResolution.SetDirectory(0)
 hResolution.SetTitle(r";FT0C percentile (%); R_{2}")
 utils.setHistStyle(hResolution, ROOT.kRed + 2)
-cResolutionFT0C = ROOT.TCanvas("cResolutionFT0C", "cResolutionFT0C", 800, 600)
-cResolutionFT0C.SetBottomMargin(0.15)
+cResolution = ROOT.TCanvas(
+    f"cResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}",
+    f"cResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}",
+    800,
+    600,
+)
+cResolution.SetBottomMargin(0.15)
 hResolution.Draw("PE")
-cResolutionFT0C.SaveAs(f"{output_dir_name}/qc_plots/cResolutionFT0C.pdf")
+cResolution.SaveAs(
+    f"{output_dir_name}/qc_plots/cResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}.pdf"
+)

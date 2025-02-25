@@ -54,6 +54,8 @@ standard_ptdep_selection_dict = config["ptdep_selection_dict"][
 ]
 
 cent_detector_label = config["cent_detector_label"]
+reference_flow_detector = config["reference_flow_detector"]
+resolution_flow_detectors = config["resolution_flow_detectors"]
 
 centrality_classes = config["centrality_classes"]
 pt_bins = config["pt_bins"]
@@ -74,9 +76,9 @@ output_file = ROOT.TFile(f"{output_dir_name}/{output_file_name}", "recreate")
 # Get resolution from file
 resolution_file = ROOT.TFile(resolution_file_name)
 if useSP:
-    res_histo_name = "Resolution_SP/hResolution_FT0C_TPCl_TPCr_SP"
+    res_histo_name = f"Resolution_SP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_SP"
 else:
-    res_histo_name = "Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP"
+    res_histo_name = f"Resolution_EP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_EP"
 hResolution = resolution_file.Get(res_histo_name)
 hResolution.SetDirectory(0)
 
@@ -274,6 +276,7 @@ for i_cent in range(n_cent_classes):
             flow_maker_syst.pt_bins = pt_bins[i_cent]
             flow_maker_syst.cent_limits = centrality_classes[i_cent]
             flow_maker_syst.resolution = resolutions[i_cent]
+            flow_maker_syst.ref_detector = reference_flow_detector
 
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = cut
@@ -352,6 +355,7 @@ for i_cent in range(n_cent_classes):
             flow_maker_syst.pt_bins = pt_bins[i_cent]
             flow_maker_syst.cent_limits = centrality_classes[i_cent]
             flow_maker_syst.resolution = resolutions[i_cent]
+            flow_maker_syst.ref_detector = reference_flow_detector
 
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = standard_selections

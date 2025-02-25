@@ -5,6 +5,7 @@ input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.ro
 resolution_file_name: "../results_pass4_new/resolution_EP.root"
 
 output_dir_name: "../results_pass4_new/"
+alternative_output_dir_name: "../results_pass4_alternative_new/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 

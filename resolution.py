@@ -29,9 +29,9 @@ output_dir = config["output_dir_name"]
 input_file_AR_name = config["input_file_AR_name"]
 input_file = ROOT.TFile(input_file_AR_name)
 
-ref_names = ["FT0C", "FT0A", "TPCl", "TPCr"]
+ref_names = ["FT0C", "FT0A", "TPCl", "TPCr", "TPC"]
 
-use_EP_tables = False
+use_EP_tables = True
 
 hSP_dict_EP = {}
 hProfile_dict_EP = {}
@@ -49,7 +49,9 @@ cent_bins = np.array(
 n_cent_bins = len(cent_bins) - 1
 
 
-def getResolution(histo_resolution, det1_det2_name, det2_det3_name, det1_det3_name):
+def getResolution(
+    histo_resolution, det1_det2_name, det2_det3_name, det1_det3_name, hProfile_dict
+):
     histo_resolution.GetYaxis().SetRangeUser(0.0, 1.0)
     n_bins = histo_resolution.GetNbinsX()
     for ibin in range(1, n_bins + 1):
@@ -197,6 +199,7 @@ def doAllPlots(
         det1_det2_name,
         det2_det3_name,
         det1_det3_name,
+        hProfile_dict,
     )
     utils.setHistStyle(hResolution_dict[resolution_name1], ROOT.kRed)
 
@@ -215,6 +218,7 @@ def doAllPlots(
         det2_det3_name,
         det1_det3_name,
         det1_det2_name,
+        hProfile_dict,
     )
     utils.setHistStyle(hResolution_dict[resolution_name2], ROOT.kRed)
 
@@ -233,6 +237,7 @@ def doAllPlots(
         det1_det3_name,
         det1_det2_name,
         det2_det3_name,
+        hProfile_dict,
     )
     utils.setHistStyle(hResolution_dict[resolution_name3], ROOT.kRed)
 

@@ -30,7 +30,9 @@ config = yaml.full_load(config_file)
 input_file_name = config["input_file_name"]
 resolution_file_name = config["resolution_file_name"]
 output_dir_name = config["output_dir_name"]
+alternative_output_dir_name = config["alternative_output_dir_name"]
 output_file_name = config["output_file_name"]
+input_file_alternative_name = alternative_output_dir_name + output_file_name
 output_file_name = output_file_name[:-5] + "_separated.root"
 
 
@@ -107,7 +109,7 @@ standard_file = ROOT.TFile(standard_file_name)
 do_alternative_systematic = True
 
 # get alternative flow table
-input_file_alternative = ROOT.TFile("../results_pass4_alternative_local/flow.root")
+input_file_alternative = ROOT.TFile(input_file_alternative_name)
 
 n_cent_classes = len(centrality_classes)
 
@@ -128,9 +130,10 @@ for i_cent in range(n_cent_classes):
     histo.SetDirectory(0)
     default_v2_histos.append(histo)
     default_v2_values.append(utils.getValuesFromHisto(histo))
-    histo_varied = input_file_alternative.Get(
-        f"{cent_dir_name}/default/hV2vsPt_{cent_dir_name}"
-    )
+    alternative_histo_name = f"{cent_dir_name}/default/hV2vsPt_{cent_dir_name}"
+    print(f"file_name: {input_file_alternative_name}")
+    print(f"    histo_name: {alternative_histo_name}")
+    histo_varied = input_file_alternative.Get(alternative_histo_name)
     alternative_v2_histos.append(histo_varied)
 
 

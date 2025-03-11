@@ -1,10 +1,10 @@
-input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D.root"
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D_igor.root"
 
 input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.root"
 
 resolution_file_name: "../results_pass4_new/resolution_EP.root"
 
-output_dir_name: "../results_pass4_new/"
+output_dir_name: "../results_pass4_new_igor/"
 alternative_output_dir_name: "../results_pass4_alternative_new/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
@@ -70,7 +70,7 @@ p_train: [-449.90,
 resolution_train: 0.09
 n_sigma_plot: 5
 
-do_syst: True
+do_syst: False
 n_trials: 500
 
 cut_dict_syst:

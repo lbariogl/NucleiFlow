@@ -11,7 +11,7 @@ import utils as utils
 
 parser = argparse.ArgumentParser(description="Configure the parameters of the script.")
 parser.add_argument(
-    "--config-file",
+    "--config",
     dest="config_file",
     help="path to the YAML file with configuration.",
     default="",
@@ -97,16 +97,20 @@ def doAllPlots(
 ):
 
     if ep_table:
+        print("** Using EP tables **")
         directory = "flow_ep"
         input_suffix = "EP"
     else:
+        print("** Using Qvector tables **")
         directory = "flow_qvec"
         input_suffix = "Qvec"
 
     if use_SP:
+        print("** Using scalar product **")
         histo_name = "hScalarProduct"
         output_suffix = "SP"
     else:
+        print("** Using event plane **")
         histo_name = "hNormalisedScalarProduct"
         output_suffix = "EP"
 
@@ -187,6 +191,8 @@ def doAllPlots(
     resolution_name1 = f"{det_name1}_{det_name2}_{det_name3}"
     resolution_title1 = r"R_{2} " + f"({det_name1}#; {det_name2}, {det_name3})"
 
+    print(f"Creating resolution {resolution_name1}")
+
     hResolution_dict[resolution_name1] = ROOT.TH1F(
         f"hResolution_{resolution_name1}_{output_suffix}",
         f";{cent_axis_title};{resolution_title1}",
@@ -206,6 +212,8 @@ def doAllPlots(
     resolution_name2 = f"{det_name2}_{det_name3}_{det_name1}"
     resolution_title2 = r"R_{2} " + f"({det_name2}#; {det_name1}, {det_name3})"
 
+    print(f"Creating resolution {resolution_name2}")
+
     hResolution_dict[resolution_name2] = ROOT.TH1F(
         f"hResolution_{resolution_name2}_{output_suffix}",
         f";{cent_axis_title};{resolution_title2}",
@@ -224,6 +232,8 @@ def doAllPlots(
 
     resolution_name3 = f"{det_name3}_{det_name1}_{det_name2}"
     resolution_title3 = r"R_{2} " + f"({det_name3}#; {det_name1}, {det_name2})"
+
+    print(f"Creating resolution {resolution_name3}")
 
     hResolution_dict[resolution_name3] = ROOT.TH1F(
         f"hResolution_{resolution_name3}_{output_suffix}",
@@ -248,7 +258,17 @@ def doAllPlots(
 det_combos = list(combinations(ref_names, 3))
 
 for det_combo in det_combos:
-    doAllPlots(det_combo[0], det_combo[1], det_combo[2], use_EP_tables)
+    doAllPlots(
+        det_combo[0],
+        det_combo[1],
+        det_combo[2],
+        use_EP_tables,
+        use_SP=False,
+        hSP_dict=hSP_dict_EP,
+        hProfile_dict=hProfile_dict_EP,
+        cSpProfile_dict=cSpProfile_dict_EP,
+        hResolution_dict=hResolution_dict_EP,
+    )
     doAllPlots(
         det_combo[0],
         det_combo[1],

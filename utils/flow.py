@@ -43,8 +43,9 @@ class FlowMaker:
         self.n_tofMassSquared_bins = 200
         self.tofMassSquared_bin_limits = [-5.0, 5.0]
 
-        self.n_V2_bins = 20
-        self.n_V2_bin_limits = [-1.0, 1.0]
+        self.n_v2_bins = 20
+        self.v2_bin_limits = [-1.0, 1.0]
+        self.v2_axis_label = r"cos(2(#phi - #Psi))"
 
         self.hNsigma3He = []
         self.cNsigma3HeFit = []
@@ -138,10 +139,10 @@ class FlowMaker:
             # V2
             hV2_tmp = ROOT.TH1F(
                 f"hV2{self.ref_detector}_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
-                f"{pt_label}" + r";cos(2(#phi - #Psi)); counts",
-                self.n_V2_bins,
-                self.n_V2_bin_limits[0],
-                self.n_V2_bin_limits[1],
+                f"{pt_label}" + f";{self.v2_axis_label}; counts",
+                self.n_v2_bins,
+                self.v2_bin_limits[0],
+                self.v2_bin_limits[1],
             )
 
             # system infopanel
@@ -194,9 +195,9 @@ class FlowMaker:
                     self.n_tofMassSquared_bins,
                     self.tofMassSquared_bin_limits[0],
                     self.tofMassSquared_bin_limits[1],
-                    self.n_V2_bins,
-                    self.n_V2_bin_limits[0],
-                    self.n_V2_bin_limits[1],
+                    self.n_v2_bins,
+                    self.v2_bin_limits[0],
+                    self.v2_bin_limits[1],
                 )
 
                 self.hV2vsTOFmassSquared2D.append(hV2vsTOFmassSquared2D_tmp)

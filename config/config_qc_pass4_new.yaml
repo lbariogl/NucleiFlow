@@ -21,7 +21,7 @@ selection_dict:
     "abs(fDCAz)": "abs(fDCAz) < 1.",
     "fTPCnCls": "fTPCnCls > 99",
     "abs(fZvertex)": "abs(fZvertex) < 10.",
-    "fNsigmaITS3He": "fNsigmaITS3He > - 1.5",
+    # "fNsigmaITS3He": "fNsigmaITS3He > - 1.5",
     "abs(fNsigmaTPC3He)": "abs(fNsigmaTPC3He) < 2.",
   }
 ptdep_selection_dict: # the dictionary has as key the right pt limit for the selection

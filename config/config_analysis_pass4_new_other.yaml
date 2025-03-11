@@ -4,8 +4,8 @@ input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.ro
 
 resolution_file_name: "../results_pass4_new/resolution_EP.root"
 
-output_dir_name: "../results_pass4_new/"
-alternative_output_dir_name: "../results_pass4_alternative_new/"
+output_dir_name: "../results_pass4_new_other/"
+alternative_output_dir_name: "../results_pass4_alternative_new_other/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 
@@ -57,7 +57,7 @@ cent_colours: [633, 797, 418, 402, 433, 862, 874]
 
 cent_detector_label: "FT0C"
 reference_flow_detector: "FT0C"
-resolution_flow_detectors: ["TPCl", "TPCr"]
+resolution_flow_detectors: ["FT0A", "TPC"]
 
 use_Barlow: True
 

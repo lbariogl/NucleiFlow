@@ -39,6 +39,11 @@ ep_tree_name = config["ep_tree_name"]
 
 useSP = config["useSP"]
 
+if useSP:
+    print("** Using scalar product **")
+else:
+    print("** Using event plane **")
+
 # n-sigma TPC bins
 n_nsigmaTPC_bins = config["n_nsigmaTPC_bins"]
 nsigmaTPC_bin_limits = config["nsigmaTPC_bin_limits"]
@@ -96,6 +101,9 @@ if useSP:
     res_histo_name = f"Resolution_SP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_SP"
 else:
     res_histo_name = f"Resolution_EP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_EP"
+print(
+    f"Getting resolution from file {resolution_file_name}, historgram {res_histo_name}"
+)
 hResolution = resolution_file.Get(res_histo_name)
 hResolution.SetDirectory(0)
 
@@ -152,6 +160,11 @@ for i_cent in range(n_cent_classes):
     flow_maker.nsigmaTPC_bin_limits = nsigmaTPC_bin_limits
     flow_maker.pt_bins = pt_bins[i_cent]
 
+    if useSP:
+        flow_maker.v2_bin_limits = [-10.0, 10.0]
+        flow_maker.n_v2_bins = 100
+        flow_maker.v2_axis_label = r"Q cos(2(#phi - #Psi_{2}))"
+
     flow_maker.ptdep_selection_dict = ptdep_selection_dict
 
     flow_maker.cent_limits = centrality_classes[i_cent]
@@ -171,7 +184,10 @@ for i_cent in range(n_cent_classes):
 
     flow_maker.output_dir = default_dir
 
-    plot_dir_name = f"{output_dir_name}/plots/cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}"
+    if not useSP:
+        plot_dir_name = f"{output_dir_name}/plots/cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}"
+    else:
+        plot_dir_name = f"{output_dir_name}/plots_SP/cent_{flow_maker.cent_limits[0]}_{flow_maker.cent_limits[1]}"
     if not os.path.exists(plot_dir_name):
         os.makedirs(plot_dir_name)
 

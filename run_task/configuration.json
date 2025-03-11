@@ -1255,6 +1255,392 @@
         "processMC": "false",
         "processMatching": "false"
     },
+    "nuclei-flow-tree": {
+        "trackTuner": {
+            "debugInfo": "false",
+            "updateTrackDCAs": "false",
+            "updateTrackCovMat": "false",
+            "updateCurvature": "false",
+            "updateCurvatureIU": "false",
+            "updatePulls": "false",
+            "isInputFileFromCCDB": "false",
+            "pathInputFile": "",
+            "nameInputFile": "",
+            "pathFileQoverPt": "",
+            "nameFileQoverPt": "",
+            "usePvRefitCorrections": "false",
+            "qOverPtMC": "-1",
+            "qOverPtData": "-1"
+        },
+        "cfgCompensatePIDinTracking": "false",
+        "cfgCentralityEstimator": "0",
+        "cfgCMrapidity": "0",
+        "cfgCutVertex": "10",
+        "cfgCutEta": "0.800000012",
+        "cfgCutTpcMom": "0.200000003",
+        "cfgCutRapidityMin": "-0.5",
+        "cfgCutRapidityMax": "0.5",
+        "cfgCutOnReconstructedRapidity": "false",
+        "cfgCutNclusITS": "5",
+        "cfgCutNclusTPC": "70",
+        "cfgCutPtMinTree": "0.200000003",
+        "cfgCutPtMaxTree": "15",
+        "cfgEventSelections": {
+            "labels_rows": [
+                "TVX",
+                "Z vtx",
+                "TF border",
+                "ITS ROF border",
+                "No same-bunch pile-up",
+                "kIsGoodZvtxFT0vsPV",
+                "isGoodITSLayersAll",
+                "isEPtriggered"
+            ],
+            "labels_cols": [
+                "Event selections"
+            ],
+            "values": [
+                [
+                    "1"
+                ],
+                [
+                    "1"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ]
+            ]
+        },
+        "cfgMomentumScalingBetheBloch": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "Positive",
+                "Negative"
+            ],
+            "values": [
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ]
+            ]
+        },
+        "cfgBetheBlochParams": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "p0",
+                "p1",
+                "p2",
+                "p3",
+                "p4",
+                "resolution"
+            ],
+            "values": [
+                [
+                    "-136.71000000000001",
+                    "0.441",
+                    "0.22689999999999999",
+                    "1.347",
+                    "0.80349999999999999",
+                    "0.089999999999999997"
+                ],
+                [
+                    "-136.71000000000001",
+                    "0.441",
+                    "0.22689999999999999",
+                    "1.347",
+                    "0.80349999999999999",
+                    "0.089999999999999997"
+                ],
+                [
+                    "-239.99000000000001",
+                    "1.155",
+                    "1.099",
+                    "1.137",
+                    "1.006",
+                    "0.089999999999999997"
+                ],
+                [
+                    "-321.33999999999997",
+                    "0.65390000000000004",
+                    "1.591",
+                    "0.82250000000000001",
+                    "2.363",
+                    "0.089999999999999997"
+                ],
+                [
+                    "-586.65999999999997",
+                    "1.859",
+                    "4.4349999999999996",
+                    "0.28199999999999997",
+                    "3.2010000000000001",
+                    "0.089999999999999997"
+                ]
+            ]
+        },
+        "cfgNsigmaTPC": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "nsigma_min",
+                "nsigma_max"
+            ],
+            "values": [
+                [
+                    "-5",
+                    "5"
+                ],
+                [
+                    "-5",
+                    "5"
+                ],
+                [
+                    "-5",
+                    "5"
+                ],
+                [
+                    "-5",
+                    "5"
+                ],
+                [
+                    "-5",
+                    "5"
+                ]
+            ]
+        },
+        "cfgDCAcut": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "max DCAxy",
+                "max DCAz"
+            ],
+            "values": [
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ],
+                [
+                    "1",
+                    "1"
+                ]
+            ]
+        },
+        "cfgDownscaling": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "Fraction of kept candidates"
+            ],
+            "values": [
+                [
+                    "1"
+                ],
+                [
+                    "1"
+                ],
+                [
+                    "1"
+                ],
+                [
+                    "1"
+                ],
+                [
+                    "1"
+                ]
+            ]
+        },
+        "cfgTreeConfig": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "Filter trees",
+                "Use TOF selection"
+            ],
+            "values": [
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ]
+            ]
+        },
+        "cfgDCAHists": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "Save DCA hist",
+                "Matter\/Antimatter"
+            ],
+            "values": [
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ],
+                [
+                    "0",
+                    "0"
+                ]
+            ]
+        },
+        "cfgFlowHist": {
+            "labels_rows": [
+                "proton",
+                "deuteron",
+                "triton",
+                "He3",
+                "alpha"
+            ],
+            "labels_cols": [
+                "Save flow hists"
+            ],
+            "values": [
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ],
+                [
+                    "0"
+                ]
+            ]
+        },
+        "cfgNITSClusBins": {
+            "values": [
+                "3",
+                "4.5",
+                "7.5"
+            ]
+        },
+        "cfgNTPCClusBins": {
+            "values": [
+                "3",
+                "89.5",
+                "159.5"
+            ]
+        },
+        "cfgSkimmedProcessing": "false",
+        "cfgUseTrackTuner": "false",
+        "cfgTrackTunerParams": "debugInfo=0|updateTrackDCAs=1|updateTrackCovMat=1|updateCurvature=0|updateCurvatureIU=0|updatePulls=1|isInputFileFromCCDB=1|pathInputFile=Users\/m\/mfaggin\/test\/inputsTrackTuner\/pp2023\/smoothHighPtMC|nameInputFile=trackTuner_DataLHC23fPass1_McLHC23k4b_run535085.root|pathFileQoverPt=Users\/h\/hsharma\/qOverPtGraphs|nameFileQoverPt=D0sigma_Data_removal_itstps_MC_LHC22b1b.root|usePvRefitCorrections=0|qOverPtMC=-1.|qOverPtData=-1.",
+        "cfgMaterialCorrection": "2",
+        "ccdb-url": "http:\/\/alice-ccdb.cern.ch",
+        "cfgZorroCCDBpath": "\/Users\/m\/mpuccio\/EventFiltering\/OTS\/",
+        "processDataFlow": "true",
+        "processDataFlowAlternative": "false"
+    },
     "flow-qc": {
         "cfgCentralityEstimator": "0",
         "cfgCutVertex": "10",

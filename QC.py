@@ -91,10 +91,7 @@ utils.redefineColumns(complete_df)
 # apply common selections
 complete_df.query(f"{mandatory_selections} and {selections}", inplace=True)
 
-# Create QC histograms
-hEta = ROOT.TH1F("hEta", ";#eta;", 200, -1.0, 1.0)
-utils.setHistStyle(hEta, ROOT.kRed + 2)
-
+# fill hNsigmaITSvsP before ITS-cluster size selection
 hNsigmaITSvsP = ROOT.TH2F(
     "hNsigmaITSvsP",
     r"; #it{p} (GeV/#it{c}); n#sigma_{ITS}",
@@ -108,6 +105,11 @@ hNsigmaITSvsP = ROOT.TH2F(
 
 for p, n_sigma_its in zip(complete_df["fP"], complete_df["fNsigmaITS3He"]):
     hNsigmaITSvsP.Fill(p, n_sigma_its)
+
+complete_df.query("fNsigmaITS3He > - 1.5", inplace=True)
+
+hEta = ROOT.TH1F("hEta", ";#eta;", 200, -1.0, 1.0)
+utils.setHistStyle(hEta, ROOT.kRed + 2)
 
 hTPCsignalVsPoverZ = ROOT.TH2F(
     "hTPCsignalVsPoverZ",
@@ -176,6 +178,25 @@ hDeltaPsi_FT0C_TPCl = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_TPCl_EP")
 hDeltaPsi_FT0C_TPCr = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_TPCr_EP")
 hDeltaPsi_FT0C_FT0A = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_FT0A_EP")
 hDeltaPsi_TPCl_TPCr = input_dir_AR_flow_ep.Get("hDeltaPsi_TPCl_TPCr_EP")
+hDeltaPsi_FT0A_TPC = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0A_TPC_EP")
+hDeltaPsi_FT0C_TPC = input_dir_AR_flow_ep.Get("hDeltaPsi_FT0C_TPC_EP")
+
+input_file_AR_small = ROOT.TFile(
+    "/data/lbariogl/flow/LHC23zzh_pass4_small_new/AnalysisResults_general.root"
+)
+
+input_file_AR_small_igor = ROOT.TFile(
+    "/data/lbariogl/flow/LHC23zzh_pass4_small_new/AnalysisResults_igor.root"
+)
+hEventSelections_normal = input_file_AR_small.Get(
+    "nuclei-spectra/spectra/hEventSelections"
+)
+utils.setHistStyle(hZvtx, ROOT.kRed + 2)
+hEventSelections_igor = input_file_AR_small_igor.Get(
+    "nuclei-spectra/spectra/hEventSelections"
+)
+utils.setHistStyle(hZvtx, ROOT.kAzure + 1)
+
 
 # get histrogram for FT0C distrubution
 hPsiFT0C_2D = input_dir_AR_flow_ep.Get("hPsi_FT0C_EP")
@@ -282,6 +303,37 @@ cPsiTPCr.SaveAs(f"{output_dir_name}/qc_plots/cPsiTPCr.pdf")
 TPCr_dir.cd()
 cPsiTPCr.Write()
 
+# get histrogram for TPC distrubution
+hPsiTPC_2D = input_dir_AR_flow_ep.Get("hPsi_TPC_EP")
+vPsiTPC = []
+yMaxPsi = 0
+legend_psi_TPC = ROOT.TLegend(0.40, 0.22, 0.70, 0.45, "TPC centrality classes", "brNDC")
+legend_psi_TPC.SetNColumns(2)
+TPC_dir = output_file.mkdir("TPC")
+
+for i_cent, cent in enumerate(centrality_classes):
+    left_bin = hPsiTPC_2D.GetXaxis().FindBin(cent[0])
+    right_bin = hPsiTPC_2D.GetXaxis().FindBin(cent[1]) - 1
+    hPsiTPC = hPsiTPC_2D.ProjectionY(f"hTPC_{cent[0]}_{cent[1]}", left_bin, right_bin)
+    utils.setHistStyle(hPsiTPC, cent_colours[i_cent])
+    hPsiTPC.Scale(1.0 / hPsiTPC.Integral())
+    vPsiTPC.append(hPsiTPC)
+    loc_max = hPsiTPC.GetMaximum()
+    if loc_max > yMaxPsi:
+        yMaxPsi = loc_max
+    legend_psi_TPC.AddEntry(hPsiTPC, f"{cent[0]}-{cent[1]}%", "l")
+
+cPsiTPC = ROOT.TCanvas("cPsiTPCr", "cPsiTPCr", 800, 600)
+cPsiTPC.DrawFrame(-3.5, 0, 3.5, yMaxPsi * 1.1, r";#Psi_{2}^{TPCr}; norm. counts")
+for i_cent, hPsiTPCr in enumerate(vPsiTPCr):
+    hPsiTPC.Draw("L SAME")
+    TPC_dir.cd()
+    hPsiTPC.Write()
+legend_psi_TPCr.Draw("SAME")
+cPsiTPC.SaveAs(f"{output_dir_name}/qc_plots/cPsiTPC.pdf")
+TPC_dir.cd()
+cPsiTPC.Write()
+
 
 # filling QC-plots after pt-dependent selections
 for i_pt in range(0, n_pt_bins):
@@ -371,12 +423,16 @@ for f in functions:
     f.Write()
 hZvtx.Write()
 hCentFT0C.Write()
+hEventSelections_normal.Write()
+hEventSelections_igor.Write()
 hDeltaPsi_FT0A_TPCl.Write()
 hDeltaPsi_FT0A_TPCr.Write()
 hDeltaPsi_FT0C_TPCl.Write()
 hDeltaPsi_FT0C_TPCr.Write()
 hDeltaPsi_FT0C_FT0A.Write()
 hDeltaPsi_TPCl_TPCr.Write()
+hDeltaPsi_FT0A_TPC.Write()
+hDeltaPsi_FT0C_TPC.Write()
 
 # Save QC histogram as PDF
 plot_dir_name = f"{output_dir_name}/qc_plots"
@@ -401,12 +457,16 @@ cTPC.SaveAs(f"{plot_dir_name}/cTPC.pdf")
 # cAvgItsClusSizeCosLambdaPt.SaveAs(f"{plot_dir_name}/cAvgItsClusSizeCosLambdaPt.pdf")
 utils.saveCanvasAsPDF(hZvtx, plot_dir_name)
 utils.saveCanvasAsPDF(hCentFT0C, plot_dir_name)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCl, plot_dir_name, is2D=True, logScale=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCr, plot_dir_name, is2D=True, logScale=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCl, plot_dir_name, is2D=True, logScale=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCr, plot_dir_name, is2D=True, logScale=True)
-utils.saveCanvasAsPDF(hDeltaPsi_FT0C_FT0A, plot_dir_name, is2D=True, logScale=True)
-utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name, is2D=True, logScale=True)
+utils.saveCanvasAsPDF(hEventSelections_normal, plot_dir_name)
+utils.saveCanvasAsPDF(hEventSelections_igor, plot_dir_name)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCl, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPCr, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCl, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPCr, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_FT0A, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_TPCl_TPCr, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0A_TPC, plot_dir_name, is2D=True)
+utils.saveCanvasAsPDF(hDeltaPsi_FT0C_TPC, plot_dir_name, is2D=True)
 
 # resolution plot
 resolution_file = ROOT.TFile(resolution_file_name)

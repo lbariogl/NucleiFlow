@@ -263,6 +263,7 @@ def redefineColumns(
     )
     # v2 with event-plane method
     if useSP:
+        print("Using Scalar Product method")
         print("fV2FT0C")
         complete_df.eval("fV2FT0C = fQFT0C * cos(2 * (fPhi-fPsiFT0C))", inplace=True)
         print("fV2FT0A")
@@ -274,6 +275,7 @@ def redefineColumns(
         print("fV2TPC")
         complete_df.eval("fV2TPC = fQTPC * cos(2 * (fPhi-fPsiTPC))", inplace=True)
     else:
+        print("Using Event Plane method")
         print("fV2FT0C")
         complete_df.eval("fV2FT0C = cos(2 * (fPhi-fPsiFT0C))", inplace=True)
         print("fV2FT0A")
@@ -425,7 +427,7 @@ def getHistos1D(
 
 
 def getCanvasWithTwoPanels(
-    canvas_name, histo_1, histo_2, top_panel=None, bottom_panel=None
+    canvas_name, histo_1, histo_2, top_panel=None, bottom_panel=None, line=None
 ):
     canvas = ROOT.TCanvas(canvas_name, canvas_name, 800, 600)
     pad_top = ROOT.TPad("pad_top", "pad_top", 0.0, 0.5, 1.0, 1.0, 0)
@@ -446,6 +448,8 @@ def getCanvasWithTwoPanels(
     histo_2.Draw("PE")
     if bottom_panel:
         histo_2.GetListOfFunctions().Add(bottom_panel)
+    if line:
+        line.Draw()
     return canvas
 
 

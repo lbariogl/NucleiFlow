@@ -107,8 +107,8 @@ hNsigmaITSvsP = ROOT.TH2F(
 for p, n_sigma_its in zip(complete_df["fP"], complete_df["fNsigmaITS3He"]):
     hNsigmaITSvsP.Fill(p, n_sigma_its)
 
-its_nsigma_parameters = [4.6, 0.5, -4.5]
-its_nsigma_func_string = r"([0] / TMath::Power(x, [1])) + [2]"
+its_nsigma_parameters = utils.its_nsigma_parameters
+its_nsigma_func_string = utils.its_nsigma_func_string
 its_nsigma_func = ROOT.TF1("its_nsigma_func", its_nsigma_func_string, 1.0, 15.0, 3)
 its_nsigma_func.SetParameters(*its_nsigma_parameters)
 its_nsigma_func.SetLineColor(ROOT.kRed)
@@ -124,7 +124,33 @@ hNsigmaITSvsP.Write()
 its_nsigma_func.Write()
 cNsigmaITSvsP.Write()
 
-complete_df.query("fNsigmaITS3He > - 1.5", inplace=True)
+complete_df.query("fNsigmaITS3HeMinusOffset > 0", inplace=True)
+
+
+# fill hNsigmaITSvsP before ITS-cluster size selection after selection
+hNsigmaITSvsPafterSel = ROOT.TH2F(
+    "hNsigmaITSvsPafterSel",
+    r"; #it{p} (GeV/#it{c}); n#sigma_{ITS}",
+    120,
+    0.0,
+    12.0,
+    500,
+    -5.0,
+    5.0,
+)
+
+for p, n_sigma_its in zip(complete_df["fP"], complete_df["fNsigmaITS3He"]):
+    hNsigmaITSvsPafterSel.Fill(p, n_sigma_its)
+
+cNsigmaITSvsPafterSel = ROOT.TCanvas(
+    "cNsigmaITSvsPafterSel", "cNsigmaITSvsPafterSel", 800, 600
+)
+hNsigmaITSvsPafterSel.Draw("colz")
+cNsigmaITSvsPafterSel.SaveAs(f"{output_dir_name}/qc_plots/cNsigmaITSvsPafterSel.pdf")
+
+output_file.cd()
+hNsigmaITSvsPafterSel.Write()
+cNsigmaITSvsPafterSel.Write()
 
 hEta = ROOT.TH1F("hEta", ";#eta;", 200, -1.0, 1.0)
 utils.setHistStyle(hEta, ROOT.kRed + 2)

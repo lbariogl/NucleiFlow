@@ -140,14 +140,34 @@ def expResolution(p, mass=mass_helion):
     return relRes
 
 
-def getNsigmaITS(avgTtsClusterSizeCosLambda, p):
+def getNsigmaITS(avgItsClusterSizeCosLambda, p):
     exp = expSignal(p)
     resolution = expResolution(p) * exp
-    return (avgTtsClusterSizeCosLambda - exp) / resolution
+    return (avgItsClusterSizeCosLambda - exp) / resolution
 
 
 # vectorised version of N-sigma TPC at specific rigidity
 getNsigmaITS_vectorised = np.vectorize(getNsigmaITS)
+
+# pt-dependent its n-sigma selection
+its_nsigma_parameters = [4.6, 0.5, -4.5]
+its_nsigma_func_string = r"([0] / TMath::Power(x, [1])) + [2]"
+
+
+def nSigmaITSoffset(p):
+    return its_nsigma_parameters[2] + (
+        its_nsigma_parameters[0] / pow(abs(p), its_nsigma_parameters[1])
+    )
+
+
+def getNsigmaITSminusOffset(nsigma, p):
+    offset = nSigmaITSoffset(p)
+    diff = nsigma - offset
+    return diff
+
+
+# vectorised version of N-sigma TPC at specific rigidity
+getNsigmaITSminusOffset_vectorised = np.vectorize(getNsigmaITSminusOffset)
 
 
 # get rapidity
@@ -251,6 +271,11 @@ def redefineColumns(
     print("fNsigmaITS3He")
     complete_df["fNsigmaITS3He"] = complete_df.apply(
         lambda row: getNsigmaITS(row["fAvgItsClusSizeCosLambda"], row["fP"]),
+        axis=1,
+    )
+    print("fNsigmaITS3HeMinusOffset")
+    complete_df["fNsigmaITS3HeMinusOffset"] = complete_df.apply(
+        lambda row: getNsigmaITSminusOffset(row["fNsigmaITS3He"], row["fP"]),
         axis=1,
     )
     # print('fRapidity')

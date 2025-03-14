@@ -89,7 +89,10 @@ complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
 # define new columns
 utils.redefineColumns(
-    complete_df, mass=utils.mass_helion, parameters=p_train, useSP=useSP
+    complete_df,
+    mass=utils.mass_helion,
+    parameters=p_train,
+    useSP=useSP,
 )
 
 # apply mandatory selections

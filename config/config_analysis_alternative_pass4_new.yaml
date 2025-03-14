@@ -20,7 +20,7 @@ selection_dict:
     "abs(fDCAz)": "abs(fDCAz) < 1.",
     "fTPCnCls": "fTPCnCls > 99",
     "abs(fZvertex)": "abs(fZvertex) < 10.",
-    "fNsigmaITS3He": "fNsigmaITS3He > - 1.5",
+    "fNsigmaITS3HeMinusOffset": "fNsigmaITS3HeMinusOffset > 0",
     "abs(fNsigmaTPC3He)": "abs(fNsigmaTPC3He) < 2.",
   }
 ptdep_selection_dict: # the dictionary has as key the right pt limit for the selection
@@ -78,7 +78,7 @@ cut_dict_syst:
     "abs(fDCAz)": { "cut_greater": False, "cut_list": [0.75, 1.00, 26] },
     "fTPCnCls": { "cut_greater": True, "cut_list": [100, 130, 7] },
     "abs(fZvertex)": { "cut_greater": False, "cut_list": [8, 10, 5] },
-    "fNsigmaITS3He": {"cut_greater": True, "cut_list": [-1.1, -0.9, 3] },
+    "fNsigmaITS3HeMinusOffset": {"cut_greater": True, "cut_list": [-0.1, 0.1, 5] },
     "abs(fNsigmaTPC3He)": {"cut_greater": False, "cut_list": [2., 1.8, 5] }
   }
 

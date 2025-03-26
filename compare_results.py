@@ -29,6 +29,8 @@ output_dir_name = config["output_dir_name"]
 
 resolition_file = ROOT.TFile(resolution_file_name)
 
+check_igor = False
+
 # different resolution detectors
 
 res1 = resolition_file.Get("Resolution_EP/hResolution_FT0C_TPCl_TPCr_EP")
@@ -85,115 +87,115 @@ hRatioRes.Write()
 
 cCompDetRes.SaveAs(f"{output_dir_name}/syst_plots/comparisons/v2_comp_resolutions.pdf")
 
-# Igor's check
-
 centrality_classes = config["centrality_classes"]
 n_cent_classes = len(centrality_classes)
 pt_bins = config["pt_bins"]
 
 input_file_name_default = config["output_dir_name"] + config["output_file_name"]
-input_file_name_igor = (
-    config["output_dir_name"][:-1] + "_igor/" + config["output_file_name"]
-)
-
 input_file_default = ROOT.TFile(input_file_name_default)
-input_file_igor = ROOT.TFile(input_file_name_igor)
 
+# Igor's check
 
-for i_cent in range(n_cent_classes):
-    print(f"Processing centrality class {i_cent}.")
-    histo_default = input_file_default.Get(
-        f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/default/hV2vsPt_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
+if check_igor:
+    input_file_name_igor = (
+        config["output_dir_name"][:-1] + "_igor/" + config["output_file_name"]
     )
-    histo_default.SetDirectory(0)
+    input_file_igor = ROOT.TFile(input_file_name_igor)
 
-    histo_igor = input_file_igor.Get(
-        f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/default/hV2vsPt_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
-    )
-    histo_igor.SetDirectory(0)
-    histo_igor.SetName(
-        f"hV2vsPt_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_igor"
-    )
-    utils.setHistStyle(histo_igor, ROOT.kGray + 1, 21)
+    for i_cent in range(n_cent_classes):
+        print(f"Processing centrality class {i_cent}.")
+        histo_default = input_file_default.Get(
+            f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/default/hV2vsPt_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
+        )
+        histo_default.SetDirectory(0)
 
-    hRatioIgor = histo_default.Clone(
-        f"hRatioIgor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
-    )
-    hRatioIgor.Reset()
-    hRatioIgor.GetYaxis().SetTitle("ratio")
-    hRatioIgor.GetYaxis().SetRangeUser(0.5, 1.5)
-    for i_pt in range(1, len(pt_bins[i_cent])):
-        val1 = histo_default.GetBinContent(i_pt)
-        err1 = histo_default.GetBinError(i_pt)
-        val2 = histo_igor.GetBinContent(i_pt)
-        err2 = histo_igor.GetBinError(i_pt)
-        ratio_val = val1 / val2
-        ratio_err = ratio_val * np.sqrt((err1 / val1) ** 2 + (err2 / val2) ** 2)
-        hRatioIgor.SetBinError(i_pt, ratio_err)
-        hRatioIgor.SetBinContent(i_pt, ratio_val)
+        histo_igor = input_file_igor.Get(
+            f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}/default/hV2vsPt_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
+        )
+        histo_igor.SetDirectory(0)
+        histo_igor.SetName(
+            f"hV2vsPt_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_igor"
+        )
+        utils.setHistStyle(histo_igor, ROOT.kGray + 1, 21)
 
-    pt_limits = [pt_bins[i_cent][0], pt_bins[i_cent][-1]]
+        hRatioIgor = histo_default.Clone(
+            f"hRatioIgor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
+        )
+        hRatioIgor.Reset()
+        hRatioIgor.GetYaxis().SetTitle("ratio")
+        hRatioIgor.GetYaxis().SetRangeUser(0.5, 1.5)
+        for i_pt in range(1, len(pt_bins[i_cent])):
+            val1 = histo_default.GetBinContent(i_pt)
+            err1 = histo_default.GetBinError(i_pt)
+            val2 = histo_igor.GetBinContent(i_pt)
+            err2 = histo_igor.GetBinError(i_pt)
+            ratio_val = val1 / val2
+            ratio_err = ratio_val * np.sqrt((err1 / val1) ** 2 + (err2 / val2) ** 2)
+            hRatioIgor.SetBinError(i_pt, ratio_err)
+            hRatioIgor.SetBinContent(i_pt, ratio_val)
 
-    line = ROOT.TLine(pt_limits[0], 1.0, pt_limits[1], 1.0)
-    line.SetLineStyle(ROOT.kDashed)
+        pt_limits = [pt_bins[i_cent][0], pt_bins[i_cent][-1]]
 
-    cCompIgor = ROOT.TCanvas(
-        f"cCompDetIgor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
-        f"cCompDetIgor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
-        800,
-        600,
-    )
+        line = ROOT.TLine(pt_limits[0], 1.0, pt_limits[1], 1.0)
+        line.SetLineStyle(ROOT.kDashed)
 
-    pad_top_igor = ROOT.TPad(
-        f"pad_top_igor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
-        f"pad_top_igor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
-        0.0,
-        0.5,
-        1.0,
-        1.0,
-        0,
-    )
-    pad_top_igor.SetLeftMargin(0.15)
-    pad_top_igor.SetBottomMargin(0.0)
-    pad_top_igor.Draw()
-    pad_top_igor.cd()
+        cCompIgor = ROOT.TCanvas(
+            f"cCompDetIgor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
+            f"cCompDetIgor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
+            800,
+            600,
+        )
 
-    histo_default.Draw("PE")
-    histo_igor.Draw("PE SAME")
+        pad_top_igor = ROOT.TPad(
+            f"pad_top_igor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
+            f"pad_top_igor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
+            0.0,
+            0.5,
+            1.0,
+            1.0,
+            0,
+        )
+        pad_top_igor.SetLeftMargin(0.15)
+        pad_top_igor.SetBottomMargin(0.0)
+        pad_top_igor.Draw()
+        pad_top_igor.cd()
 
-    legendIgor = ROOT.TLegend(
-        0.20,
-        0.58,
-        0.37,
-        0.76,
-        f"{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} #%",
-        "brNDC",
-    )
-    legendIgor.AddEntry(histo_default, "Standard selections")
-    legendIgor.AddEntry(histo_igor, "isGoodITSLayersAll")
-    legendIgor.Draw()
+        histo_default.Draw("PE")
+        histo_igor.Draw("PE SAME")
 
-    cCompIgor.cd()
-    pad_bottom_igor = ROOT.TPad(
-        "pad_bottom_igor", "pad_bottom_igor", 0.0, 0.0, 1.0, 0.5, 0
-    )
-    pad_bottom_igor.SetLeftMargin(0.15)
-    pad_bottom_igor.SetTopMargin(0.0)
-    pad_bottom_igor.SetBottomMargin(0.3)
-    pad_bottom_igor.Draw()
-    pad_bottom_igor.cd()
-    hRatioIgor.Draw("PE")
-    line.Draw()
+        legendIgor = ROOT.TLegend(
+            0.20,
+            0.58,
+            0.37,
+            0.76,
+            f"{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} #%",
+            "brNDC",
+        )
+        legendIgor.AddEntry(histo_default, "Standard selections")
+        legendIgor.AddEntry(histo_igor, "isGoodITSLayersAll")
+        legendIgor.Draw()
 
-    output_file.cd()
-    histo_default.Write()
-    histo_default.Write()
-    cCompIgor.Write()
-    hRatioIgor.Write()
+        cCompIgor.cd()
+        pad_bottom_igor = ROOT.TPad(
+            "pad_bottom_igor", "pad_bottom_igor", 0.0, 0.0, 1.0, 0.5, 0
+        )
+        pad_bottom_igor.SetLeftMargin(0.15)
+        pad_bottom_igor.SetTopMargin(0.0)
+        pad_bottom_igor.SetBottomMargin(0.3)
+        pad_bottom_igor.Draw()
+        pad_bottom_igor.cd()
+        hRatioIgor.Draw("PE")
+        line.Draw()
 
-    cCompIgor.SaveAs(
-        f"{output_dir_name}/syst_plots/comparisons/v2_comp_igor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}.pdf"
-    )
+        output_file.cd()
+        histo_default.Write()
+        histo_default.Write()
+        cCompIgor.Write()
+        hRatioIgor.Write()
+
+        cCompIgor.SaveAs(
+            f"{output_dir_name}/syst_plots/comparisons/v2_comp_igor_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}.pdf"
+        )
 
 # SP check
 
@@ -223,7 +225,7 @@ for i_cent in range(n_cent_classes):
         f"hRatioSP_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
     )
     hRatioSP.Reset()
-    hRatioSP.GetYaxis().SetTitle("ratio")
+    hRatioSP.GetYaxis().SetTitle("EP / SP")
     hRatioSP.GetYaxis().SetRangeUser(0.12, 1.88)
     for i_pt in range(1, len(pt_bins[i_cent])):
         val1 = histo_default.GetBinContent(i_pt)
@@ -239,6 +241,8 @@ for i_cent in range(n_cent_classes):
 
     line_SP = ROOT.TLine(pt_limits[0], 1.0, pt_limits[1], 1.0)
     line_SP.SetLineStyle(ROOT.kDashed)
+
+    hRatioSP.Fit("pol0", "Q")
 
     cCompSP = ROOT.TCanvas(
         f"cCompSP_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}",
@@ -264,7 +268,7 @@ for i_cent in range(n_cent_classes):
     histo_sp.Draw("PE")
     histo_default.Draw("PE SAME")
 
-    legendIgor = ROOT.TLegend(
+    legend_sp = ROOT.TLegend(
         0.20,
         0.58,
         0.37,
@@ -272,9 +276,9 @@ for i_cent in range(n_cent_classes):
         f"{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} #%",
         "brNDC",
     )
-    legendIgor.AddEntry(histo_default, "Event-Plane")
-    legendIgor.AddEntry(histo_sp, "Scalar Product")
-    legendIgor.Draw()
+    legend_sp.AddEntry(histo_default, "Event-Plane")
+    legend_sp.AddEntry(histo_sp, "Scalar Product")
+    legend_sp.Draw()
 
     cCompSP.cd()
     pad_bottom_sp = ROOT.TPad("pad_bottom_sp", "pad_bottom_sp", 0.0, 0.0, 1.0, 0.5, 0)

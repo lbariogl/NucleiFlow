@@ -204,7 +204,7 @@ cV2.SaveAs(f"{output_dir_plots_name}{cV2.GetName()}.pdf")
 
 # systematic uncertainties
 
-syst_axis_limits = [0.025, 0.025, 0.025, 0.025, 0.06, 0.06, 0.06]
+syst_axis_limits = [0.025, 0.025, 0.025, 0.025, 0.06, 0.07, 0.07]
 
 for i_cent in range(n_cent):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
@@ -263,11 +263,12 @@ gPredWenbin.append(gPredWenbin3040)
 gPredWenbin4060 = coalescence_theory_file.Get("gPredWenbin_40_60")
 gPredWenbin4060.SetFillStyle(1001)
 gPredWenbin4060.SetFillColorAlpha(ROOT.kViolet + 1, 0.6)
+gPredWenbin.append(gPredWenbin4060)
 
 cV2comp = []
-y_limits = [0.40, 0.50, 0.70, 0.80]
+y_limits = [0.40, 0.50, 0.70, 0.80, 1.00]
 
-for i_cent in range(4):
+for i_cent in range(5):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
     cV2comp.append(
         ROOT.TCanvas(f"cV2comp_{cent_name}", f"cV2comp_{cent_name}", 800, 600)

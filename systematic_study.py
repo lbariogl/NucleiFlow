@@ -82,27 +82,26 @@ else:
 hResolution = resolution_file.Get(res_histo_name)
 hResolution.SetDirectory(0)
 
-res_0_10 = hResolution.GetBinContent(1)
-res_10_20 = hResolution.GetBinContent(2)
-res_20_40 = (hResolution.GetBinContent(3) + hResolution.GetBinContent(4)) / 2
-res_40_60 = (hResolution.GetBinContent(5) + hResolution.GetBinContent(6)) / 2
+cent_limits_tens = [0, 10, 20, 30, 40, 50, 60, 70, 80]
+resolutions = []
 
-res_20_30 = hResolution.GetBinContent(3)
-res_30_40 = hResolution.GetBinContent(4)
-res_40_50 = hResolution.GetBinContent(5)
-res_50_60 = hResolution.GetBinContent(6)
-res_60_80 = (hResolution.GetBinContent(7) + hResolution.GetBinContent(8)) / 2
-
-# resolutions = [res_0_10, res_10_20, res_20_40, res_40_60]
-resolutions = [
-    res_0_10,
-    res_10_20,
-    res_20_30,
-    res_30_40,
-    res_40_50,
-    res_50_60,
-    res_60_80,
-]
+for i_cent, cent in enumerate(centrality_classes):
+    cent_left_index = cent_limits_tens.index(cent[0])
+    cent_right_index = cent_limits_tens.index(cent[1])
+    print(f"cent_limits_tens[{cent_left_index}]: {cent_limits_tens[cent_left_index]}")
+    print(f"cent_limits_tens[{cent_right_index}]: {cent_limits_tens[cent_right_index]}")
+    if cent_right_index - cent_left_index == 1:
+        resol = hResolution.GetBinContent(cent_left_index + 1)
+        print(f"cent: {cent[0]} - {cent[1]}, resolution: {resol}")
+    else:
+        resol = np.mean(
+            [
+                hResolution.GetBinContent(i)
+                for i in range(cent_left_index + 1, cent_right_index + 1)
+            ]
+        )
+        print(f"cent: {cent[0]} - {cent[1]}, resolution: {resol}")
+    resolutions.append(resol)
 
 # get Standard Spectrum
 standard_file_name = f"{output_dir_name}/" + config["output_file_name"]

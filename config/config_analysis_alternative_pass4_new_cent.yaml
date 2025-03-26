@@ -4,7 +4,7 @@ input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.ro
 
 resolution_file_name: "../results_pass4_new/resolution_Qvec.root"
 
-output_dir_name: "../results_pass4_alternative_new/"
+output_dir_name: "../results_pass4_alternative_new_cent/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 
@@ -38,7 +38,7 @@ nsigmaTPC_bin_limits: [-5.0, 5.0]
 tof_analysis: False
 
 centrality_classes:
-  [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50], [50, 60], [60, 80]]
+  [[0, 10], [10, 20], [20, 30], [30, 40], [40, 60], [60, 80]]
 
 qc_pt_bins: [0., 2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8., 10.]
 
@@ -49,10 +49,9 @@ pt_bins:
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8., 10.],
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8.],
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6.4, 7.2, 8.],
-    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6.4, 7.2],
     [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4],
   ]
-cent_colours: [633, 797, 418, 402, 433, 862, 874]
+cent_colours: [633, 797, 418, 402, 433, 874]
 
 cent_detector_label: "FT0C"
 reference_flow_detector: "FT0C"

@@ -535,8 +535,7 @@ utils.saveCanvasAsPDF(hEventSelections_normal, plot_dir_name)
 utils.saveCanvasAsPDF(hEventSelections_igor, plot_dir_name)
 for histo in vDeltaPsi.values():
     histo.Write()
-    utils.saveCanvasAsPDF(histo, plot_dir_name, is2D=True)
-
+    utils.saveCanvasAsPDF(histo, plot_dir_name, is2D=True, logz=False)
 # resolution plot
 resolution_file = ROOT.TFile(resolution_file_name)
 if useSP:

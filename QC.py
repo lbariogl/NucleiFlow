@@ -440,6 +440,7 @@ for i_cent, cent in enumerate(centrality_classes):
             vQx[det][i_cent].append(hQx)
             vQy[det][i_cent].append(hQy)
             vV2ScalarProduct[det][i_cent].append(hV2ScalarProduct)
+            vV2ScalarProduct_check[det][i_cent].append(hV2ScalarProduct_check)
 
             cent_dir.cd(det)
             hPhiMinusPsi.Write()
@@ -535,7 +536,7 @@ utils.saveCanvasAsPDF(hEventSelections_normal, plot_dir_name)
 utils.saveCanvasAsPDF(hEventSelections_igor, plot_dir_name)
 for histo in vDeltaPsi.values():
     histo.Write()
-    utils.saveCanvasAsPDF(histo, plot_dir_name, is2D=True, logz=False)
+    utils.saveCanvasAsPDF(histo, plot_dir_name, is2D=True)
 # resolution plot
 resolution_file = ROOT.TFile(resolution_file_name)
 if useSP:

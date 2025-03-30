@@ -43,8 +43,8 @@ class FlowMaker:
         self.n_tofMassSquared_bins = 200
         self.tofMassSquared_bin_limits = [-5.0, 5.0]
 
-        self.n_v2_bins = 20
-        self.v2_bin_limits = [-1.0, 1.0]
+        self.n_v2_bins = 21
+        self.v2_bin_limits = [-1.05, 1.05]
         self.v2_axis_label = r"cos(2(#phi - #Psi))"
 
         self.hNsigma3He = []

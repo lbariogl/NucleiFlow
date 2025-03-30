@@ -56,7 +56,7 @@ cent_colours: [633, 797, 418, 402, 433, 862, 874]
 
 cent_detector_label: "FT0C"
 reference_flow_detector: "FT0C"
-resolution_flow_detectors: ["TPCl", "TPCr"]
+resolution_flow_detectors: ["FT0A", "TPC"]
 
 use_Barlow: True
 

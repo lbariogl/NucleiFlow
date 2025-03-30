@@ -94,6 +94,8 @@ pt_bins = config["pt_bins"]
 input_file_name_default = config["output_dir_name"] + config["output_file_name"]
 input_file_default = ROOT.TFile(input_file_name_default)
 
+print(f"Input file: {input_file_name_default}")
+
 # Igor's check
 
 if check_igor:
@@ -203,6 +205,8 @@ input_file_name_sp = (
     config["output_dir_name"] + config["output_file_name"][:-5] + "_SP.root"
 )
 input_file_sp = ROOT.TFile(input_file_name_sp)
+print(f"Input file: {input_file_name_sp}")
+print(f"Output file: {output_dir_name}/v2_comp.root")
 
 
 for i_cent in range(n_cent_classes):

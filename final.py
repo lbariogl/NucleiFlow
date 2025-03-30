@@ -77,6 +77,8 @@ for i_cent in range(0, n_cent):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
     h_stat = input_file.Get(f"{cent_name}/default/hV2vsPt_{cent_name}")
     h_stat.SetDirectory(0)
+    h_stat.GetYaxis().SetTitle(r"#it{v}_{2}{EP, |#Delta#eta| > 1.3}")
+    utils.setHistStyle(h_stat, cent_colours[i_cent])
     stat_list.append(h_stat)
 
     for i_var, var in enumerate(separated_abs_syst_dict):
@@ -102,6 +104,7 @@ for i_cent in range(0, n_cent):
 
     # summing systematic uncertainties
     h_syst = h_stat.Clone(f"hV2vsPt_{cent_name}_syst")
+    utils.setHistStyle(h_syst, cent_colours[i_cent])
     h_abs_syst = h_stat.Clone(f"hAbsSystVsPt_{cent_name}")
     h_abs_syst.Reset()
     h_abs_syst.GetYaxis().SetTitle("systematic error")
@@ -140,7 +143,11 @@ for i_cent in range(0, n_cent):
 
     cV2_cent = ROOT.TCanvas(f"cV2_{cent_name}", f"cV2_{cent_name}", 800, 600)
     frame_cent = cV2_cent.DrawFrame(
-        1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{2}"
+        1.7,
+        -0.1,
+        12.0,
+        1.1,
+        r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP, |#Delta#eta| > 1.3}",
     )
     cV2_cent.SetBottomMargin(0.13)
     cV2_cent.SetBorderSize(0)
@@ -178,7 +185,13 @@ info_panel_total.SetTextSize(0.04)
 info_panel_total.AddText(r"ALICE Preliminary")
 info_panel_total.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
 info_panel_total.AddText(r"{}^{3}#bar{He}, |#eta| < 0.8")
-frame = cV2.DrawFrame(1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP}")
+frame = cV2.DrawFrame(
+    1.7,
+    -0.1,
+    12.0,
+    1.1,
+    r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP, |#Delta#eta| > 1.3}",
+)
 cV2.SetBottomMargin(0.13)
 cV2.SetLeftMargin(0.13)
 cV2.SetBorderSize(0)
@@ -249,24 +262,25 @@ gPredWenbin010.SetFillColorAlpha(ROOT.kCyan + 2, 0.6)
 gPredWenbin.append(gPredWenbin010)
 gPredWenbin1020 = coalescence_theory_file.Get("gPredWenbin_10_20")
 gPredWenbin1020.SetFillStyle(1001)
-gPredWenbin1020.SetFillColorAlpha(ROOT.kCyan + 2, 0.6)
+gPredWenbin1020.SetFillColorAlpha(ROOT.kSpring - 9, 0.6)
 gPredWenbin.append(gPredWenbin1020)
 gPredWenbin2030 = coalescence_theory_file.Get("gPredWenbin_20_30")
 gPredWenbin2030.SetFillStyle(1001)
-gPredWenbin2030.SetFillColorAlpha(ROOT.kViolet + 1, 0.6)
+gPredWenbin2030.SetFillColorAlpha(ROOT.kOrange + 1, 0.6)
 gPredWenbin.append(gPredWenbin2030)
 gPredWenbin3040 = coalescence_theory_file.Get("gPredWenbin_30_40")
 gPredWenbin3040.SetFillStyle(1001)
-gPredWenbin3040.SetFillColorAlpha(ROOT.kViolet + 1, 0.6)
+gPredWenbin3040.SetFillColorAlpha(ROOT.kOrange + 1, 0.6)
 gPredWenbin.append(gPredWenbin3040)
 
 gPredWenbin4060 = coalescence_theory_file.Get("gPredWenbin_40_60")
 gPredWenbin4060.SetFillStyle(1001)
-gPredWenbin4060.SetFillColorAlpha(ROOT.kViolet + 1, 0.6)
+gPredWenbin4060.SetFillColorAlpha(ROOT.kOrange + 1, 0.6)
 gPredWenbin.append(gPredWenbin4060)
 
 cV2comp = []
-y_limits = [0.40, 0.50, 0.70, 0.80, 1.00]
+x_limits = [11.0, 11.0, 11.0, 9.0, 9.0]
+y_limits = [0.30, 0.50, 0.60, 0.80, 1.00]
 
 for i_cent in range(5):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
@@ -274,7 +288,11 @@ for i_cent in range(5):
         ROOT.TCanvas(f"cV2comp_{cent_name}", f"cV2comp_{cent_name}", 800, 600)
     )
     framecomp = cV2comp[i_cent].DrawFrame(
-        1.7, -0.07, 12.0, y_limits[i_cent], r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP}"
+        1.7,
+        -0.07,
+        x_limits[i_cent],
+        y_limits[i_cent],
+        r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP, |#Delta#eta| > 1.3}",
     )
     cV2comp[i_cent].SetBottomMargin(0.13)
     cV2comp[i_cent].SetLeftMargin(0.13)
@@ -292,7 +310,7 @@ for i_cent in range(5):
         f"{centrality_classes[i_cent][0]}-{centrality_classes[i_cent][1]}% FT0C centrality"
     )
 
-    legend_comp = ROOT.TLegend(0.54, 0.16, 0.9, 0.38, "", "brNDC")
+    legend_comp = ROOT.TLegend(0.55, 0.23, 0.87, 0.4, "", "brNDC")
     legend_comp.SetBorderSize(0)
 
     gPredWenbin[i_cent].Draw("E3same][")

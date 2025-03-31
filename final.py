@@ -251,52 +251,34 @@ for i_cent in range(n_cent):
 
 # comparison with models
 
-for i_cent in range(n_cent):
+
+def draw_comparison_with_models(
+    i_cent,
+    centrality_classes,
+    stat_list,
+    syst_list,
+    gPredHelium3,
+    output_dir_plots_name,
+    output_file,
+    multi_page_pdf_path=None,  # Add argument for multi-page PDF
+    is_first_canvas=False,  # Add argument to handle opening the PDF
+    is_last_canvas=False,  # Add argument to handle closing the PDF
+):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
+    x_limits = [11.0, 11.0, 11.0, 9.0, 9.0]
+    y_limits = [0.30, 0.50, 0.60, 0.80, 1.00]
 
-gPredWenbin = []
-coalescence_theory_file = ROOT.TFile("../theoretical_models/Predictions.root")
-gPredWenbin010 = coalescence_theory_file.Get("gPredWenbin_0_10")
-gPredWenbin010.SetFillStyle(1001)
-gPredWenbin010.SetFillColorAlpha(ROOT.kCyan + 2, 0.6)
-gPredWenbin.append(gPredWenbin010)
-gPredWenbin1020 = coalescence_theory_file.Get("gPredWenbin_10_20")
-gPredWenbin1020.SetFillStyle(1001)
-gPredWenbin1020.SetFillColorAlpha(ROOT.kSpring - 9, 0.6)
-gPredWenbin.append(gPredWenbin1020)
-gPredWenbin2030 = coalescence_theory_file.Get("gPredWenbin_20_30")
-gPredWenbin2030.SetFillStyle(1001)
-gPredWenbin2030.SetFillColorAlpha(ROOT.kOrange + 1, 0.6)
-gPredWenbin.append(gPredWenbin2030)
-gPredWenbin3040 = coalescence_theory_file.Get("gPredWenbin_30_40")
-gPredWenbin3040.SetFillStyle(1001)
-gPredWenbin3040.SetFillColorAlpha(ROOT.kOrange + 1, 0.6)
-gPredWenbin.append(gPredWenbin3040)
-
-gPredWenbin4060 = coalescence_theory_file.Get("gPredWenbin_40_60")
-gPredWenbin4060.SetFillStyle(1001)
-gPredWenbin4060.SetFillColorAlpha(ROOT.kOrange + 1, 0.6)
-gPredWenbin.append(gPredWenbin4060)
-
-cV2comp = []
-x_limits = [11.0, 11.0, 11.0, 9.0, 9.0]
-y_limits = [0.30, 0.50, 0.60, 0.80, 1.00]
-
-for i_cent in range(5):
-    cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
-    cV2comp.append(
-        ROOT.TCanvas(f"cV2comp_{cent_name}", f"cV2comp_{cent_name}", 800, 600)
-    )
-    framecomp = cV2comp[i_cent].DrawFrame(
+    cV2comp = ROOT.TCanvas(f"cV2comp_{cent_name}", f"cV2comp_{cent_name}", 800, 600)
+    framecomp = cV2comp.DrawFrame(
         1.7,
         -0.07,
         x_limits[i_cent],
         y_limits[i_cent],
         r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP, |#Delta#eta| > 1.3}",
     )
-    cV2comp[i_cent].SetBottomMargin(0.13)
-    cV2comp[i_cent].SetLeftMargin(0.13)
-    cV2comp[i_cent].SetBorderSize(0)
+    cV2comp.SetBottomMargin(0.13)
+    cV2comp.SetLeftMargin(0.13)
+    cV2comp.SetBorderSize(0)
 
     info_panel_comp = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, "NDC")
     info_panel_comp.SetBorderSize(0)
@@ -313,14 +295,14 @@ for i_cent in range(5):
     legend_comp = ROOT.TLegend(0.55, 0.23, 0.87, 0.4, "", "brNDC")
     legend_comp.SetBorderSize(0)
 
-    gPredWenbin[i_cent].Draw("E3same][")
+    gPredHelium3[i_cent].Draw("E3same][")
 
     stat_list[i_cent].Draw("PEX0 SAME")
     syst_list[i_cent].Draw("PE2 SAME")
 
     legend_comp.AddEntry(stat_list[i_cent], r"{}^{3}#bar{He}, |#eta| < 0.8", "PF")
     legend_comp.AddEntry(
-        gPredWenbin[i_cent],
+        gPredHelium3[i_cent],
         r"#splitline{IP Glasma + MUSIC +}{+ UrQMD + Coalescence}",
         "F",
     )
@@ -328,9 +310,179 @@ for i_cent in range(5):
     info_panel_comp.Draw()
     legend_comp.Draw()
 
-    cV2comp[i_cent].SaveAs(
-        f"{output_dir_plots_name}{cV2comp[i_cent].GetName()}_comp.pdf"
-    )
+    # Save individual canvas
+    cV2comp.SaveAs(f"{output_dir_plots_name}{cV2comp.GetName()}_comp.pdf")
+
+    # Append to multi-page PDF if path is provided
+    if multi_page_pdf_path:
+        if is_first_canvas:
+            cV2comp.Print(multi_page_pdf_path + "[")  # Open the PDF
+        cV2comp.Print(multi_page_pdf_path)  # Append the canvas
+        if is_last_canvas:
+            cV2comp.Print(multi_page_pdf_path + "]")
 
     output_file.cd()
-    cV2comp[i_cent].Write()
+    cV2comp.Write()
+
+    return cV2comp
+
+
+# Comparison with models
+gPredHelium3 = []
+coalescence_theory_file = ROOT.TFile("../theoretical_models/Predictions.root")
+predictions = [
+    ("gPredHelium3_0_10", ROOT.kCyan + 2),
+    ("gPredHelium3_10_20", ROOT.kSpring - 9),
+    ("gPredHelium3_20_30", ROOT.kOrange + 1),
+    ("gPredHelium3_30_40", ROOT.kOrange + 1),
+    ("gPredHelium3_40_60", ROOT.kOrange + 1),
+]
+
+for pred_name, color in predictions:
+    graph = coalescence_theory_file.Get(pred_name)
+    graph.SetFillStyle(1001)
+    graph.SetFillColorAlpha(color, 0.6)
+    gPredHelium3.append(graph)
+
+# Open a single PDF file for all model comparison canvases
+output_pdf_path = f"{output_dir_plots_name}model_comparisons.pdf"
+
+for i_cent in range(5):
+    print(f"Drawing comparison for centrality class {i_cent}")
+    draw_comparison_with_models(
+        i_cent,
+        centrality_classes,
+        stat_list,
+        syst_list,
+        gPredHelium3,
+        output_dir_plots_name,
+        output_file,
+        multi_page_pdf_path=output_pdf_path,  # Pass the multi-page PDF path
+        is_first_canvas=(i_cent == 0),  # Open the PDF on the first canvas
+        is_last_canvas=(i_cent == 4),  # Close the PDF on the last canvas
+    )
+
+
+def draw_predictions_with_scaling(
+    i_cent,
+    centrality_classes,
+    gPredHelium3,
+    gPredProton,
+    output_dir_plots_name,
+    multi_page_pdf_path=None,  # Add argument for multi-page PDF
+    is_first_canvas=False,  # Add argument to handle opening the PDF
+    is_last_canvas=False,  # Add argument to handle opening the PDF
+):
+    cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
+    x_limits = [3.67, 3.67, 3.67, 3.0, 3.0]  # Adjusted for helium scaling
+    y_limits = [0.30, 0.50, 0.60, 0.80, 1.00]
+
+    cPred = ROOT.TCanvas(f"cPred_{cent_name}", f"cPred_{cent_name}", 800, 600)
+    framePred = cPred.DrawFrame(
+        0.5,
+        -0.07,
+        x_limits[i_cent],
+        y_limits[i_cent],
+        r";#it{p}_{T}/A (GeV/#it{c}); v_{2}{EP}",
+    )
+    cPred.SetBottomMargin(0.13)
+    cPred.SetLeftMargin(0.13)
+    cPred.SetBorderSize(0)
+
+    info_panel_pred = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, "NDC")
+    info_panel_pred.SetBorderSize(0)
+    info_panel_pred.SetFillStyle(0)
+    info_panel_pred.SetTextAlign(12)
+    info_panel_pred.SetTextFont(42)
+    info_panel_pred.SetTextSize(0.04)
+    info_panel_pred.AddText(r"ALICE Preliminary")
+    info_panel_pred.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
+    info_panel_pred.AddText(
+        f"{centrality_classes[i_cent][0]}-{centrality_classes[i_cent][1]}% FT0C centrality"
+    )
+
+    legend_pred = ROOT.TLegend(0.69, 0.20, 0.91, 0.29, "", "brNDC")
+    legend_pred.SetBorderSize(0)
+
+    # Scale helium x-coordinates by dividing by 3
+    gHeliumScaled = gPredHelium3[i_cent].Clone(f"gHeliumScaled_{cent_name}")
+    for i in range(gHeliumScaled.GetN()):
+        x = gHeliumScaled.GetPointX(i)
+        y = gHeliumScaled.GetPointY(i)
+        gHeliumScaled.SetPoint(i, x / 3.0, y)
+
+    gHeliumScaled.Draw("E3same][")
+    gPredProton[i_cent].Draw("E3same][")
+
+    legend_pred.AddEntry(gHeliumScaled, r"{}^{3}#bar{He}", "F")
+    legend_pred.AddEntry(gPredProton[i_cent], r"Proton", "F")
+
+    info_panel_pred.Draw()
+    legend_pred.Draw()
+
+    # Save individual canvas
+    cPred.SaveAs(f"{output_dir_plots_name}{cPred.GetName()}_pred.pdf")
+    output_file.cd()
+    cPred.Write()
+
+    # Append to multi-page PDF if path is provided
+    if multi_page_pdf_path:
+        if is_first_canvas:
+            cPred.Print(multi_page_pdf_path + "[")  # Open the PDF
+        cPred.Print(multi_page_pdf_path)  # Append the canvas
+        if is_last_canvas:
+            cPred.Print(multi_page_pdf_path + "]")
+
+    return cPred
+
+
+# Create a multi-page PDF for helium and proton predictions
+output_pdf_predictions = f"{output_dir_plots_name}helium_proton_predictions.pdf"
+
+# Extract helium and proton predictions from the same file
+gPredHelium3 = []
+gPredProton = []
+coalescence_theory_file = ROOT.TFile("../theoretical_models/Predictions.root")
+predictions = [
+    ("gPredHelium3_0_10", "gPredProton_0_10", ROOT.kCyan + 2),
+    ("gPredHelium3_10_20", "gPredProton_10_20", ROOT.kSpring - 9),
+    ("gPredHelium3_20_30", "gPredProton_20_30", ROOT.kOrange + 1),
+    ("gPredHelium3_30_40", "gPredProton_30_40", ROOT.kOrange + 1),
+    ("gPredHelium3_40_60", "gPredProton_40_60", ROOT.kOrange + 1),
+]
+
+# Define complementary colors for protons
+complementary_colors = [
+    ROOT.kMagenta + 2,  # Complementary to Cyan
+    ROOT.kTeal - 7,  # Complementary to Spring
+    ROOT.kBlue + 1,  # Complementary to Orange
+    ROOT.kBlue + 1,  # Complementary to Orange
+    ROOT.kBlue + 1,  # Complementary to Orange
+]
+
+for (helium_name, proton_name, helium_color), proton_color in zip(
+    predictions, complementary_colors
+):
+    # Load helium predictions
+    helium_graph = coalescence_theory_file.Get(helium_name)
+    helium_graph.SetFillStyle(1001)
+    helium_graph.SetFillColorAlpha(helium_color, 0.6)
+    gPredHelium3.append(helium_graph)
+
+    # Load proton predictions
+    proton_graph = coalescence_theory_file.Get(proton_name)
+    proton_graph.SetFillStyle(1001)
+    proton_graph.SetFillColorAlpha(proton_color, 0.6)  # Assign complementary color
+    gPredProton.append(proton_graph)
+
+for i_cent in range(5):
+    draw_predictions_with_scaling(
+        i_cent,
+        centrality_classes,
+        gPredHelium3,
+        gPredProton,
+        output_dir_plots_name,
+        multi_page_pdf_path=output_pdf_predictions,  # Pass the multi-page PDF path
+        is_first_canvas=(i_cent == 0),  # Open the PDF on the first canvas
+        is_last_canvas=(i_cent == 4),  # Close the PDF on the last canvas
+    )

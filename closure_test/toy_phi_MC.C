@@ -3,68 +3,73 @@
 #include <TH1F.h>
 #include <TF1.h>
 #include <TLorentzVector.h>
-
+#include <TVector3.h>
+#include <TLegend.h>
+#include <TCanvas.h>
+#include <TFile.h>
 
 double GetPhiInRange(double phi)
 {
   double result = phi;
-  while (result < 0) {
-    result = result + 2. * TMath::Pi() / 2;
+  if (result < 0)
+  {
+    result = result + 2 * TMath::Pi();
   }
-  while (result > 2. * TMath::Pi() / 2) {
-    result = result - 2. * TMath::Pi() / 2;
+  if (result > 2 * TMath::Pi())
+  {
+    result = result - 2 * TMath::Pi();
   }
   return result;
 }
 
-Double_t Poly2(Double_t *x, Double_t *par)
+double Poly2(double *x, double *par)
 {
-  return  par[0]*(1+2.0*par[1]*TMath::Cos(2.0*x[0]));
+  return par[0] * (1 + 2.0 * par[1] * TMath::Cos(2.0 * x[0]));
 }
 
-Double_t Poly3(Double_t *x, Double_t *par)
+double Poly3(double *x, double *par)
 {
-  return  par[0]*(1 +2.0*par[1]*TMath::Power(TMath::Cos(2.0*x[0]),1.0) + par[2]*TMath::Power(TMath::Sin(3.0*x[0]),1.0));
+  return par[0] * (1 + 2.0 * par[1] * TMath::Power(TMath::Cos(2.0 * x[0]), 1.0) + par[2] * TMath::Power(TMath::Sin(3.0 * x[0]), 1.0));
 }
 
-Double_t v2(Double_t *x, Double_t *par)
+double v2(double *x, double *par)
 {
-  return  1+ 2*0.1*TMath::Power(TMath::Cos(2.0*x[0]),1.0);
+  return 1 + 2 * 0.1 * TMath::Power(TMath::Cos(2.0 * x[0]), 1.0);
 }
 
-Double_t calcrestmom(TLorentzVector mother, TLorentzVector daug){
-  double beta = mother.Beta();
-  double betax = mother.Px()/mother.E();
-  double betay = mother.Py()/mother.E();
-  double betaz = mother.Pz()/mother.E();
-  daug.Boost(-betax, -betay, -betaz);
+double calcrestmom(TLorentzVector mother, TLorentzVector daug)
+{
+  TVector3 boost_vector = mother.BoostVector();
+  daug.Boost(-boost_vector);
   return daug.P();
 }
 
 void toy_phi_MC()
 {
-  TF1 *f2=new TF1("f2","1+2.0*0.5*TMath::Cos(2.0*x)",0,TMath::Pi());
-  TF1 *f3=new TF1("f3","1+2.0*0.5*TMath::Cos(2.0*x)",0,TMath::Pi());
-  TF1 *f4=new TF1("f4","1+2.0*0.5*TMath::Cos(2.0*x)",0,TMath::Pi());
+  TF1 *f2 = new TF1("f2", "1+2.0*0.5*TMath::Cos(2.0*x)", 0, 2 * TMath::Pi());
+  TF1 *f3 = new TF1("f3", "1+2.0*0.5*TMath::Cos(2.0*x)", 0, 2 * TMath::Pi());
+  TF1 *f4 = new TF1("f4", "1+2.0*0.5*TMath::Cos(2.0*x)", 0, 2 * TMath::Pi());
 
   float pt1, eta1, pt2, eta2, pt3, eta3;
   float phi1, phi2, phi3;
 
   TRandom3 rand;
 
-  TH1F *h1 = new TH1F("h1","h1", 36, 0.0, TMath::Pi());
-  TH1F *h2 = new TH1F("h2","h2", 36, 0.0, TMath::Pi());
-  TH1F *h3 = new TH1F("h3","h3", 36, 0.0, TMath::Pi());
-
-  h1->SetLineColor(1);
-  h2->SetLineColor(2);
-  h3->SetLineColor(4);
+  TH1F *hPhiProton = new TH1F("hPhiProton", ";#phi (rad);counts", 72, 0.0, 2 * TMath::Pi());
+  hPhiProton->SetMarkerStyle(20);
+  hPhiProton->SetMarkerColor(kBlack);
+  TH1F *hPhiDeuteron = new TH1F("hPhiDeuteron", ";#phi (rad);counts", 72, 0.0, 2 * TMath::Pi());
+  hPhiDeuteron->SetMarkerStyle(20);
+  hPhiDeuteron->SetMarkerColor(kRed);
+  TH1F *hPhiHelium = new TH1F("hPhiHelium", ";#phi (rad);counts", 72, 0.0, 2 * TMath::Pi());
+  hPhiHelium->SetMarkerStyle(20);
+  hPhiHelium->SetMarkerColor(kBlue);
 
   TLorentzVector mother, deuteron, helium3;
   TLorentzVector d1, d2, d3;
   TLorentzVector d1dummy, d2dummy, d3dummy;
 
-  for(int i = 0; i < 5000000; i++)
+  for (int i = 0; i < 5000000; i++)
   {
     pt1 = rand.Uniform(0.0, 10.0);
     eta1 = rand.Uniform(-0.8, 0.8);
@@ -99,42 +104,52 @@ void toy_phi_MC()
     double p2 = calcrestmom(helium3_vec, d2dummy);
     double p3 = calcrestmom(helium3_vec, d3dummy);
 
-    h1->Fill(GetPhiInRange(d1.Phi()));
+    hPhiProton->Fill(GetPhiInRange(d1.Phi()));
 
-    if (TMath::Abs(proton1restmom - proton2restmom) < 0.3) {
-      h2->Fill(GetPhiInRange(deuteron.Phi()));
+    if (TMath::Abs(proton1restmom - proton2restmom) < 0.3)
+    {
+      hPhiDeuteron->Fill(GetPhiInRange(deuteron.Phi()));
     }
 
-    if (TMath::Abs(p1 - p2) < 0.3 && TMath::Abs(p1 - p3) < 0.3 && TMath::Abs(p2 - p3) < 0.3) {
-      h3->Fill(GetPhiInRange(helium3.Phi()));
+    if (TMath::Abs(p1 - p2) < 0.3 && TMath::Abs(p1 - p3) < 0.3 && TMath::Abs(p2 - p3) < 0.3)
+    {
+      hPhiHelium->Fill(GetPhiInRange(helium3.Phi()));
     }
   }
 
-  h1->Sumw2();
-  h2->Sumw2();
-  h3->Sumw2();
+  hPhiProton->Sumw2();
+  hPhiDeuteron->Sumw2();
+  hPhiHelium->Sumw2();
 
-  h1->Scale(1.0 / h1->Integral());
-  h2->Scale(1.0 / h2->Integral());
-  h3->Scale(1.0 / h3->Integral());
+  hPhiProton->Scale(1.0 / hPhiProton->Integral());
+  hPhiDeuteron->Scale(1.0 / hPhiDeuteron->Integral());
+  hPhiHelium->Scale(1.0 / hPhiHelium->Integral());
 
-  h1->SetStats(0);
-  h1->GetXaxis()->SetTitle("#phi (rad)");
-  h1->GetYaxis()->SetTitle("normalized counts");
-  h1->Draw();
-  h2->Draw("same");
-  h3->Draw("same");
-  
-  TLegend *leg = new TLegend(0.404873, 0.694853, 0.705029, 0.894853);
-  leg->SetFillColor(0);
-  leg->SetFillStyle(0);
-  leg->SetTextSize(0.04);
-  leg->SetTextFont(42);
-  leg->SetTextColor(1);
-  leg->SetBorderSize(0);
-  leg->AddEntry(h1, "proton", "pl");
-  leg->AddEntry(h2, "deuteron", "lp");
-  leg->AddEntry(h3, "helium3", "lp");
-  leg->Draw();
+  hPhiProton->SetStats(0);
+  hPhiProton->GetXaxis()->SetTitle("#phi (rad)");
+  hPhiProton->GetYaxis()->SetTitle("normalized counts");
 
+  TCanvas *cPhi = new TCanvas("cPhi", "phi distributions", 800, 600);
+  cPhi->DrawFrame(-0.01, -0.01, 6.29, 0.05, ";#phi (rad);counts");
+  hPhiProton->Draw("same");
+  hPhiDeuteron->Draw("same");
+  hPhiHelium->Draw("same");
+
+  TLegend *legPhi = new TLegend(0.21, 0.56, 0.61, 0.86, "", "brNDC");
+  legPhi->SetFillColor(0);
+  legPhi->SetFillStyle(0);
+  legPhi->SetTextSize(0.04);
+  legPhi->SetTextFont(42);
+  legPhi->SetTextColor(1);
+  legPhi->SetBorderSize(0);
+  legPhi->AddEntry(hPhiProton, "proton", "pl");
+  legPhi->AddEntry(hPhiDeuteron, "deuteron", "lp");
+  legPhi->AddEntry(hPhiHelium, "helium3", "lp");
+  legPhi->Draw();
+
+  TFile *f = new TFile("toy_phi_MC.root", "recreate");
+  hPhiProton->Write();
+  hPhiDeuteron->Write();
+  hPhiHelium->Write();
+  cPhi->Write();
 }

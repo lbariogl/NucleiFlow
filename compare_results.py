@@ -202,7 +202,7 @@ if check_igor:
 # SP check
 
 input_file_name_sp = (
-    config["output_dir_name"] + config["output_file_name"][:-5] + "_SP.root"
+    config["output_dir_name"][:-1] + "_SP/" + config["output_file_name"]
 )
 input_file_sp = ROOT.TFile(input_file_name_sp)
 print(f"Input file: {input_file_name_sp}")

@@ -101,7 +101,7 @@ complete_df.query(mandatory_selections, inplace=True)
 # Get resolution from file
 resolution_file = ROOT.TFile(resolution_file_name)
 if useSP:
-    res_histo_name = f"Resolution_SP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_SP"
+    res_histo_name = f"Sourav/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_Sourav"
 else:
     res_histo_name = f"Resolution_EP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_EP"
 print(

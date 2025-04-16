@@ -315,15 +315,16 @@ for res in hResolution_dict_SP.values():
 # check sourav
 input_file_sourav = ROOT.TFile("../sourav_check/AnalysisResults.root")
 
+print("Sourav check")
 hSP_dict_Sourav = {}
 hProfile_dict_Sourav = {}
 cSpProfile_dict_Sourav = {}
 hResolution_dict_Sourav = {}
 
-hSP_FT0C_TPC = input_file_sourav.Get("ResFT0CTPC").Project3D("zx")
+hSP_FT0C_TPC = input_file_sourav.Get("phipbpb/ResSPFT0CTPC").Project3D("zx")
 hSP_FT0C_TPC.SetName("hScalarProduct_FT0C_TPC_Sourav")
-hSP_FT0C_TPC.RebinX(10)
 hSP_FT0C_TPC.SetTitle(r";centrality (%); #vec{Q}_{2}^{FT0C} #upoint #vec{Q}_{2}^{TPC}")
+# hSP_FT0C_TPC.GetYaxis().SetRangeUser(-2.0, 2.0)
 hSP_dict_Sourav["FT0C_TPC"] = hSP_FT0C_TPC
 hProfile_dict_Sourav["FT0C_TPC"] = hSP_FT0C_TPC.ProfileX("hProfile_FT0C_TPC_Sourav")
 utils.setHistStyle(hProfile_dict_Sourav["FT0C_TPC"], ROOT.kRed)
@@ -336,12 +337,12 @@ cSpProfile_dict_Sourav["FT0C_TPC"] = ROOT.TCanvas(
 hSP_FT0C_TPC.Draw("colz")
 hProfile_dict_Sourav["FT0C_TPC"].Draw("pe same")
 
-hSP_FT0C_FT0A = input_file_sourav.Get("ResFT0CFT0A").Project3D("zx")
+hSP_FT0C_FT0A = input_file_sourav.Get("phipbpb/ResSPFT0CFT0A").Project3D("zx")
 hSP_FT0C_FT0A.SetName("hScalarProduct_FT0C_FT0A_Sourav")
-hSP_FT0C_FT0A.RebinX(10)
 hSP_FT0C_FT0A.SetTitle(
     r";centrality (%); #vec{Q}_{2}^{FT0C} #upoint #vec{Q}_{2}^{FT0A}"
 )
+# hSP_FT0C_FT0A.GetYaxis().SetRangeUser(-2.0, 2.0)
 hSP_dict_Sourav["FT0C_FT0A"] = hSP_FT0C_FT0A
 hProfile_dict_Sourav["FT0C_FT0A"] = hSP_FT0C_FT0A.ProfileX("hProfile_FT0C_FT0A_Sourav")
 utils.setHistStyle(hProfile_dict_Sourav["FT0C_FT0A"], ROOT.kRed)
@@ -355,10 +356,10 @@ hSP_FT0C_FT0A.Draw("colz")
 hProfile_dict_Sourav["FT0C_FT0A"].Draw("pe same")
 
 
-hSP_FT0A_TPC = input_file_sourav.Get("ResFT0ATPC").Project3D("zx")
+hSP_FT0A_TPC = input_file_sourav.Get("phipbpb/ResSPFT0ATPC").Project3D("zx")
 hSP_FT0A_TPC.SetName("hScalarProduct_FT0A_TPC_Sourav")
-hSP_FT0A_TPC.RebinX(10)
 hSP_FT0A_TPC.SetTitle(r";centrality (%); #vec{Q}_{2}^{FT0A} #upoint #vec{Q}_{2}^{TPC}")
+# hSP_FT0A_TPC.GetYaxis().SetRangeUser(-2.0, 2.0)
 hSP_dict_Sourav["FT0A_TPC"] = hSP_FT0A_TPC
 hProfile_dict_Sourav["FT0A_TPC"] = hSP_FT0A_TPC.ProfileX("hProfile_FT0A_TPC_Sourav")
 utils.setHistStyle(hProfile_dict_Sourav["FT0A_TPC"], ROOT.kRed)
@@ -376,10 +377,10 @@ cent_axis_limits = [
     hSP_dict_Sourav["FT0C_TPC"].GetXaxis().GetBinLowEdge(1),
     hSP_dict_Sourav["FT0C_TPC"].GetXaxis().GetBinUpEdge(n_bins),
 ]
-cent_axis_title = cent_axis_limits["FT0C_TPC"].GetXaxis().GetTitle()
+cent_axis_title = hSP_dict_Sourav["FT0C_TPC"].GetXaxis().GetTitle()
 
-resolution_name1 = "FT0C_TPC_FT0A"
-resolution_title1 = r"R_{2} (FT0C#; TPC, FT0A)"
+resolution_name1 = "FT0C_FT0A_TPC"
+resolution_title1 = r"R_{2} (FT0C#; FT0A, TPC)"
 
 print(f"Creating resolution {resolution_name1}")
 

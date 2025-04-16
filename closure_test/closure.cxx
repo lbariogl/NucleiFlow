@@ -98,13 +98,23 @@ void closure(int suffix = 0, float pt_min_arg = 0.5, float pt_max_arg = 0.6)
         double phiStart = phiMin + iPhi * phiStep;
         double phiEnd = phiStart + phiStep;
 
-        // printf("Subset: pt [%.2f, %.2f], eta [%.2f, %.2f], phi [%.2f, %.2f]\n", ptStart, ptEnd, etaStart, etaEnd, phiStart, phiEnd);
+        // Calculate the integral of the weight function (1 + 2 * v2 * TMath::Cos(phi)) in the phi bin
+        double weightIntegral = (phiEnd - phiStart) + v2 * (TMath::Sin(phiEnd) - TMath::Sin(phiStart)) * 2;
+
+        // Calculate the integral of the uniform distribution in the phi bin
+        double uniformIntegral = phiEnd - phiStart;
+
+        // Calculate the scaling factor for the number of tracks
+        double scalingFactor = weightIntegral / uniformIntegral;
+
+        // Adjust the number of tracks for this phi bin
+        long long adjustedTracks = static_cast<long long>(nTracks * scalingFactor);
 
         // Vector to store particles in the current subset
         std::vector<Particle> subsetParticles;
 
         // Generate particles within this subset
-        for (long i = 0; i < nTracks; ++i)
+        for (long i = 0; i < adjustedTracks; ++i)
         {
           long long int id = 0;
 

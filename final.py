@@ -40,6 +40,10 @@ output_file_name = config["output_dir_name"] + "final.root"
 output_file = ROOT.TFile(output_file_name, "recreate")
 output_dir_name = config["output_dir_name"]
 
+useSP = config["useSP"]
+
+method_label = "SP" if useSP else "EP"
+
 output_dir_plots_name = output_dir_name + "final_plots/"
 
 if not os.path.exists(output_dir_plots_name):
@@ -77,7 +81,7 @@ for i_cent in range(0, n_cent):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
     h_stat = input_file.Get(f"{cent_name}/default/hV2vsPt_{cent_name}")
     h_stat.SetDirectory(0)
-    h_stat.GetYaxis().SetTitle(r"#it{v}_{2}{EP, |#Delta#eta| > 1.3}")
+    h_stat.GetYaxis().SetTitle(r"#it{v}_{2}{" + method_label + r", |#Delta#eta| > 1.3}")
     utils.setHistStyle(h_stat, cent_colours[i_cent])
     stat_list.append(h_stat)
 
@@ -147,7 +151,9 @@ for i_cent in range(0, n_cent):
         -0.1,
         12.0,
         1.1,
-        r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP, |#Delta#eta| > 1.3}",
+        r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{"
+        + method_label
+        + r", |#Delta#eta| > 1.3}",
     )
     cV2_cent.SetBottomMargin(0.13)
     cV2_cent.SetBorderSize(0)
@@ -190,7 +196,7 @@ frame = cV2.DrawFrame(
     -0.1,
     12.0,
     1.1,
-    r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP, |#Delta#eta| > 1.3}",
+    r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{" + method_label + r", |#Delta#eta| > 1.3}",
 )
 cV2.SetBottomMargin(0.13)
 cV2.SetLeftMargin(0.13)
@@ -274,7 +280,9 @@ def draw_comparison_with_models(
         -0.07,
         x_limits[i_cent],
         y_limits[i_cent],
-        r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{EP, |#Delta#eta| > 1.3}",
+        r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{"
+        + method_label
+        + r", |#Delta#eta| > 1.3}",
     )
     cV2comp.SetBottomMargin(0.13)
     cV2comp.SetLeftMargin(0.13)

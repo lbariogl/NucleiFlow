@@ -333,9 +333,9 @@ for i_cent, cent in enumerate(centrality_classes):
             hPhiMinusPsi = ROOT.TH1F(
                 f"hPhiMinusPsi_{det}_cent_{cent[0]}_{cent[1]}_pt_{i_pt}",
                 hPhiMinusPsi_formatted_title,
-                140,
-                -7.0,
-                7.0,
+                40,
+                0.0,
+                ROOT.TMath.Pi(),
             )
             utils.setHistStyle(hPhiMinusPsi, ROOT.kRed + 2)
 
@@ -418,7 +418,7 @@ for i_cent, cent in enumerate(centrality_classes):
                 bin_df[f"fPsi{det}"],
                 bin_df[f"fV2{det}"],
             ):
-                delta_phi = phi - psi
+                delta_phi = utils.getPhiInRange(phi - psi)
                 cos2PhiMinusPsi = ROOT.TMath.Cos(2 * delta_phi)
                 hPhiMinusPsi.Fill(delta_phi)
                 hCos2PhiMinusPsi.Fill(cos2PhiMinusPsi)

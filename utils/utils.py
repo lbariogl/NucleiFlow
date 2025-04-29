@@ -192,6 +192,18 @@ def getCorrectPhi(phi):
 getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
 
 
+def getPhiInRange(phi):
+    result = phi
+    while result < 0:
+        result += np.pi  # Equivalent to 2 * TMath::Pi() / 2
+    while result > np.pi:
+        result -= np.pi
+    return result
+
+
+getPhiInRange_vectorized = np.vectorize(getPhiInRange)
+
+
 def get_df_from_tree(input_file_name, tree_name):
 
     # create empty data-frame

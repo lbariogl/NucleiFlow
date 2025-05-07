@@ -5,6 +5,7 @@ import argparse
 import os
 import re
 from itertools import combinations
+import numpy as np
 
 import sys
 
@@ -58,8 +59,9 @@ reference_flow_detector = config["reference_flow_detector"]
 resolution_flow_detectors = config["resolution_flow_detectors"]
 
 centrality_classes = config["centrality_classes"]
-pt_bins = config["qc_pt_bins"]
-n_pt_bins = len(pt_bins) - 1
+pt_bins = config["pt_bins"]
+pt_bins_no_cent = config["qc_pt_bins"]
+n_pt_bins_no_cent = len(pt_bins_no_cent) - 1
 cent_colours = config["cent_colours"]
 
 do_syst = config["do_syst"]
@@ -276,6 +278,9 @@ vPhi = []
 vPsiTree = {}
 vPhiMinusPsi = {}
 vCos2PhiMinusPsi = {}
+vSin2PhiMinusPsi = {}
+vCos2PhiMinusPsiVsPt = {}
+vSin2PhiMinusPsiVsPt = {}
 vQ = {}
 vQx = {}
 vQy = {}
@@ -286,6 +291,7 @@ for det in detectors:
     vPsiTree[det] = []
     vPhiMinusPsi[det] = []
     vCos2PhiMinusPsi[det] = []
+    vSin2PhiMinusPsi[det] = []
     vQ[det] = []
     vQx[det] = []
     vQy[det] = []
@@ -293,16 +299,24 @@ for det in detectors:
     vV2ScalarProduct_check[det] = []
     vV2Tree[det] = []
 
+    vCos2PhiMinusPsiVsPt[det] = []
+    vSin2PhiMinusPsiVsPt[det] = []
+
 for i_cent, cent in enumerate(centrality_classes):
     cent_seleration = f"fCentFT0C > {cent[0]} and fCentFT0C < {cent[1]}"
     cent_dir = output_file.mkdir(f"{cent[0]}_{cent[1]}")
     cent_df = complete_df.query(cent_seleration, inplace=False)
     vPhi_cent = []
     phi_dir = cent_dir.mkdir("phi")
+
+    pt_bins_arr = np.array(pt_bins[i_cent], dtype=np.float64)
+    n_pt_bins = len(pt_bins[i_cent]) - 1
+
     for det in detectors:
         vPsiTree[det].append([])
         vPhiMinusPsi[det].append([])
         vCos2PhiMinusPsi[det].append([])
+        vSin2PhiMinusPsi[det].append([])
         vQ[det].append([])
         vQx[det].append([])
         vQy[det].append([])
@@ -311,9 +325,26 @@ for i_cent, cent in enumerate(centrality_classes):
         vV2Tree[det].append([])
         cent_dir.mkdir(det)
 
+        hCos2PhiMinusPsiVsPt = ROOT.TH1F(
+            f"hCos2PhiMinusPsiVsPt_{det}_cent_{cent[0]}_{cent[1]}",
+            r"; #it{p}_{T} (GeV/#it{c}); cos(2(#phi - #Psi_{{{det}}})",
+            n_pt_bins,
+            pt_bins_arr,
+        )
+        utils.setHistStyle(hCos2PhiMinusPsiVsPt, ROOT.kRed + 2)
+        vCos2PhiMinusPsiVsPt[det].append(hCos2PhiMinusPsiVsPt)
+        hSin2PhiMinusPsiVsPt = ROOT.TH1F(
+            f"hSin2PhiMinusPsiVsPt_{det}_cent_{cent[0]}_{cent[1]}",
+            r"; #it{p}_{T} (GeV/#it{c}); sin(2(#phi - #Psi_{{{det}}})",
+            n_pt_bins,
+            pt_bins_arr,
+        )
+        utils.setHistStyle(hSin2PhiMinusPsiVsPt, ROOT.kAzure + 1)
+        vSin2PhiMinusPsiVsPt[det].append(hSin2PhiMinusPsiVsPt)
+
     for i_pt in range(0, n_pt_bins):
         # select the correct pt bin
-        pt_sel = f"abs(fPt) > {pt_bins[i_pt]} and abs(fPt) < {pt_bins[i_pt+1]}"  # and {ptdep_selection_list[i_pt]}"
+        pt_sel = f"abs(fPt) > {pt_bins[i_cent][i_pt]} and abs(fPt) < {pt_bins[i_cent][i_pt+1]}"  # and {ptdep_selection_list[i_pt]}"
         bin_df = cent_df.query(pt_sel, inplace=False)
 
         hPhi = ROOT.TH1F(
@@ -348,6 +379,16 @@ for i_cent, cent in enumerate(centrality_classes):
                 1,
             )
             utils.setHistStyle(hCos2PhiMinusPsi, ROOT.kRed + 2)
+
+            hSin2PhiMinusPsi_formatted_title = f";sin(2(#phi - #Psi_{{{det}}}); counts"
+            hSin2PhiMinusPsi = ROOT.TH1F(
+                f"hSin2PhiMinusPsi_{det}_cent_{cent[0]}_{cent[1]}_pt_{i_pt}",
+                hSin2PhiMinusPsi_formatted_title,
+                100,
+                -1,
+                1,
+            )
+            utils.setHistStyle(hSin2PhiMinusPsi, ROOT.kRed + 2)
 
             hQx_formatted_title = f";Q_{{x, {det}}}; counts"
             hQx = ROOT.TH1F(
@@ -420,8 +461,10 @@ for i_cent, cent in enumerate(centrality_classes):
             ):
                 delta_phi = utils.getPhiInRange(phi - psi)
                 cos2PhiMinusPsi = ROOT.TMath.Cos(2 * delta_phi)
+                sin2PhiMinusPsi = ROOT.TMath.Sin(2 * delta_phi)
                 hPhiMinusPsi.Fill(delta_phi)
                 hCos2PhiMinusPsi.Fill(cos2PhiMinusPsi)
+                hSin2PhiMinusPsi.Fill(sin2PhiMinusPsi)
                 hQ.Fill(q)
                 qx = q * ROOT.TMath.Cos(2 * psi)
                 hQx.Fill(qx)
@@ -436,15 +479,30 @@ for i_cent, cent in enumerate(centrality_classes):
 
             vPhiMinusPsi[det][i_cent].append(hPhiMinusPsi)
             vCos2PhiMinusPsi[det][i_cent].append(hCos2PhiMinusPsi)
+            vSin2PhiMinusPsi[det][i_cent].append(hSin2PhiMinusPsi)
             vQ[det][i_cent].append(hQ)
             vQx[det][i_cent].append(hQx)
             vQy[det][i_cent].append(hQy)
             vV2ScalarProduct[det][i_cent].append(hV2ScalarProduct)
             vV2ScalarProduct_check[det][i_cent].append(hV2ScalarProduct_check)
 
+            vCos2PhiMinusPsiVsPt[det][i_cent].SetBinContent(
+                i_pt + 1, hCos2PhiMinusPsi.GetMean()
+            )
+            vCos2PhiMinusPsiVsPt[det][i_cent].SetBinError(
+                i_pt + 1, hCos2PhiMinusPsi.GetMeanError()
+            )
+            vSin2PhiMinusPsiVsPt[det][i_cent].SetBinContent(
+                i_pt + 1, hSin2PhiMinusPsi.GetMean()
+            )
+            vSin2PhiMinusPsiVsPt[det][i_cent].SetBinError(
+                i_pt + 1, hSin2PhiMinusPsi.GetMeanError()
+            )
+
             cent_dir.cd(det)
             hPhiMinusPsi.Write()
             hCos2PhiMinusPsi.Write()
+            hSin2PhiMinusPsi.Write()
             hQ.Write()
             hQx.Write()
             hQy.Write()
@@ -452,12 +510,17 @@ for i_cent, cent in enumerate(centrality_classes):
             hV2ScalarProduct_check.Write()
             hV2Tree.Write()
 
+    for det in detectors:
+        cent_dir.cd(det)
+        vCos2PhiMinusPsiVsPt[det][i_cent].Write()
+        vSin2PhiMinusPsiVsPt[det][i_cent].Write()
+
     vPhi.append(vPhi_cent)
 
 # filling QC-plots after pt-dependent selections
-for i_pt in range(0, n_pt_bins):
+for i_pt in range(0, n_pt_bins_no_cent):
     # select the correct pt bin
-    pt_sel = f"abs(fPt) > {pt_bins[i_pt]} and abs(fPt) < {pt_bins[i_pt+1]}"  # and {ptdep_selection_list[i_pt]}"
+    pt_sel = f"abs(fPt) > {pt_bins_no_cent[i_pt]} and abs(fPt) < {pt_bins_no_cent[i_pt+1]}"  # and {ptdep_selection_list[i_pt]}"
     bin_df = complete_df.query(pt_sel, inplace=False)
 
     # Fill QC histograms

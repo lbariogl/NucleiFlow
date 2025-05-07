@@ -2,7 +2,7 @@ input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D.root"
 
 input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.root"
 
-resolution_file_name: "../results_pass4_new_cent/resolution_EP.root"
+resolution_file_name: "../results_pass4_new_cent_SP/resolution_EP.root"
 
 output_dir_name: "../results_pass4_new_cent_SP/"
 alternative_output_dir_name: "../results_pass4_alternative_new_cent_SP/"

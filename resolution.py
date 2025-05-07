@@ -52,7 +52,7 @@ n_cent_bins = len(cent_bins) - 1
 def getResolution(
     histo_resolution, det1_det2_name, det2_det3_name, det1_det3_name, hProfile_dict
 ):
-    histo_resolution.GetYaxis().SetRangeUser(0.0, 1.0)
+    histo_resolution.GetYaxis().SetRangeUser(0.0, 1.5)
     n_bins = histo_resolution.GetNbinsX()
     for ibin in range(1, n_bins + 1):
         val1_2 = hProfile_dict[det1_det2_name].GetBinContent(ibin)
@@ -285,6 +285,8 @@ if use_EP_tables:
     output_file_name = output_dir + "resolution_EP.root"
 else:
     output_file_name = output_dir + "resolution_Qvec.root"
+
+print(f"Writing output to {output_file_name}")
 
 output_file = ROOT.TFile(output_file_name, "recreate")
 SP_dir_EP = output_file.mkdir("SP_normalised")

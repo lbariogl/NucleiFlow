@@ -277,10 +277,15 @@ for det in detectors:
 vPhi = []
 vPsiTree = {}
 vPhiMinusPsi = {}
+vSinPhiMinusPsi = {}
 vCos2PhiMinusPsi = {}
 vSin2PhiMinusPsi = {}
+vSinPhiMinusPsiVsPt = {}
 vCos2PhiMinusPsiVsPt = {}
 vSin2PhiMinusPsiVsPt = {}
+cSinPhiMinusPsiVsPt = {}
+cCos2PhiMinusPsiVsPt = {}
+cSin2PhiMinusPsiVsPt = {}
 vQ = {}
 vQx = {}
 vQy = {}
@@ -290,6 +295,7 @@ vV2Tree = {}
 for det in detectors:
     vPsiTree[det] = []
     vPhiMinusPsi[det] = []
+    vSinPhiMinusPsi[det] = []
     vCos2PhiMinusPsi[det] = []
     vSin2PhiMinusPsi[det] = []
     vQ[det] = []
@@ -299,6 +305,7 @@ for det in detectors:
     vV2ScalarProduct_check[det] = []
     vV2Tree[det] = []
 
+    vSinPhiMinusPsiVsPt[det] = []
     vCos2PhiMinusPsiVsPt[det] = []
     vSin2PhiMinusPsiVsPt[det] = []
 
@@ -315,6 +322,7 @@ for i_cent, cent in enumerate(centrality_classes):
     for det in detectors:
         vPsiTree[det].append([])
         vPhiMinusPsi[det].append([])
+        vSinPhiMinusPsi[det].append([])
         vCos2PhiMinusPsi[det].append([])
         vSin2PhiMinusPsi[det].append([])
         vQ[det].append([])
@@ -325,21 +333,31 @@ for i_cent, cent in enumerate(centrality_classes):
         vV2Tree[det].append([])
         cent_dir.mkdir(det)
 
+        hSinPhiMinusPsiVsPt = ROOT.TH1F(
+            f"hSinPhiMinusPsiVsPt_{det}_cent_{cent[0]}_{cent[1]}",
+            rf"; #it{{p}}_{{T}} (GeV/#it{{c}}); sin(#phi - #Psi_{{{det}}})",
+            n_pt_bins,
+            pt_bins_arr,
+        )
+        utils.setHistStyle(hSinPhiMinusPsiVsPt, cent_colours[i_cent])
+        vSinPhiMinusPsiVsPt[det].append(hSinPhiMinusPsiVsPt)
+
         hCos2PhiMinusPsiVsPt = ROOT.TH1F(
             f"hCos2PhiMinusPsiVsPt_{det}_cent_{cent[0]}_{cent[1]}",
-            r"; #it{p}_{T} (GeV/#it{c}); cos(2(#phi - #Psi_{{{det}}})",
+            rf"; #it{{p}}_{{T}} (GeV/#it{{c}}); cos(2(#phi - #Psi_{{{det}}}))",
             n_pt_bins,
             pt_bins_arr,
         )
-        utils.setHistStyle(hCos2PhiMinusPsiVsPt, ROOT.kRed + 2)
+        utils.setHistStyle(hCos2PhiMinusPsiVsPt, cent_colours[i_cent])
         vCos2PhiMinusPsiVsPt[det].append(hCos2PhiMinusPsiVsPt)
+
         hSin2PhiMinusPsiVsPt = ROOT.TH1F(
             f"hSin2PhiMinusPsiVsPt_{det}_cent_{cent[0]}_{cent[1]}",
-            r"; #it{p}_{T} (GeV/#it{c}); sin(2(#phi - #Psi_{{{det}}})",
+            rf"; #it{{p}}_{{T}} (GeV/#it{{c}}); sin(2(#phi - #Psi_{{{det}}}))",
             n_pt_bins,
             pt_bins_arr,
         )
-        utils.setHistStyle(hSin2PhiMinusPsiVsPt, ROOT.kAzure + 1)
+        utils.setHistStyle(hSin2PhiMinusPsiVsPt, cent_colours[i_cent])
         vSin2PhiMinusPsiVsPt[det].append(hSin2PhiMinusPsiVsPt)
 
     for i_pt in range(0, n_pt_bins):
@@ -369,6 +387,16 @@ for i_cent, cent in enumerate(centrality_classes):
                 ROOT.TMath.Pi(),
             )
             utils.setHistStyle(hPhiMinusPsi, ROOT.kRed + 2)
+
+            hSinPhiMinusPsi_formatted_title = rf";sin(#phi - #Psi_{{{det}}}); counts"
+            hSinPhiMinusPsi = ROOT.TH1F(
+                f"hSinPhiMinusPsi_{det}_cent_{cent[0]}_{cent[1]}_pt_{i_pt}",
+                hSinPhiMinusPsi_formatted_title,
+                100,
+                -1,
+                1,
+            )
+            utils.setHistStyle(hSinPhiMinusPsi, ROOT.kRed + 2)
 
             hCos2PhiMinusPsi_formatted_title = f";cos(2(#phi - #Psi_{{{det}}}); counts"
             hCos2PhiMinusPsi = ROOT.TH1F(
@@ -460,9 +488,11 @@ for i_cent, cent in enumerate(centrality_classes):
                 bin_df[f"fV2{det}"],
             ):
                 delta_phi = utils.getPhiInRange(phi - psi)
+                sinPhiMinusPsi = ROOT.TMath.Sin(phi - psi)
                 cos2PhiMinusPsi = ROOT.TMath.Cos(2 * delta_phi)
                 sin2PhiMinusPsi = ROOT.TMath.Sin(2 * delta_phi)
                 hPhiMinusPsi.Fill(delta_phi)
+                hSinPhiMinusPsi.Fill(sinPhiMinusPsi)
                 hCos2PhiMinusPsi.Fill(cos2PhiMinusPsi)
                 hSin2PhiMinusPsi.Fill(sin2PhiMinusPsi)
                 hQ.Fill(q)
@@ -478,6 +508,7 @@ for i_cent, cent in enumerate(centrality_classes):
                 hV2Tree.Fill(v2)
 
             vPhiMinusPsi[det][i_cent].append(hPhiMinusPsi)
+            vSinPhiMinusPsi[det][i_cent].append(hSinPhiMinusPsi)
             vCos2PhiMinusPsi[det][i_cent].append(hCos2PhiMinusPsi)
             vSin2PhiMinusPsi[det][i_cent].append(hSin2PhiMinusPsi)
             vQ[det][i_cent].append(hQ)
@@ -486,6 +517,12 @@ for i_cent, cent in enumerate(centrality_classes):
             vV2ScalarProduct[det][i_cent].append(hV2ScalarProduct)
             vV2ScalarProduct_check[det][i_cent].append(hV2ScalarProduct_check)
 
+            vSinPhiMinusPsiVsPt[det][i_cent].SetBinContent(
+                i_pt + 1, hSinPhiMinusPsi.GetMean()
+            )
+            vSinPhiMinusPsiVsPt[det][i_cent].SetBinError(
+                i_pt + 1, hSinPhiMinusPsi.GetMeanError()
+            )
             vCos2PhiMinusPsiVsPt[det][i_cent].SetBinContent(
                 i_pt + 1, hCos2PhiMinusPsi.GetMean()
             )
@@ -501,6 +538,7 @@ for i_cent, cent in enumerate(centrality_classes):
 
             cent_dir.cd(det)
             hPhiMinusPsi.Write()
+            hSinPhiMinusPsi.Write()
             hCos2PhiMinusPsi.Write()
             hSin2PhiMinusPsi.Write()
             hQ.Write()
@@ -512,10 +550,81 @@ for i_cent, cent in enumerate(centrality_classes):
 
     for det in detectors:
         cent_dir.cd(det)
+        vSinPhiMinusPsiVsPt[det][i_cent].Write()
         vCos2PhiMinusPsiVsPt[det][i_cent].Write()
         vSin2PhiMinusPsiVsPt[det][i_cent].Write()
 
     vPhi.append(vPhi_cent)
+
+for det in detectors:
+    cSinPhiMinusPsiVsPt[det] = ROOT.TCanvas(
+        f"cCos2PhiMinusPsiVsPt_{det}", f"cCos2PhiMinusPsiVsPt_{det}", 800, 600
+    )
+    cSinLegend = ROOT.TLegend(0.40, 0.22, 0.70, 0.45, det, "brNDC")
+    cSinPhiMinusPsiVsPt[det].DrawFrame(
+        0.0,
+        -1.2,
+        11.0,
+        1.2,
+        f";#it{{p}}_{{T}} (GeV/#it{{c}}); sin(#phi - #Psi_{{{det}}})",
+    )
+    for i_cent, cent in enumerate(centrality_classes):
+        vSinPhiMinusPsiVsPt[det][i_cent].Draw("PE SAME")
+        cSinLegend.AddEntry(
+            vSinPhiMinusPsiVsPt[det][i_cent], f"{cent[0]}-{cent[1]}%", "PL"
+        )
+    cSinLegend.Draw("SAME")
+    cSinPhiMinusPsiVsPt[det].SaveAs(
+        f"{output_dir_name}/qc_plots/cSinPhiMinusPsiVsPt_{det}.pdf"
+    )
+    output_file.cd(f"{det}")
+    cSinPhiMinusPsiVsPt[det].Write()
+
+    cCos2PhiMinusPsiVsPt[det] = ROOT.TCanvas(
+        f"cCos2PhiMinusPsiVsPt_{det}", f"cCos2PhiMinusPsiVsPt_{det}", 800, 600
+    )
+    cCos2Legend = ROOT.TLegend(0.40, 0.22, 0.70, 0.45, det, "brNDC")
+    cCos2PhiMinusPsiVsPt[det].DrawFrame(
+        0.0,
+        -1.2,
+        11.0,
+        1.2,
+        f";#it{{p}}_{{T}} (GeV/#it{{c}}); cos(2(#phi - #Psi_{{{det}}}))",
+    )
+    for i_cent, cent in enumerate(centrality_classes):
+        vCos2PhiMinusPsiVsPt[det][i_cent].Draw("PE SAME")
+        cCos2Legend.AddEntry(
+            vCos2PhiMinusPsiVsPt[det][i_cent], f"{cent[0]}-{cent[1]}%", "PL"
+        )
+    cCos2Legend.Draw("SAME")
+    cCos2PhiMinusPsiVsPt[det].SaveAs(
+        f"{output_dir_name}/qc_plots/cCos2PhiMinusPsiVsPt_{det}.pdf"
+    )
+    output_file.cd(f"{det}")
+    cCos2PhiMinusPsiVsPt[det].Write()
+
+    cSin2PhiMinusPsiVsPt[det] = ROOT.TCanvas(
+        f"cSin2PhiMinusPsiVsPt_{det}", f"cSin2PhiMinusPsiVsPt_{det}", 800, 600
+    )
+    cSin2Legend = ROOT.TLegend(0.40, 0.22, 0.70, 0.45, det, "brNDC")
+    cSin2PhiMinusPsiVsPt[det].DrawFrame(
+        0.0,
+        -1.2,
+        11.0,
+        1.2,
+        f";#it{{p}}_{{T}} (GeV/#it{{c}}); sin(2(#phi - #Psi_{{{det}}}))",
+    )
+    for i_cent, cent in enumerate(centrality_classes):
+        vSin2PhiMinusPsiVsPt[det][i_cent].Draw("PE SAME")
+        cSin2Legend.AddEntry(
+            vSin2PhiMinusPsiVsPt[det][i_cent], f"{cent[0]}-{cent[1]}%", "PL"
+        )
+    cSin2Legend.Draw("SAME")
+    cSin2PhiMinusPsiVsPt[det].SaveAs(
+        f"{output_dir_name}/qc_plots/cSin2PhiMinusPsiVsPt_{det}.pdf"
+    )
+    output_file.cd(f"{det}")
+    cSin2PhiMinusPsiVsPt[det].Write()
 
 # filling QC-plots after pt-dependent selections
 for i_pt in range(0, n_pt_bins_no_cent):

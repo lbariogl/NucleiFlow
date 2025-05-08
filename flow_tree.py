@@ -101,7 +101,7 @@ complete_df.query(mandatory_selections, inplace=True)
 # Get resolution from file
 resolution_file = ROOT.TFile(resolution_file_name)
 if useSP:
-    res_histo_name = f"Sourav/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_Sourav"
+    res_histo_name = f"Resolution_SP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_SP"
 else:
     res_histo_name = f"Resolution_EP/hResolution_{reference_flow_detector}_{resolution_flow_detectors[0]}_{resolution_flow_detectors[1]}_EP"
 print(
@@ -443,7 +443,10 @@ legend.Draw()
 
 output_file.cd()
 cV2.Write()
-cV2.SaveAs(f"{output_dir_name}/plots/{cV2.GetName()}.pdf")
+if not useSP:
+    cV2.SaveAs(f"{output_dir_name}/plots/{cV2.GetName()}.pdf")
+else:
+    cV2.SaveAs(f"{output_dir_name}/plots_SP/{cV2.GetName()}.pdf")
 
 cPurity = ROOT.TCanvas("cPurity", "cPurity", 800, 600)
 frame = cPurity.DrawFrame(1.7, 0.5, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); purity")

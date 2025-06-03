@@ -1,18 +1,20 @@
-input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_20250620/v4/AO2D.root"
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D.root"
 
-input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_20250620/v4/AnalysisResults.root"
+input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AnalysisResults.root"
 
-resolution_file_name: "../results_pass4_v4/resolution_EP.root"
+resolution_file_name: "../results_pass4_new/resolution_EP.root"
 
-output_dir_name: "../prova/prova_phi/"
-alternative_output_dir_name: "../results_pass4_alternative_new_cent_SP/"
+output_dir_name: "../prova/prova_v2_getCorrectPhi/"
+alternative_output_dir_name: "../results_pass4_alternative_new/"
 output_file_name: "flow.root"
 output_file_name_qc: "qc.root"
 
 nuclei_tree_name: "O2nucleitable"
 ep_tree_name: "O2nucleitableflow"
 
-useSP : True
+useSP : False
+
+harmonic : 2
 
 mandatory_selections: "fSign < 0 and abs(fEta) < 0.8 and fTPCchi2 > 0.5"
 selection_dict:
@@ -21,7 +23,7 @@ selection_dict:
     "abs(fDCAz)": "abs(fDCAz) < 1.",
     "fTPCnCls": "fTPCnCls > 99",
     "abs(fZvertex)": "abs(fZvertex) < 10.",
-    "fNsigmaITS3HeMinusOffset": "fNsigmaITS3HeMinusOffset > 0",
+    "fNsigmaITS3He": "fNsigmaITS3He > - 1.5",
     "abs(fNsigmaTPC3He)": "abs(fNsigmaTPC3He) < 2.",
   }
 ptdep_selection_dict: # the dictionary has as key the right pt limit for the selection
@@ -39,7 +41,10 @@ nsigmaTPC_bin_limits: [-5.0, 5.0]
 tof_analysis: False
 
 centrality_classes:
-  [[0, 10], [10, 20], [20, 30], [30, 40], [40, 60]]
+  # [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50], [50, 60], [60, 80]]
+  [[0, 10], [10, 20], [20, 30], [30, 40], [40, 50], [50, 60]]
+  # [[0, 20], [20, 40]]
+  # [[0, 10]]
 
 qc_pt_bins: [0., 2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 6.8, 7.2, 7.6, 8., 10.]
 
@@ -50,13 +55,19 @@ pt_bins:
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8., 10.],
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6., 6.4, 7.2, 8.],
     [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6.4, 7.2, 8.],
-    [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4],
+    [2, 2.2, 2.4, 2.6, 2.8, 3., 3.2, 3.6, 4., 4.4, 4.8, 5.2, 5.6, 6.4, 7.2],
+    # [2, 2.4, 2.8, 3.2, 4., 4.8, 5.6, 6.4],
   ]
-cent_colours: [633, 797, 418, 862, 874]
+  # [
+  #   [2, 3, 4.5, 7, 10],
+  #   [2, 3, 4.5, 7, 10],
+  # ]
+
+cent_colours: [633, 797, 418, 402, 433, 862, 874]
 
 cent_detector_label: "FT0C"
 reference_flow_detector: "FT0C"
-resolution_flow_detectors: ["FT0A", "TPC"]
+resolution_flow_detectors: ["TPCl", "TPCr"]
 
 use_Barlow: True
 
@@ -69,7 +80,7 @@ p_train: [-449.90,
 resolution_train: 0.09
 n_sigma_plot: 5
 
-do_syst: True
+do_syst: False
 n_trials: 500
 
 cut_dict_syst:
@@ -78,7 +89,7 @@ cut_dict_syst:
     "abs(fDCAz)": { "cut_greater": False, "cut_list": [0.75, 1.00, 26] },
     "fTPCnCls": { "cut_greater": True, "cut_list": [100, 130, 7] },
     "abs(fZvertex)": { "cut_greater": False, "cut_list": [8, 10, 5] },
-    "fNsigmaITS3HeMinusOffset": {"cut_greater": True, "cut_list": [-0.1, 0.1, 5] },
+    "fNsigmaITS3He": {"cut_greater": True, "cut_list": [-1.1, -0.9, 5] },
     "abs(fNsigmaTPC3He)": {"cut_greater": False, "cut_list": [2., 1.8, 5] }
   }
 

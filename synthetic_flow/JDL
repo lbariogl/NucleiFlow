@@ -1,0 +1,77 @@
+Executable = "/alice/cern.ch/user/a/aliprod/EP24l1/runme.sh";
+
+JobTag =
+{
+  "comment: PbPb, 5.36 TeV, injected nuclei with synthetic flow",
+};
+
+
+Packages =
+{
+  "VO_ALICE@O2sim::v20250508-1"
+};
+
+InputFile =
+{
+  "LF:/alice/cern.ch/user/l/lbariogl/synthetic_flow/runNucleiFlow.sh"
+};
+
+Split = "production:1-$3";
+
+SplitArguments = "env SPLITID=#alien_counter# PRODSPLIT=$3 CYCLE=0 runNucleiFlow.sh";
+
+OutputDir = "/alice/cern.ch/user/l/lbariogl/synthetic_flow//$1/#alien_counter_03i#";
+
+Output =
+{
+  "AO2D.root@disk=2",
+  "*stat@disk=1",
+  "*.json@disk=1",
+  "stderr*@disk=1",
+  "stdout*@disk=1",
+  "tf1/*.log@disk=1",
+  "tf1/genevents_serverlog@disk=1",
+  "debug_log_archive*.tgz@disk=1",
+};
+
+OutputErrorE =
+{
+  "*stat@disk=1",
+  "*.json@disk=1",
+  "stderr*@disk=1",
+  "stdout*@disk=1",
+  "tf1/*.log@disk=1",
+  "tf1/genevents_serverlog@disk=1",
+  "debug_log_archive*.tgz@disk=1"
+};
+
+
+CPULimit="8";
+CPUCores = "8";
+
+TTL = "72000";
+TTLOptimizationType="TTLStatistics";
+
+Price = "1";
+
+LPMAnchorPassName = "apass4";
+LPMPASSNAME="apass4";
+MCAnchor = "apass4";
+CollisionSystem = "Pb-Pb";
+
+JDLVariables =
+{
+  "Packages",
+  "OutputDir",
+  "LPMAnchorPassName",
+  "MCAnchor",
+  "CollisionSystem",
+  "CPULimit",
+  "LPMPASSNAME",
+  "TTL"
+};
+
+WorkDirectorySize =
+{
+  "80000MB"
+};

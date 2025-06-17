@@ -467,7 +467,10 @@ legend_purity.Draw()
 
 output_file.cd()
 cPurity.Write()
-cPurity.SaveAs(f"{output_dir_name}/plots/{cPurity.GetName()}.pdf")
+if not useSP:
+    cPurity.SaveAs(f"{output_dir_name}/plots/{cPurity.GetName()}.pdf")
+else:
+    cPurity.SaveAs(f"{output_dir_name}/plots_SP/{cPurity.GetName()}.pdf")
 
 cRawCounts = ROOT.TCanvas("cRawCounts", "cRawCounts", 800, 600)
 frame = cRawCounts.DrawFrame(1.7, 0.5, 12.0, 25000, r";#it{p}_{T} (GeV/#it{c}); counts")
@@ -500,5 +503,8 @@ legend_raw.Draw()
 
 output_file.cd()
 cRawCounts.Write()
-cRawCounts.SaveAs(f"{output_dir_name}/plots/{cRawCounts.GetName()}.pdf")
+if not useSP:
+    cRawCounts.SaveAs(f"{output_dir_name}/plots/{cRawCounts.GetName()}.pdf")
+else:
+    cRawCounts.SaveAs(f"{output_dir_name}/plots_SP/{cRawCounts.GetName()}.pdf")
 hRawCounts.Write()

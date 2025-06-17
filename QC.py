@@ -488,7 +488,7 @@ for i_cent, cent in enumerate(centrality_classes):
                 bin_df[f"fV2{det}"],
             ):
                 delta_phi = utils.getPhiInRange(phi - psi)
-                sinPhiMinusPsi = ROOT.TMath.Sin(phi - psi)
+                sinPhiMinusPsi = ROOT.TMath.Sin(delta_phi)
                 cos2PhiMinusPsi = ROOT.TMath.Cos(2 * delta_phi)
                 sin2PhiMinusPsi = ROOT.TMath.Sin(2 * delta_phi)
                 hPhiMinusPsi.Fill(delta_phi)

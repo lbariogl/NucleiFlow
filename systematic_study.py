@@ -146,7 +146,12 @@ nucleiflow_df = utils.get_df_from_tree(input_file_name, ep_tree_name)
 complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
 
 # define new columns
-utils.redefineColumns(complete_df)
+utils.redefineColumns(
+    complete_df,
+    mass=utils.mass_helion,
+    parameters=p_train,
+    useSP=useSP,
+)
 
 # apply mandatory selections
 complete_df.query(mandatory_selections, inplace=True)
@@ -277,6 +282,11 @@ for i_cent in range(n_cent_classes):
             flow_maker_syst.resolution = resolutions[i_cent]
             flow_maker_syst.ref_detector = reference_flow_detector
 
+            if useSP:
+                flow_maker_syst.v2_bin_limits = [-10.0, 10.0]
+                flow_maker_syst.n_v2_bins = 100
+                flow_maker_syst.v2_axis_label = r"Q cos(2(#phi - #Psi_{2}))"
+
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = cut
             # flow_maker_syst.ptdep_selection_dict = standard_ptdep_selection_dict
@@ -355,6 +365,11 @@ for i_cent in range(n_cent_classes):
             flow_maker_syst.cent_limits = centrality_classes[i_cent]
             flow_maker_syst.resolution = resolutions[i_cent]
             flow_maker_syst.ref_detector = reference_flow_detector
+
+            if useSP:
+                flow_maker_syst.v2_bin_limits = [-10.0, 10.0]
+                flow_maker_syst.n_v2_bins = 100
+                flow_maker_syst.v2_axis_label = r"Q cos(2(#phi - #Psi_{2}))"
 
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = standard_selections

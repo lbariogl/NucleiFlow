@@ -32,6 +32,7 @@ input_file = ROOT.TFile(input_file_AR_name)
 ref_names = ["FT0C", "FT0A", "TPCl", "TPCr", "TPC"]
 
 use_EP_tables = True
+harmonic = 2
 
 hSP_dict_EP = {}
 hProfile_dict_EP = {}
@@ -189,7 +190,9 @@ def doAllPlots(
     cent_axis_title = hSP_dict[det1_det2_name].GetXaxis().GetTitle()
 
     resolution_name1 = f"{det_name1}_{det_name2}_{det_name3}"
-    resolution_title1 = r"R_{2} " + f"({det_name1}#; {det_name2}, {det_name3})"
+    resolution_title1 = (
+        r"R_{%s} " % harmonic + f"({det_name1}#; {det_name2}, {det_name3})"
+    )
 
     print(f"Creating resolution {resolution_name1}")
 

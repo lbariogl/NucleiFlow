@@ -46,7 +46,7 @@ output_file = ROOT.TFile(f"{output_dir}/phi_studies.root", "recreate")
 print(f"Output file: {output_file.GetName()}")
 
 # get resolutions
-res_histo_name = f"Resolution_SP/hResolution_FT0C_FT0A_TPC_SP"
+res_histo_name = f"Resolution_EP/hResolution_FT0C_FT0A_TPC_EP"
 
 resolution_file = ROOT.TFile(resolution_file_name, "read")
 hResolution = resolution_file.Get(res_histo_name)
@@ -67,7 +67,7 @@ cent_limits_tens = [0, 10, 20, 30, 40, 50, 60, 70, 80]
 
 # evaluating true resolutions
 resolutions = []
-hResolution.Write("hResolution_FT0C_FT0A_TPC_SP_standard")
+hResolution.Write("hResolution_FT0C_FT0A_TPC_EP_standard")
 for i_cent, cent in enumerate(centrality_classes):
     cent_left_index = cent_limits_tens.index(cent[0])
     cent_right_index = cent_limits_tens.index(cent[1])
@@ -88,7 +88,7 @@ for i_cent, cent in enumerate(centrality_classes):
 
 # evaluating v4 from v2 resolutions
 resolutions_v4fromv2 = []
-hResolution_v4fromv2.Write("hResolution_FT0C_FT0A_TPC_SP_v4fromv2")
+hResolution_v4fromv2.Write("hResolution_FT0C_FT0A_TPC_EP_v4fromv2")
 for i_cent, cent in enumerate(centrality_classes):
     cent_left_index = cent_limits_tens.index(cent[0])
     cent_right_index = cent_limits_tens.index(cent[1])
@@ -117,6 +117,7 @@ final_file = ROOT.TFile(final_file_name, "read")
 
 vV2stat = []
 vV2syst = []
+vV4 = []
 
 for i_cent, cent in enumerate(centrality_classes):
     hV2stat = final_file.Get(
@@ -130,11 +131,11 @@ for i_cent, cent in enumerate(centrality_classes):
     hV2syst.SetDirectory(0)
     vV2syst.append(hV2syst)
 
-
 # Crea un file ROOT per i canvas
 output_root = ROOT.TFile("fit_phi_psi_canvases.root", "RECREATE")
 
 vV2fromFit = []
+vV4fromFit = []
 
 for i_cent, cent in enumerate(centrality_classes):
 
@@ -150,8 +151,28 @@ for i_cent, cent in enumerate(centrality_classes):
         pt_bins_arr,
     )
     utils.setHistStyle(hV2fromFit, cent_colours[i_cent], marker=25)
-
     vV2fromFit.append(hV2fromFit)
+
+    hV4 = ROOT.TH1F(
+        f"hV4_cent_{cent[0]}_{cent[1]}",
+        r"; #it{p}_{T} (GeV/#it{c}); v_{4}",
+        n_pt_bins,
+        pt_bins_arr,
+    )
+    utils.setHistStyle(hV4, cent_colours[i_cent])
+    vV4.append(hV4)
+
+    hV4fromFit = ROOT.TH1F(
+        f"hV4FromFit_cent_{cent[0]}_{cent[1]}",
+        r"; #it{p}_{T} (GeV/#it{c}); v_{4}",
+        n_pt_bins,
+        pt_bins_arr,
+    )
+    utils.setHistStyle(hV4fromFit, cent_colours[i_cent], marker=25)
+    vV4fromFit.append(hV4fromFit)
+
+    cent_plot_dir = f"../results_pass4_new_cent_SP/phi_studies/cent_{cent[0]}_{cent[1]}"
+    os.makedirs(cent_plot_dir, exist_ok=True)
 
     for i_pt in range(0, n_pt_bins):
 
@@ -216,18 +237,43 @@ for i_cent, cent in enumerate(centrality_classes):
         c.Write()
 
         # Salva il canvas come PDF nella cartella
-        pdf_path = os.path.join(output_dir, f"phi_minus_psi_fit_{i_cent}_{i_pt}.pdf")
+        pdf_path = os.path.join(
+            cent_plot_dir, f"cPhiMinusPsi_FT0C_cent_{cent[0]}_{cent[1]}_pt_{i_pt}.pdf"
+        )
         c.SaveAs(pdf_path)
 
         vV2fromFit[i_cent].SetBinContent(i_pt + 1, v2raw)
         vV2fromFit[i_cent].SetBinError(i_pt + 1, v2raw_err)
 
-    # vV2fromFit[i_cent].Scale(resolutions[i_cent])
+        # compute v4 from v2
+        hCos4PhiMinusPsi_name = f"{cent[0]}_{cent[1]}/FT0C/hCos4PhiMinusPsi_FT0C_cent_{cent[0]}_{cent[1]}_pt_{i_pt}"
+        print(f"Getting histogram: {hCos4PhiMinusPsi_name}")
+        hCos4PhiMinusPsi = qc_file.Get(hCos4PhiMinusPsi_name)
+        hCos4PhiMinusPsi.SetDirectory(0)
+        hCos4PhiMinusPsi.Rebin(4)
+        utils.setHistStyle(hCos4PhiMinusPsi, ROOT.kBlack)
+        cent_dir.cd()
+        hCos4PhiMinusPsi.Write()
+
+        v4_val = hCos4PhiMinusPsi.GetMean()
+        v4_err = hCos4PhiMinusPsi.GetMeanError()
+
+        vV4[i_cent].SetBinContent(i_pt + 1, v4_val)
+        vV4[i_cent].SetBinError(i_pt + 1, v4_err)
+
+        vV4fromFit[i_cent].SetBinContent(i_pt + 1, v4raw)
+        vV4fromFit[i_cent].SetBinError(i_pt + 1, v4raw_err)
+
+    vV2fromFit[i_cent].Scale(1.0 / resolutions[i_cent])
+    vV4[i_cent].Scale(1.0 / resolutions_v4fromv2[i_cent])
+    vV4fromFit[i_cent].Scale(1.0 / resolutions_v4fromv2[i_cent])
 
     cent_dir.cd()
     vV2fromFit[i_cent].Write()
     vV2stat[i_cent].Write()
     vV2syst[i_cent].Write()
+    vV4[i_cent].Write()
+    vV4fromFit[i_cent].Write()
 
     cV2fromFit = ROOT.TCanvas(
         f"cV2FromFit_cent_{cent[0]}_{cent[1]}",
@@ -246,4 +292,30 @@ for i_cent, cent in enumerate(centrality_classes):
     legend.Draw()
 
     cV2fromFit.Write()
-    cV2fromFit.SaveAs(f"{output_dir}/cV2FromFit_cent_{cent[0]}_{cent[1]}.pdf")
+    if i_cent == 0:
+        cV2fromFit.SaveAs(f"{output_dir}/cV2compVsPt.pdf[")
+    cV2fromFit.SaveAs(f"{output_dir}/cV2compVsPt.pdf")
+
+    cV4fromFit = ROOT.TCanvas(
+        f"cV4fromFit_cent_{cent[0]}_{cent[1]}",
+        f"cV4fromFit_cent_{cent[0]}_{cent[1]}",
+        800,
+        600,
+    )
+    vV4[i_cent].Draw("PE")
+    vV4fromFit[i_cent].Draw("PEsame")
+
+    legend = ROOT.TLegend(0.69, 0.22, 0.88, 0.30, "", "brNDC")
+    legend.SetBorderSize(0)
+    legend.AddEntry(vV4[i_cent], "v_{4} standard", "PF")
+    legend.AddEntry(vV4fromFit[i_cent], "v_{4} from fit", "PE")
+    legend.Draw()
+
+    cV4fromFit.Write()
+    if i_cent == 0:
+        cV4fromFit.SaveAs(f"{output_dir}/cV4compVsPt.pdf[")
+    cV4fromFit.SaveAs(f"{output_dir}/cV4compVsPt.pdf")
+
+
+cV2fromFit.SaveAs(f"{output_dir}/cV2compVsPt.pdf]")
+cV4fromFit.SaveAs(f"{output_dir}/cV4compVsPt.pdf]")

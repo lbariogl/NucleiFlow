@@ -192,12 +192,13 @@ def getCorrectPhi(phi):
 getCorrectPhi_vectorised = np.vectorize(getCorrectPhi)
 
 
-def getPhiInRange(phi):
+def getPhiInRange(phi, harmonic=2):
     result = phi
-    while result < 0:
-        result += np.pi  # Equivalent to 2 * TMath::Pi() / 2
-    while result > np.pi:
-        result -= np.pi
+    period = 2.0 * np.pi / harmonic
+    while result < 0.0:
+        result += period  # Equivalent to 2 * TMath::Pi() / 2
+    while result > period:
+        result -= period
     return result
 
 
@@ -256,7 +257,7 @@ def redefineColumns(
     print("fP")
     complete_df.eval("fP = fPt * cosh(fEta)", inplace=True)
     print("fPhi")
-    complete_df["fPhi"] = getCorrectPhi_vectorised(complete_df["fPhi"])
+    complete_df["fPhi"] = getPhiInRange_vectorized(complete_df["fPhi"])
     print("fCosLambda")
     complete_df.eval("fCosLambda = 1 / cosh(fEta)", inplace=True)
     print("fAvgItsClusSize")
@@ -332,7 +333,7 @@ def redefineColumnsLight(complete_df, charge=2):
     print("fP")
     complete_df.eval("fP = fPt * sinh(fEta)", inplace=True)
     print("fPhi")
-    complete_df["fPhi"] = getCorrectPhi_vectorised(complete_df["fPhi"])
+    complete_df["fPhi"] = getPhiInRange_vectorized(complete_df["fPhi"])
     print("fCosLambda")
     complete_df.eval("fCosLambda = 1 / cosh(fEta)", inplace=True)
     print("fAvgItsClusSize")

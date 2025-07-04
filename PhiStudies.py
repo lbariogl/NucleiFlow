@@ -38,7 +38,7 @@ pt_bins = config["pt_bins"]
 cent_colours = config["cent_colours"]
 
 # Crea la cartella per i PDF se non esiste
-output_dir = "../results_pass4_new_cent_SP/phi_studies"
+output_dir = "../results_phi_studies"
 os.makedirs(output_dir, exist_ok=True)
 
 # create output file
@@ -109,10 +109,10 @@ for i_cent, cent in enumerate(centrality_classes):
 
 
 # get histograms from QC file
-qc_file = ROOT.TFile("../results_pass4_new_cent_SP/qc.root", "read")
+qc_file = ROOT.TFile("../results_phi_studies/qc.root", "read")
 
 # ge v2 histograms from final file
-final_file_name = "../results_pass4_new_cent_SP/final.root"
+final_file_name = "../results_phi_studies/final.root"
 final_file = ROOT.TFile(final_file_name, "read")
 
 vV2stat = []
@@ -132,7 +132,7 @@ for i_cent, cent in enumerate(centrality_classes):
     vV2syst.append(hV2syst)
 
 # Crea un file ROOT per i canvas
-output_root = ROOT.TFile("fit_phi_psi_canvases.root", "RECREATE")
+output_root = ROOT.TFile("phi_studies.root", "RECREATE")
 
 vV2fromFit = []
 vV4fromFit = []
@@ -171,7 +171,7 @@ for i_cent, cent in enumerate(centrality_classes):
     utils.setHistStyle(hV4fromFit, cent_colours[i_cent], marker=25)
     vV4fromFit.append(hV4fromFit)
 
-    cent_plot_dir = f"../results_pass4_new_cent_SP/phi_studies/cent_{cent[0]}_{cent[1]}"
+    cent_plot_dir = f"../results_phi_studies/phi_studies/cent_{cent[0]}_{cent[1]}"
     os.makedirs(cent_plot_dir, exist_ok=True)
 
     for i_pt in range(0, n_pt_bins):
@@ -231,6 +231,10 @@ for i_cent, cent in enumerate(centrality_classes):
         pave.AddText(f"v2raw = {v2raw:.3g} #pm {v2raw_err:.2g}")
         pave.AddText(f"v4raw = {v4raw:.3g} #pm {v4raw_err:.2g}")
         pave.AddText(f"#chi^2/ndf = {chi2:.1f}/{ndf}")
+        pave.AddText(f"Centrality: {cent[0]}-{cent[1]}%")  # <--- aggiungi questa riga
+        pt_low = pt_bins[i_cent][i_pt]
+        pt_high = pt_bins[i_cent][i_pt + 1]
+        pave.AddText(f"{pt_low:.1f} < #it{{p}}_{{T}} < {pt_high:.1f} GeV/c")
         pave.Draw()
 
         # Salva il canvas nel file ROOT
@@ -254,6 +258,38 @@ for i_cent, cent in enumerate(centrality_classes):
         utils.setHistStyle(hCos4PhiMinusPsi, ROOT.kBlack)
         cent_dir.cd()
         hCos4PhiMinusPsi.Write()
+
+        # Crea e salva il canvas per la distribuzione di cos(4(phi-psi))
+        cCos4 = ROOT.TCanvas(
+            f"cCos4PhiMinusPsiFT0C_{cent[0]}_{cent[1]}_pt{i_pt}",
+            f"cCos4PhiMinusPsiFT0C_{cent[0]}_{cent[1]}_pt{i_pt}",
+            800,
+            600,
+        )
+        hCos4PhiMinusPsi.SetMaximum(1.2 * hCos4PhiMinusPsi.GetMaximum())
+        hCos4PhiMinusPsi.Draw("PE")
+
+        # TPaveText con centralità e range di pt
+        pave_cos4 = ROOT.TPaveText(0.55, 0.75, 0.89, 0.89, "NDC")
+        pave_cos4.SetFillColor(0)
+        pave_cos4.SetBorderSize(0)
+        pave_cos4.SetTextFont(42)
+        pave_cos4.SetTextSize(0.035)
+        pave_cos4.AddText(f"Centrality: {cent[0]}-{cent[1]}%")
+        pt_low = pt_bins[i_cent][i_pt]
+        pt_high = pt_bins[i_cent][i_pt + 1]
+        pave_cos4.AddText(f"{pt_low:.1f} < #it{{p}}_{{T}} < {pt_high:.1f} GeV/c")
+        pave_cos4.Draw()
+
+        # Salva il canvas nel file ROOT
+        cCos4.Write()
+
+        # Salva il canvas come PDF nella cartella
+        pdf_path_cos4 = os.path.join(
+            cent_plot_dir,
+            f"cCos4PhiMinusPsi_FT0C_cent_{cent[0]}_{cent[1]}_pt_{i_pt}.pdf",
+        )
+        cCos4.SaveAs(pdf_path_cos4)
 
         v4_val = hCos4PhiMinusPsi.GetMean()
         v4_err = hCos4PhiMinusPsi.GetMeanError()
@@ -291,6 +327,15 @@ for i_cent, cent in enumerate(centrality_classes):
     legend.AddEntry(vV2fromFit[i_cent], "v_{2} from fit", "PE")
     legend.Draw()
 
+    # Add centrality class panel to cV2fromFit
+    cent_pave = ROOT.TPaveText(0.18, 0.80, 0.38, 0.88, "NDC")
+    cent_pave.SetFillColor(0)
+    cent_pave.SetBorderSize(0)
+    cent_pave.SetTextFont(42)
+    cent_pave.SetTextSize(0.04)
+    cent_pave.AddText(f"Centrality: {cent[0]}-{cent[1]}%")
+    cent_pave.Draw()
+
     cV2fromFit.Write()
     if i_cent == 0:
         cV2fromFit.SaveAs(f"{output_dir}/cV2compVsPt.pdf[")
@@ -307,9 +352,18 @@ for i_cent, cent in enumerate(centrality_classes):
 
     legend = ROOT.TLegend(0.69, 0.22, 0.88, 0.30, "", "brNDC")
     legend.SetBorderSize(0)
-    legend.AddEntry(vV4[i_cent], "v_{4} standard", "PF")
+    legend.AddEntry(vV4[i_cent], "v_{4} standard wrt #Psi_{2}", "PF")
     legend.AddEntry(vV4fromFit[i_cent], "v_{4} from fit", "PE")
     legend.Draw()
+
+    # Add centrality class panel to cV4fromFit
+    cent_pave = ROOT.TPaveText(0.18, 0.80, 0.38, 0.88, "NDC")
+    cent_pave.SetFillColor(0)
+    cent_pave.SetBorderSize(0)
+    cent_pave.SetTextFont(42)
+    cent_pave.SetTextSize(0.04)
+    cent_pave.AddText(f"Centrality: {cent[0]}-{cent[1]}%")
+    cent_pave.Draw()
 
     cV4fromFit.Write()
     if i_cent == 0:

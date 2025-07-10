@@ -626,3 +626,18 @@ def get_condition(val, conditions):
 
     # If no condition is found, return None or a default message
     return None
+
+
+# Calcola min e max (inclusi errori) tra TUTTI gli istogrammi che vuoi disegnare
+def get_min_max_with_errors(hists):
+    ymin = float("inf")
+    ymax = float("-inf")
+    for hist in hists:
+        for i in range(1, hist.GetNbinsX() + 1):
+            val = hist.GetBinContent(i)
+            err = hist.GetBinError(i)
+            if val - err < ymin:
+                ymin = val - err
+            if val + err > ymax:
+                ymax = val + err
+    return ymin, ymax

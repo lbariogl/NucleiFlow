@@ -36,7 +36,7 @@ cent_colours = config["cent_colours"]
 
 input_file = ROOT.TFile(input_file_name)
 input_file_separated_syst = ROOT.TFile(input_file_name[:-5] + "_separated.root")
-output_file_name = config["output_dir_name"] + "final.root"
+output_file_name = config["output_dir_name"] + "final_august2025.root"
 output_file = ROOT.TFile(output_file_name, "recreate")
 output_dir_name = config["output_dir_name"]
 
@@ -188,7 +188,7 @@ info_panel_total.SetFillStyle(0)
 info_panel_total.SetTextAlign(12)
 info_panel_total.SetTextFont(42)
 info_panel_total.SetTextSize(0.04)
-info_panel_total.AddText(r"ALICE Preliminary")
+info_panel_total.AddText(r"ALICE")
 info_panel_total.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
 info_panel_total.AddText(r"{}^{3}#bar{He}, |#eta| < 0.8")
 frame = cV2.DrawFrame(
@@ -263,7 +263,8 @@ def draw_comparison_with_models(
     centrality_classes,
     stat_list,
     syst_list,
-    gPredHelium3,
+    gPredHelium3Coal,
+    gPredHelium3shm,
     output_dir_plots_name,
     output_file,
     multi_page_pdf_path=None,  # Add argument for multi-page PDF
@@ -294,7 +295,7 @@ def draw_comparison_with_models(
     info_panel_comp.SetTextAlign(12)
     info_panel_comp.SetTextFont(42)
     info_panel_comp.SetTextSize(0.04)
-    info_panel_comp.AddText(r"ALICE Preliminary")
+    info_panel_comp.AddText(r"ALICE")
     info_panel_comp.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
     info_panel_comp.AddText(
         f"{centrality_classes[i_cent][0]}-{centrality_classes[i_cent][1]}% FT0C centrality"
@@ -303,15 +304,21 @@ def draw_comparison_with_models(
     legend_comp = ROOT.TLegend(0.55, 0.23, 0.87, 0.4, "", "brNDC")
     legend_comp.SetBorderSize(0)
 
-    gPredHelium3[i_cent].Draw("E3same][")
+    gPredHelium3Coal[i_cent].Draw("E3same][")
+    gPredHelium3shm[i_cent].Draw("E3same][")
 
     stat_list[i_cent].Draw("PEX0 SAME")
     syst_list[i_cent].Draw("PE2 SAME")
 
     legend_comp.AddEntry(stat_list[i_cent], r"{}^{3}#bar{He}, |#eta| < 0.8", "PF")
     legend_comp.AddEntry(
-        gPredHelium3[i_cent],
-        r"#splitline{IP Glasma + MUSIC +}{+ UrQMD + Coalescence}",
+        gPredHelium3Coal[i_cent],
+        r"#splitline{MUSIC + UrQMD +}{+ Coalescence}",
+        "F",
+    )
+    legend_comp.AddEntry(
+        gPredHelium3shm[i_cent],
+        r"MUSIC + UrQMD",
         "F",
     )
 
@@ -335,43 +342,83 @@ def draw_comparison_with_models(
     return cV2comp
 
 
-# Comparison with models
-gPredHelium3 = []
+# Get predictions for coalescence
+
+gPredHelium3Coal = []
+gPredProton = []
 coalescence_theory_file = ROOT.TFile("../theoretical_models/Predictions.root")
 predictions = [
-    ("gPredHelium3_0_10", ROOT.kCyan + 2),
-    ("gPredHelium3_10_20", ROOT.kSpring - 9),
-    ("gPredHelium3_20_30", ROOT.kOrange + 1),
-    ("gPredHelium3_30_40", ROOT.kOrange + 1),
-    ("gPredHelium3_40_60", ROOT.kOrange + 1),
+    ("gPredHelium3_0_10", "gPredProton_0_10", ROOT.kCyan + 2),
+    ("gPredHelium3_10_20", "gPredProton_10_20", ROOT.kSpring - 9),
+    ("gPredHelium3_20_30", "gPredProton_20_30", ROOT.kOrange + 1),
+    ("gPredHelium3_30_40", "gPredProton_30_40", ROOT.kOrange + 1),
+    ("gPredHelium3_40_60", "gPredProton_40_60", ROOT.kOrange + 1),
 ]
 
-for pred_name, color in predictions:
-    graph = coalescence_theory_file.Get(pred_name)
+# Define complementary colors for protons
+complementary_colors = [
+    ROOT.kMagenta + 2,  # Complementary to Cyan
+    ROOT.kTeal - 7,  # Complementary to Spring
+    ROOT.kBlue + 1,  # Complementary to Orange
+    ROOT.kBlue + 1,  # Complementary to Orange
+    ROOT.kBlue + 1,  # Complementary to Orange
+]
+
+
+for (helium_name, proton_name, helium_color), proton_color in zip(
+    predictions, complementary_colors
+):
+    # Load helium predictions
+    helium_graph = coalescence_theory_file.Get(helium_name)
+    helium_graph.SetFillStyle(1001)
+    helium_graph.SetFillColorAlpha(helium_color, 0.6)
+    gPredHelium3Coal.append(helium_graph)
+
+    # Load proton predictions
+    proton_graph = coalescence_theory_file.Get(proton_name)
+    proton_graph.SetFillStyle(1001)
+    proton_graph.SetFillColorAlpha(proton_color, 0.6)  # Assign complementary color
+    gPredProton.append(proton_graph)
+
+# Get predictions for SHM
+gPredHelium3shm = []
+shm_theory_file = ROOT.TFile("../theoretical_models/Predictions_august2025.root")
+predictions = [
+    "gPredHelium3_0_10",
+    "gPredHelium3_10_20",
+    "gPredHelium3_20_30",
+    "gPredHelium3_30_40",
+    "gPredHelium3_40_60",
+]
+
+for i_cent, pred_name in enumerate(predictions):
+    graph = shm_theory_file.Get(pred_name)
     graph.SetFillStyle(1001)
-    graph.SetFillColorAlpha(color, 0.6)
-    gPredHelium3.append(graph)
+    graph.SetFillColorAlpha(complementary_colors[i_cent], 0.6)
+    gPredHelium3shm.append(graph)
 
 # Open a single PDF file for all model comparison canvases
 output_pdf_path = f"{output_dir_plots_name}model_comparisons.pdf"
 
-for i_cent in range(5):
+# compare protons with 3he
+for i_cent in range(n_cent):
     print(f"Drawing comparison for centrality class {i_cent}")
     draw_comparison_with_models(
         i_cent,
         centrality_classes,
         stat_list,
         syst_list,
-        gPredHelium3,
+        gPredHelium3Coal,
+        gPredHelium3shm,
         output_dir_plots_name,
         output_file,
         multi_page_pdf_path=output_pdf_path,  # Pass the multi-page PDF path
         is_first_canvas=(i_cent == 0),  # Open the PDF on the first canvas
-        is_last_canvas=(i_cent == 4),  # Close the PDF on the last canvas
+        is_last_canvas=(i_cent == n_cent - 1),  # Close the PDF on the last canvas
     )
 
 
-def draw_predictions_with_scaling(
+def draw_predictions_helium_protons(
     i_cent,
     centrality_classes,
     gPredHelium3,
@@ -403,7 +450,7 @@ def draw_predictions_with_scaling(
     info_panel_pred.SetTextAlign(12)
     info_panel_pred.SetTextFont(42)
     info_panel_pred.SetTextSize(0.04)
-    info_panel_pred.AddText(r"ALICE Preliminary")
+    info_panel_pred.AddText(r"ALICE")
     info_panel_pred.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
     info_panel_pred.AddText(
         f"{centrality_classes[i_cent][0]}-{centrality_classes[i_cent][1]}% FT0C centrality"
@@ -447,47 +494,12 @@ def draw_predictions_with_scaling(
 # Create a multi-page PDF for helium and proton predictions
 output_pdf_predictions = f"{output_dir_plots_name}helium_proton_predictions.pdf"
 
-# Extract helium and proton predictions from the same file
-gPredHelium3 = []
-gPredProton = []
-coalescence_theory_file = ROOT.TFile("../theoretical_models/Predictions.root")
-predictions = [
-    ("gPredHelium3_0_10", "gPredProton_0_10", ROOT.kCyan + 2),
-    ("gPredHelium3_10_20", "gPredProton_10_20", ROOT.kSpring - 9),
-    ("gPredHelium3_20_30", "gPredProton_20_30", ROOT.kOrange + 1),
-    ("gPredHelium3_30_40", "gPredProton_30_40", ROOT.kOrange + 1),
-    ("gPredHelium3_40_60", "gPredProton_40_60", ROOT.kOrange + 1),
-]
-
-# Define complementary colors for protons
-complementary_colors = [
-    ROOT.kMagenta + 2,  # Complementary to Cyan
-    ROOT.kTeal - 7,  # Complementary to Spring
-    ROOT.kBlue + 1,  # Complementary to Orange
-    ROOT.kBlue + 1,  # Complementary to Orange
-    ROOT.kBlue + 1,  # Complementary to Orange
-]
-
-for (helium_name, proton_name, helium_color), proton_color in zip(
-    predictions, complementary_colors
-):
-    # Load helium predictions
-    helium_graph = coalescence_theory_file.Get(helium_name)
-    helium_graph.SetFillStyle(1001)
-    helium_graph.SetFillColorAlpha(helium_color, 0.6)
-    gPredHelium3.append(helium_graph)
-
-    # Load proton predictions
-    proton_graph = coalescence_theory_file.Get(proton_name)
-    proton_graph.SetFillStyle(1001)
-    proton_graph.SetFillColorAlpha(proton_color, 0.6)  # Assign complementary color
-    gPredProton.append(proton_graph)
 
 for i_cent in range(5):
-    draw_predictions_with_scaling(
+    draw_predictions_helium_protons(
         i_cent,
         centrality_classes,
-        gPredHelium3,
+        gPredHelium3Coal,
         gPredProton,
         output_dir_plots_name,
         multi_page_pdf_path=output_pdf_predictions,  # Pass the multi-page PDF path

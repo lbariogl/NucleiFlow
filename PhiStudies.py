@@ -142,6 +142,15 @@ vV2fromFit = []
 vV4fromFit = []
 vSigmaFromFit = []
 
+# Before the loop (so it persists)
+dummy_hist = ROOT.TH1F("dummy_hist", "", 1, 0, 1)
+dummy_hist.SetLineColor(ROOT.kBlue)
+dummy_hist.SetLineWidth(2)
+
+dummy_hist_v2only = ROOT.TH1F("dummy_hist_v2only", "", 1, 0, 1)
+dummy_hist_v2only.SetLineColor(ROOT.kRed)
+dummy_hist_v2only.SetLineWidth(2)
+
 for i_cent, cent in enumerate(centrality_classes):
 
     cent_dir = output_file.mkdir(f"cent_{cent[0]}_{cent[1]}")
@@ -211,9 +220,9 @@ for i_cent, cent in enumerate(centrality_classes):
             "sigma", "sigma", 0.01, 0.00001, 0.1
         )  # width of Gaussian
 
-        base_formula = "1+2*v2raw*cos(2*x)+2*v4raw*cos(4*x)"
+        base_formula = "1+2*v2raw*exp(-2*sigma*sigma)*cos(2*x)+2*v4raw*exp(-8*sigma*sigma)*cos(4*x)"
         base_func = ROOT.RooGenericPdf(
-            "base_func", base_formula, ROOT.RooArgList(x, v2raw, v4raw)
+            "base_func", base_formula, ROOT.RooArgList(x, v2raw, v4raw, sigma)
         )
 
         # phi resolution vs pT
@@ -226,12 +235,9 @@ for i_cent, cent in enumerate(centrality_classes):
         sigma.setVal(phi_resolution)
         sigma.setConstant(True)
 
-        gauss = ROOT.RooGaussian("gauss", "gauss", x, ROOT.RooFit.RooConst(0), sigma)
-        conv = ROOT.RooFFTConvPdf("conv", "conv", x, base_func, gauss)
-
-        # Crea il modello esteso: RooAddPdf con la convoluzione come unico componente
+        # Crea il modello esteso: RooAddPdf con la funzione base come unico componente
         model = ROOT.RooAddPdf(
-            "model", "model", ROOT.RooArgList(conv), ROOT.RooArgList(norm)
+            "model", "model", ROOT.RooArgList(base_func), ROOT.RooArgList(norm)
         )
 
         dh = ROOT.RooDataHist(
@@ -249,13 +255,44 @@ for i_cent, cent in enumerate(centrality_classes):
         v2raw_err = v2raw.getError()
         v4raw_val = v4raw.getVal()
         v4raw_err = v4raw.getError()
-        chi2 = conv.createChi2(dh).getVal()
-        ndf = hPhiMinusPsi.GetNbinsX() - 4  # 4 parameters
+        chi2 = base_func.createChi2(dh).getVal()
+        ndf = hPhiMinusPsi.GetNbinsX() - 3  # 3 parameters
+
+        # Create a new norm for the reduced fit
+        norm_reduced = ROOT.RooRealVar(
+            "norm_reduced", "norm_reduced", hPhiMinusPsi.Integral(), 0, 1e6
+        )
+        v2raw_reduced = ROOT.RooRealVar("v2raw_reduced", "v2raw_reduced", 0.1, -1, 1)
+        sigma_reduced = ROOT.RooRealVar(
+            "sigma_reduced", "sigma_reduced", 0.01, 0.00001, 0.1
+        )  # width of Gaussian
+        sigma_reduced.setVal(phi_resolution)
+        sigma_reduced.setConstant(True)
+        base_formula_reduced = (
+            "1+2*v2raw_reduced*exp(-2*sigma_reduced*sigma_reduced)*cos(2*x)"
+        )
+        base_func_reduced = ROOT.RooGenericPdf(
+            "base_func_reduced",
+            base_formula_reduced,
+            ROOT.RooArgList(x, v2raw_reduced, sigma_reduced),
+        )
+        model_reduced = ROOT.RooAddPdf(
+            "model_reduced",
+            "model_reduced",
+            ROOT.RooArgList(base_func_reduced),
+            ROOT.RooArgList(norm_reduced),
+        )
+
+        model_reduced.fitTo(dh, ROOT.RooFit.Extended(True), ROOT.RooFit.PrintLevel(-1))
+        chi2_reduced = base_func_reduced.createChi2(dh).getVal()
+        ndf_reduced = hPhiMinusPsi.GetNbinsX() - 2  # 2 parameters
 
         # For plotting: RooFit
         frame = x.frame()
         dh.plotOn(frame)
-        conv.plotOn(frame)
+        base_func.plotOn(frame, ROOT.RooFit.LineColor(ROOT.kBlue))
+        base_func_reduced.plotOn(frame, ROOT.RooFit.LineColor(ROOT.kRed))
+
         frame.GetXaxis().SetTitle("#phi - #Psi_{2}")
         nbins = hPhiMinusPsi.GetNbinsX()
         frame.GetYaxis().SetTitle(f"Entries / (#pi/{nbins})")
@@ -273,7 +310,7 @@ for i_cent, cent in enumerate(centrality_classes):
                 ymax = bin_content + bin_error
 
         # Imposta il range dell'asse y del frame
-        frame.SetMinimum(0.95 * ymin)
+        frame.SetMinimum(0.90 * ymin)
         frame.SetMaximum(1.05 * ymax)
 
         # Titolo con centralità e intervallo di pt
@@ -290,18 +327,33 @@ for i_cent, cent in enumerate(centrality_classes):
         frame.SetTitle(canvas_title)
         frame.Draw()
 
-        pave = ROOT.TPaveText(0.37, 0.63, 0.70, 0.87, "NDC")
-        pave.SetFillColor(0)
-        pave.SetBorderSize(0)
-        pave.AddText(
-            r"Fit: Convolution [(1 + 2 #it{v}_{2}^{raw} cos(2x) + 2 #it{v}_{4}^{raw} cos(4x)) #otimes Gauss]"
+        legFit = ROOT.TLegend(0.35, 0.51, 0.65, 0.85)
+        legFit.SetFillColor(0)
+        legFit.SetFillStyle(0)
+        legFit.SetTextSize(0.04)
+        legFit.SetTextFont(42)
+        legFit.SetTextColor(1)
+        legFit.SetBorderSize(0)
+        # Add entries to the legend
+        legFit.AddEntry(hPhiMinusPsi, "^{3}He", "PE")
+        legFit.AddEntry(
+            dummy_hist_v2only,
+            "#it{A} [1 + 2#it{B} e^{-2#sigma^{2}}cos(2#it{#phi})]",
+            "L",
         )
-        pave.AddText(f"Norm = {norm_val:.3g} #pm {norm_err:3.3g}")
-        pave.AddText(f"v2raw = {v2raw_val:.3g} #pm {v2raw_err:.3g}")
-        pave.AddText(f"v4raw = {v4raw_val:.3g} #pm {v4raw_err:.3g}")
-        pave.AddText(f"Gaussian width = {sigma.getVal():.3g} (fixed)")
-        pave.AddText(f"#chi^2/ndf = {chi2:.1f}/{ndf}")
-        pave.Draw()
+        legFit.AddEntry(0, f"#chi^{{2}}/ndf = {chi2_reduced:.1f}/{ndf_reduced}", "")
+        legFit.AddEntry(
+            dummy_hist,
+            "#it{A} [1 + 2#it{B} e^{-2#sigma^{2}}cos(2#it{#phi}) + ",
+            "L",
+        )
+        legFit.AddEntry(
+            0,
+            "+ 4#it{C} e^{-8#sigma^{2}}cos(4#it{#phi})]",
+            "",
+        )
+        legFit.AddEntry(0, f"#chi^{{2}}/ndf = {chi2:.1f}/{ndf}", "")
+        legFit.Draw()
 
         # Salva il canvas nel file ROOT
         c.Write()
@@ -368,7 +420,7 @@ for i_cent, cent in enumerate(centrality_classes):
         vV4[i_cent].SetBinError(i_pt + 1, v4_err)
 
     vV2fromFit[i_cent].Scale(1.0 / resolutions[i_cent])
-    vV4[i_cent].Scale(1.0 / resolutions_v4fromv2[i_cent])
+    vV4[i_cent].Scale(1 / resolutions_v4fromv2[i_cent])
     vV4fromFit[i_cent].Scale(1.0 / resolutions_v4fromv2[i_cent])
 
     cent_dir.cd()
@@ -507,5 +559,127 @@ for i_cent, cent in enumerate(centrality_classes):
 
 
 cV2fromFit.SaveAs(f"{output_dir}/cV2compVsPt.pdf]")
+
+cV2allCent = ROOT.TCanvas("cV2allCent", "v2 vs pT for all centrality classes", 800, 600)
+cV2allCent.cd()
+
+
+# Draw all centrality classes on the same canvas
+drawn = False
+legend_centrality = ROOT.TLegend(
+    0.15, 0.62, 0.45, 0.84, "^{3}He, FT0C centrality", "brNDC"
+)
+legend_centrality.SetBorderSize(0)
+legend_centrality.SetTextFont(42)
+legend_centrality.SetTextSize(0.035)
+legend_centrality.SetFillStyle(0)
+
+for i_cent, cent in enumerate(centrality_classes):
+    # Draw hV2stat
+    opt = "PE" if not drawn else "PE SAME"
+    vV2stat[i_cent].Draw(opt)
+    legend_centrality.AddEntry(vV2stat[i_cent], f"{cent[0]}-{cent[1]}%", "FP")
+    # Draw hV2syst
+    vV2syst[i_cent].Draw("PE2x0 SAME")
+    # Draw vV2fromFit
+    vV2fromFit[i_cent].SetMarkerStyle(25)
+    vV2fromFit[i_cent].Draw("PE SAME")
+    drawn = True
+
+# Set axis titles and ranges
+first_hist = vV2stat[0]
+first_hist.GetXaxis().SetTitle("#it{p}_{T} (GeV/#it{c})")
+first_hist.GetYaxis().SetTitle("v_{2}")
+first_hist.GetYaxis().SetRangeUser(0, 0.8)
+
+# Add a second legend for marker meaning
+legend_markers = ROOT.TLegend(0.17, 0.51, 0.37, 0.62, "", "brNDC")
+legend_markers.SetBorderSize(0)
+legend_markers.SetTextFont(42)
+legend_markers.SetTextSize(0.035)
+legend_markers.SetFillStyle(0)
+
+# Dummy for v2, SP (same marker as hV2stat)
+dummy_v2sp = ROOT.TH1F("dummy_v2sp", "", 1, 0, 1)
+dummy_v2sp.SetMarkerStyle(vV2stat[0].GetMarkerStyle())
+dummy_v2sp.SetMarkerColor(ROOT.kGray + 2)
+dummy_v2sp.SetLineColor(ROOT.kGray + 2)
+dummy_v2sp.SetMarkerSize(vV2stat[0].GetMarkerSize())
+legend_markers.AddEntry(dummy_v2sp, "v_{2}, Scalar Product", "P")
+
+# Dummy for parameter B from the fit (same marker as vV2fromFit)
+dummy_v2fit = ROOT.TH1F("dummy_v2fit", "", 1, 0, 1)
+dummy_v2fit.SetMarkerStyle(25)
+dummy_v2fit.SetMarkerColor(ROOT.kGray + 2)
+dummy_v2fit.SetLineColor(ROOT.kGray + 2)
+dummy_v2fit.SetMarkerSize(vV2fromFit[0].GetMarkerSize())
+legend_markers.AddEntry(dummy_v2fit, "parameter B from the fit", "P")
+
+# Info panel (top-right corner)
+info_panel_comp = ROOT.TPaveText(0.65, 0.75, 0.85, 0.85, "NDC")
+info_panel_comp.SetFillColor(0)
+info_panel_comp.SetBorderSize(0)
+info_panel_comp.SetTextFont(42)
+info_panel_comp.SetTextSize(0.04)
+info_panel_comp.AddText(r"ALICE")
+info_panel_comp.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
+info_panel_comp.Draw()
+
+legend_centrality.Draw()
+legend_markers.Draw()
+output_file.cd()
+cV2allCent.Write()
+cV2allCent.SaveAs(f"{output_dir}/cV2allCent.pdf")
+
+# New canvas for all vV4fromFit
+cV4allCent = ROOT.TCanvas(
+    "cV4allCent", "B parameter from fit for all centrality classes", 800, 600
+)
+cV4allCent.cd()
+
+drawn = False
+legend_centrality_v4 = ROOT.TLegend(
+    0.15, 0.62, 0.45, 0.84, "^{3}He, FT0C centrality", "brNDC"
+)
+legend_centrality_v4.SetBorderSize(0)
+legend_centrality_v4.SetTextFont(42)
+legend_centrality_v4.SetTextSize(0.035)
+legend_centrality_v4.SetFillStyle(0)
+
+for i_cent, cent in enumerate(centrality_classes):
+    opt = "PE" if not drawn else "PE SAME"
+    vV4fromFit[i_cent].Draw(opt)
+    legend_centrality_v4.AddEntry(vV4fromFit[i_cent], f"{cent[0]}-{cent[1]}%", "FP")
+    drawn = True
+
+# Set axis titles and ranges
+first_hist_v4 = vV4fromFit[0]
+first_hist_v4.GetXaxis().SetTitle("#it{p}_{T} (GeV/#it{c})")
+first_hist_v4.GetYaxis().SetTitle("C parameter from fit")
+first_hist_v4.GetYaxis().SetRangeUser(-0.03, 0.40)
+
+# Add info panel (reuse same as before)
+info_panel_v4 = ROOT.TPaveText(0.65, 0.75, 0.85, 0.85, "NDC")
+info_panel_v4.SetFillColor(0)
+info_panel_v4.SetBorderSize(0)
+info_panel_v4.SetTextFont(42)
+info_panel_v4.SetTextSize(0.04)
+info_panel_v4.AddText(r"ALICE")
+info_panel_v4.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
+info_panel_v4.Draw()
+
+# Add dashed black horizontal line at y=0
+line0 = ROOT.TLine(
+    first_hist_v4.GetXaxis().GetXmin(), 0, first_hist_v4.GetXaxis().GetXmax(), 0
+)
+line0.SetLineColor(ROOT.kBlack)
+line0.SetLineStyle(2)
+line0.SetLineWidth(2)
+line0.Draw()
+
+legend_centrality_v4.Draw()
+output_file.cd()
+cV4allCent.Write()
+cV4allCent.SaveAs(f"{output_dir}/cV4allCent.pdf")
 cV4fromFit.SaveAs(f"{output_dir}/cV4compVsPt.pdf]")
 cSigmaFromFit.SaveAs(f"{output_dir}/cSigmaFromFit.pdf]")

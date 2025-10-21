@@ -32,7 +32,17 @@ input_file = ROOT.TFile(input_file_AR_name)
 ref_names = ["FT0C", "FT0A", "TPCl", "TPCr", "TPC"]
 
 use_EP_tables = True
-harmonic = 2
+if "harmonic" in config.keys():
+    harmonic = config["harmonic"]
+else:
+    harmonic = 2
+    print("** No harmonic provided, using default: 2 **")
+
+if "task_name" in config.keys():
+    task_name = config["task_name"]
+else:
+    task_name = "flow-qc"
+    print("** No task name provided, using default: flow-qc **")
 
 hSP_dict_EP = {}
 hProfile_dict_EP = {}
@@ -119,7 +129,7 @@ def doAllPlots(
     det1_det2_name = f"{det_name1}_{det_name2}"
     if det1_det2_name not in hSP_dict.keys():
         hSP_dict[det1_det2_name] = input_file.Get(
-            f"flow-qc/{directory}/{histo_name}_{det1_det2_name}_{input_suffix}"
+            f"{task_name}/{directory}/{histo_name}_{det1_det2_name}_{input_suffix}"
         )
         hSP_dict[det1_det2_name].RebinX(10)
 
@@ -141,7 +151,7 @@ def doAllPlots(
     det2_det3_name = f"{det_name2}_{det_name3}"
     if det2_det3_name not in hSP_dict.keys():
         hSP_dict[det2_det3_name] = input_file.Get(
-            f"flow-qc/{directory}/{histo_name}_{det2_det3_name}_{input_suffix}"
+            f"{task_name}/{directory}/{histo_name}_{det2_det3_name}_{input_suffix}"
         )
         hSP_dict[det2_det3_name].RebinX(10)
 
@@ -163,7 +173,7 @@ def doAllPlots(
     det1_det3_name = f"{det_name1}_{det_name3}"
     if det1_det3_name not in hSP_dict.keys():
         hSP_dict[det1_det3_name] = input_file.Get(
-            f"flow-qc/{directory}/{histo_name}_{det1_det3_name}_{input_suffix}"
+            f"{task_name}/{directory}/{histo_name}_{det1_det3_name}_{input_suffix}"
         )
         hSP_dict[det1_det3_name].RebinX(10)
 
@@ -213,7 +223,7 @@ def doAllPlots(
     utils.setHistStyle(hResolution_dict[resolution_name1], ROOT.kRed)
 
     resolution_name2 = f"{det_name2}_{det_name3}_{det_name1}"
-    resolution_title2 = r"R_{2} " + f"({det_name2}#; {det_name1}, {det_name3})"
+    resolution_title2 = r"R_{%s} " % harmonic + f"({det_name2}#; {det_name1}, {det_name3})"
 
     print(f"Creating resolution {resolution_name2}")
 
@@ -234,7 +244,7 @@ def doAllPlots(
     utils.setHistStyle(hResolution_dict[resolution_name2], ROOT.kRed)
 
     resolution_name3 = f"{det_name3}_{det_name1}_{det_name2}"
-    resolution_title3 = r"R_{2} " + f"({det_name3}#; {det_name1}, {det_name2})"
+    resolution_title3 = r"R_{%s} " % harmonic + f"({det_name3}#; {det_name1}, {det_name2})"
 
     print(f"Creating resolution {resolution_name3}")
 

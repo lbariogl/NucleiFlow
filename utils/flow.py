@@ -18,6 +18,9 @@ class FlowMaker:
 
     def __init__(self):
 
+        # harmonic variable
+        self.harmonic = 2
+
         # data frame
         self.data_df = None
         self.selection_string = ""
@@ -45,7 +48,7 @@ class FlowMaker:
 
         self.n_v2_bins = 21
         self.v2_bin_limits = [-1.05, 1.05]
-        self.v2_axis_label = r"cos(2(#phi - #Psi))"
+        self.v2_axis_label = r"cos(%d(#phi - #Psi))" % self.harmonic
 
         self.hNsigma3He = []
         self.cNsigma3HeFit = []
@@ -109,8 +112,8 @@ class FlowMaker:
         utils.setHistStyle(self.hRawCountsVsPt, self.color)
 
         self.hV2vsPt = ROOT.TH1F(
-            f"hV2vsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}{self.suffix}",
-            r"; #it{p}_{T} (GeV/#it{c}); v_{2}",
+            f"hV{self.harmonic}vsPt_cent_{self.cent_limits[0]}_{self.cent_limits[1]}{self.suffix}",
+            r"; #it{p}_{T} (GeV/#it{c}); v_{%d}" % self.harmonic,
             self.n_pt_bins,
             pt_bins_arr,
         )
@@ -138,7 +141,7 @@ class FlowMaker:
 
             # V2
             hV2_tmp = ROOT.TH1F(
-                f"hV2{self.ref_detector}_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                f"hV{self.harmonic}{self.ref_detector}_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
                 f"{pt_label}" + f";{self.v2_axis_label}; counts",
                 self.n_v2_bins,
                 self.v2_bin_limits[0],
@@ -157,6 +160,7 @@ class FlowMaker:
                 f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
             )
             info_panel_bis.AddText(pt_label)
+            # info_panel_bis.AddText('v%d = %.2f' % (self.harmonic, self.hV2[i_pt].GetMean()))
 
             hV2_tmp.GetListOfFunctions().Add(info_panel_bis)
             utils.setHistStyle(hV2_tmp, ROOT.kAzure + 1, linewidth=2)
@@ -188,9 +192,9 @@ class FlowMaker:
                 utils.setHistStyle(hTOFmassSquared_tmp, ROOT.kRed + 1, linewidth=2)
                 self.hTOFmassSquared.append(hTOFmassSquared_tmp)
 
-                histo_title_nsigma_tof = r";m_{TOF}^{2} - m_{{}^{4}He}^{2} (GeV/#it{c}^{2})^{2}; cos(2(#phi - #Psi))"
+                histo_title_nsigma_tof = r";m_{TOF}^{2} - m_{{}^{4}He}^{2} (GeV/#it{c}^{2})^{2}; cos(%d(#phi - #Psi))" % self.harmonic
                 hV2vsTOFmassSquared2D_tmp = ROOT.TH2F(
-                    f"hV2{self.ref_detector}vsTOFmassSquared2D_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                    f"hV{self.harmonic}{self.ref_detector}vsTOFmassSquared2D_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
                     histo_title_nsigma_tof,
                     self.n_tofMassSquared_bins,
                     self.tofMassSquared_bin_limits[0],
@@ -272,12 +276,12 @@ class FlowMaker:
                 )
                 self.hRawCountsVsPt.SetBinContent(i_pt + 1, len(df_bin_3He))
                 self.hRawCountsVsPt.SetBinError(i_pt + 1, np.sqrt(len(df_bin_3He)))
-                for v2 in df_bin_3He[f"fV2{self.ref_detector}"]:
+                for v2 in df_bin_3He[f"fV{self.harmonic}{self.ref_detector}"]:
                     self.hV2[i_pt].Fill(v2)
             else:
                 for m2, v2 in zip(
                     bin_df["fTOFmassSquared"],
-                    bin_df[f"fV2{self.ref_detector}"],
+                    bin_df[f"fV{self.harmonic}{self.ref_detector}"],
                 ):
                     centered_m2 = m2 - utils.mass_alpha * utils.mass_alpha
                     self.hTOFmassSquared[i_pt].Fill(centered_m2)
@@ -285,7 +289,7 @@ class FlowMaker:
 
                 hV2vsTOFmassSquared_tmp = utils.getAverage2D(
                     self.hV2vsTOFmassSquared2D[i_pt],
-                    f"hV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                    f"hV{self.harmonic}{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
                 )
                 utils.setHistStyle(
                     hV2vsTOFmassSquared_tmp, ROOT.kAzure + 1, linewidth=2
@@ -305,13 +309,19 @@ class FlowMaker:
                 tof_panel.AddText(pt_label)
 
                 canvas = utils.getCanvasWithTwoPanels(
-                    f"cV2{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
+                    f"cV{self.harmonic}{self.ref_detector}vsTOFmassSquared_cent_{self.cent_limits[0]}_{self.cent_limits[1]}_pt{i_pt}{self.suffix}",
                     self.hV2vsTOFmassSquared[i_pt],
                     self.hTOFmassSquared[i_pt],
                     bottom_panel=tof_panel,
                 )
 
                 self.cV2vsTOFmassSquared.append(canvas)
+
+            for obj in self.hV2[i_pt].GetListOfFunctions():
+                if obj.InheritsFrom("TPaveText"):
+                    obj.AddText(
+                        r'v_%d = %.4f \pm %.4f' % (self.harmonic, self.hV2[i_pt].GetMean(), self.hV2[i_pt].GetMeanError())
+                    )
 
         # v2 vs Pt
         for i_pt in range(0, self.n_pt_bins):
@@ -335,6 +345,11 @@ class FlowMaker:
         )
         if pt_centre > pt_thr:
             sigma_rootfitter.no_bkg = True
+        else:
+            sigma_rootfitter.mu_background_limits = [-4.5, -5, -4]
+            if self.cent_limits[0] < 40:
+                sigma_rootfitter.mu_background_limits = [-4.8, -5, -4.5]
+                sigma_rootfitter.sigma_background_limits = [0.6, 0.5, 0.7]
         sigma_rootfitter.initialise()
         sigma_rootfitter.fit()
         if self.print_frame:
@@ -398,7 +413,7 @@ class FlowMaker:
             os.makedirs(self.plot_dir)
 
         # Define the name of the final PDF
-        multipage_pdf = f"{self.plot_dir}/v2_and_nSigma_cent_{self.cent_limits[0]}_{self.cent_limits[1]}.pdf"
+        multipage_pdf = f"{self.plot_dir}/v{self.harmonic}_and_nSigma_cent_{self.cent_limits[0]}_{self.cent_limits[1]}.pdf"
 
         # Create a multipage PDF object, first print command with '(' to initiate PDF
         canvas = ROOT.TCanvas("canvas", "", 595, 842)  # A4 size in portrait
@@ -466,6 +481,7 @@ class FlowMaker:
                     f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
                 )
                 info_panel_bis.AddText(pt_label)
+                info_panel_bis.AddText('v%d = %.4f' % (self.harmonic, self.hV2[i_pt].GetMean()))
 
                 self.hV2[i_pt].GetListOfFunctions().Add(info_panel_bis)
 
@@ -493,7 +509,7 @@ class FlowMaker:
         info_panel_v2.AddText(
             f"{self.cent_limits[0]} - {self.cent_limits[1]} % {self.cent_detector}"
         )
-        info_panel_v2.AddText("hV2vsPt")
+        info_panel_v2.AddText(f"hV{self.harmonic}vsPt")
         info_panel_v2.Draw()
 
         # Draw hPurityVsPt

@@ -27,7 +27,6 @@ if args.config_file == "":
 config_file = open(args.config_file, "r")
 config = yaml.full_load(config_file)
 
-input_file_name = config["input_file_name"]
 input_file_AR_name = config["input_file_AR_name"]
 resolution_file_name = config["resolution_file_name"]
 output_dir_name = config["output_dir_name"]
@@ -36,11 +35,8 @@ output_file_name = config["output_file_name_qc"]
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
-if "useSP" in config .keys():
-    useSP = config["useSP"]
-else:
-    useSP = True
-#   print ("** No 'useSP' key found in config file. Using default value: True **")
+useSP = True
+useSP = config["useSP"]
 
 mandatory_selections = config["mandatory_selections"]
 selection_dict = config["selection_dict"]
@@ -89,25 +85,14 @@ if not os.path.exists(output_dir_name):
     os.makedirs(output_dir_name)
 output_file = ROOT.TFile(f"{output_dir_name}/{output_file_name}", "recreate")
 
-# get a unique df from nuclei and ep trees
-nuclei_df = utils.get_df_from_tree(input_file_name, nuclei_tree_name)
-
-nucleiflow_df = utils.get_df_from_tree(input_file_name, ep_tree_name)
-
-complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
-
 # set input files for EP qc
 input_file_AR = ROOT.TFile(input_file_AR_name)
 input_dir_AR_general = input_file_AR.Get(f"{task_name}/general")
 input_dir_AR_flow_ep = input_file_AR.Get(f"{task_name}/flow_ep")
 
-# define new columns
-utils.redefineColumns(complete_df, useSP=useSP, harmonic=harmonic)
+complete_df = pd.read_csv(config["df_file_name"])
 
-# apply common selections
-complete_df.query(f"{mandatory_selections} and {selections}", inplace=True)
 
-# fill hNsigmaITSvsP before ITS-cluster size selection
 hNsigmaITSvsP = ROOT.TH2F(
     "hNsigmaITSvsP",
     r"; #it{p} (GeV/#it{c}); n#sigma_{ITS}",

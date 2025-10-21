@@ -29,7 +29,6 @@ if args.config_file == "":
 config_file = open(args.config_file, "r")
 config = yaml.full_load(config_file)
 
-input_file_name = config["input_file_name"]
 resolution_file_name = config["resolution_file_name"]
 output_dir_name = config["output_dir_name"]
 output_file_name = config["output_file_name"]
@@ -81,30 +80,14 @@ else:
     harmonic = 2
     print("** No 'harmonic' key found in config file. Using default value: 2 **")
 
+# get pre-computed DataFrame
+complete_df = pd.read_csv(config["df_file_name"])
+
 # create output file
 if not os.path.exists(output_dir_name):
     os.makedirs(output_dir_name)
 output_file = ROOT.TFile(f"{output_dir_name}/{output_file_name}", "recreate")
 
-
-# get a unique df from nuclei and ep trees
-nuclei_df = utils.get_df_from_tree(input_file_name, nuclei_tree_name)
-
-nucleiflow_df = utils.get_df_from_tree(input_file_name, ep_tree_name)
-
-complete_df = pd.concat([nuclei_df, nucleiflow_df], axis=1, join="inner")
-
-# define new columns
-utils.redefineColumns(
-    complete_df,
-    mass=utils.mass_helion,
-    parameters=p_train,
-    useSP=useSP,
-    harmonic=harmonic,
-)
-
-# apply mandatory selections
-complete_df.query(mandatory_selections, inplace=True)
 
 # Get resolution from file
 resolution_file = ROOT.TFile(resolution_file_name)
@@ -431,12 +414,11 @@ if do_syst:
                 f"{cent_plots_dir_names[i_cent]}/{canvas_syst.GetName()}.pdf"
             )
 
-
 # Final plots
 
 print("Making final plots")
 cV2 = ROOT.TCanvas(f"cV{harmonic}", f"cV{harmonic}", 800, 600)
-frame = cV2.DrawFrame(1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{%d}" % harmonic)
+frame = cV2.DrawFrame(1.7, -0.1, 8.5, 0.28, r";#it{p}_{T} (GeV/#it{c}); v_{%d}" % harmonic)
 cV2.cd()
 legend = ROOT.TLegend(0.66, 0.62, 0.92, 0.85, "FT0C centrality", "brNDC")
 legend.SetBorderSize(0)

@@ -41,6 +41,13 @@ ep_tree_name = config["ep_tree_name"]
 
 useSP = config["useSP"]
 
+# harmonic parameter
+if "harmonic" in config .keys():
+    harmonic = config["harmonic"]
+else:
+    harmonic = 2
+    print("** No 'harmonic' key found in config file. Using default value: 2 **")
+
 # Tof analysis (True for 4He)
 tof_analysis = config["tof_analysis"]
 
@@ -127,11 +134,11 @@ for i_cent in range(n_cent_classes):
     cent_dir_names.append(cent_dir_name)
     cent_dir = output_file.mkdir(cent_dir_name)
     cent_dirs.append(cent_dir)
-    histo = standard_file.Get(f"{cent_dir_name}/default/hV2vsPt_{cent_dir_name}")
+    histo = standard_file.Get(f"{cent_dir_name}/default/hV{harmonic}vsPt_{cent_dir_name}")
     histo.SetDirectory(0)
     default_v2_histos.append(histo)
     default_v2_values.append(utils.getValuesFromHisto(histo))
-    alternative_histo_name = f"{cent_dir_name}/default/hV2vsPt_{cent_dir_name}"
+    alternative_histo_name = f"{cent_dir_name}/default/hV{harmonic}vsPt_{cent_dir_name}"
     print(f"file_name: {input_file_alternative_name}")
     print(f"    histo_name: {alternative_histo_name}")
     histo_varied = input_file_alternative.Get(alternative_histo_name)
@@ -257,8 +264,8 @@ for i_cent in range(n_cent_classes):
         for i_pt in range(0, n_pt_bins):
             histo_v2_syst.append(
                 ROOT.TH1F(
-                    f"hV2syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
-                    ";v_{2}",
+                    f"hV{harmonic}syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
+                    ";v_{{harmonic}}",
                     20,
                     default_v2_values[i_cent][i_pt][0]
                     - 3 * default_v2_values[i_cent][i_pt][1],
@@ -285,7 +292,7 @@ for i_cent in range(n_cent_classes):
             if useSP:
                 flow_maker_syst.v2_bin_limits = [-10.0, 10.0]
                 flow_maker_syst.n_v2_bins = 100
-                flow_maker_syst.v2_axis_label = r"Q cos(2(#phi - #Psi_{2}))"
+                flow_maker_syst.v2_axis_label = r"Q cos(%d(#phi - #Psi_{%d}))" % (harmonic, harmonic)
 
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = cut
@@ -341,8 +348,8 @@ for i_cent in range(n_cent_classes):
         for i_pt in range(0, n_pt_bins):
             histo_v2_syst.append(
                 ROOT.TH1F(
-                    f"hV2syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
-                    ";v_{2}",
+                    f"hV{harmonic}syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
+                    ";v_{{harmonic}}",
                     20,
                     default_v2_values[i_cent][i_pt][0]
                     - 3 * default_v2_values[i_cent][i_pt][1],
@@ -369,7 +376,7 @@ for i_cent in range(n_cent_classes):
             if useSP:
                 flow_maker_syst.v2_bin_limits = [-10.0, 10.0]
                 flow_maker_syst.n_v2_bins = 100
-                flow_maker_syst.v2_axis_label = r"Q cos(2(#phi - #Psi_{2}))"
+                flow_maker_syst.v2_axis_label = r"Q cos(%d(#phi - #Psi_{%d}))" % (harmonic, harmonic)
 
             var_suffix = f"_{var}_{i_cut}"
             flow_maker_syst.selection_string = standard_selections
@@ -411,7 +418,7 @@ for i_cent in range(n_cent_classes):
     for var, histos in v2_dict.items():
         cent_dirs[i_cent].cd(f"{var}")
         canvas_dict[var].cd()
-        canvas_title = f"{var}" + r";#it{p}_{T} (GeV/#it{c}); v_{2}"
+        canvas_title = f"{var}" + r";#it{p}_{T} (GeV/#it{c}); v_{%d}" % (harmonic)
         canvas_dict[var].DrawFrame(1.7, -0.2, 12.0, 1.0, canvas_title)
         period = int(cols.GetSize() / len(histos))
         for i_histo, histo in enumerate(histos):
@@ -551,9 +558,9 @@ for i_cent in range(n_cent_classes):
 
     comp_table_canvas.SaveAs(f"{cent_syst_dir_name}{comp_table_canvas.GetName()}.pdf")
 
-    histo_table_diff = histo_ep.Clone(f"hV2tableDiff_{cent_dir_name}")
+    histo_table_diff = histo_ep.Clone(f"hV{harmonic}tableDiff_{cent_dir_name}")
     histo_table_diff.Reset()
-    histo_table_diff.GetYaxis().SetTitle(r"v_{2}^{EP} - v_{2}^{Qvec}")
+    histo_table_diff.GetYaxis().SetTitle(r"v_{%d}^{EP} - v_{%d}^{Qvec}" % (harmonic, harmonic))
 
     n_pt_bins = len(pt_bins[i_cent]) - 1
 

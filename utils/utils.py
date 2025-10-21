@@ -6,6 +6,7 @@ from scipy import special
 
 ROOT.gStyle.SetPadTickX(1)
 ROOT.gStyle.SetPadTickY(1)
+# ROOT.gStyle.SetOptStat("nemrou")
 ROOT.gStyle.SetOptStat(0)
 
 ROOT.gStyle.SetFrameLineColor(ROOT.gStyle.GetCanvasColor())
@@ -182,10 +183,11 @@ getRapidity_vectorised = np.vectorize(getRapidity)
 
 
 # return phi in [-pi, pi]
-def getCorrectPhi(phi):
+def getCorrectPhi(phi, harmonic=2):
     new_phi = phi
-    if phi > np.pi:
-        new_phi = new_phi - (2 * np.pi)
+    period = 2 * np.pi / harmonic  # Equivalent to 2 * TMath::Pi() / 2
+    if phi > period:
+        new_phi = new_phi - (2 * period)
     return new_phi
 
 
@@ -250,6 +252,7 @@ def redefineColumns(
     charge=2,
     parameters=default_bb_parameters,
     useSP=False,
+    harmonic=2,
 ):
     print("Redefining columns")
     print("fPt")
@@ -257,7 +260,7 @@ def redefineColumns(
     print("fP")
     complete_df.eval("fP = fPt * cosh(fEta)", inplace=True)
     print("fPhi")
-    complete_df["fPhi"] = getPhiInRange_vectorized(complete_df["fPhi"])
+    complete_df["fPhi"] = getPhiInRange_vectorized(complete_df["fPhi"], harmonic)
     print("fCosLambda")
     complete_df.eval("fCosLambda = 1 / cosh(fEta)", inplace=True)
     print("fAvgItsClusSize")
@@ -302,38 +305,38 @@ def redefineColumns(
     # v2 with event-plane method
     if useSP:
         print("Using Scalar Product method")
-        print("fV2FT0C")
-        complete_df.eval("fV2FT0C = fQFT0C * cos(2 * (fPhi-fPsiFT0C))", inplace=True)
-        print("fV2FT0A")
-        complete_df.eval("fV2FT0A = fQFT0A * cos(2 * (fPhi-fPsiFT0A))", inplace=True)
-        print("fV2TPCl")
-        complete_df.eval("fV2TPCl = fQTPCl * cos(2 * (fPhi-fPsiTPCl))", inplace=True)
-        print("fV2TPCr")
-        complete_df.eval("fV2TPCr = fQTPCr * cos(2 * (fPhi-fPsiTPCr))", inplace=True)
-        print("fV2TPC")
-        complete_df.eval("fV2TPC = fQTPC * cos(2 * (fPhi-fPsiTPC))", inplace=True)
+        print(f"fV{harmonic}FT0C")
+        complete_df.eval(f"fV{harmonic}FT0C = fQFT0C * cos({harmonic} * (fPhi-fPsiFT0C))", inplace=True)
+        print(f"fV{harmonic}FT0A")
+        complete_df.eval(f"fV{harmonic}FT0A = fQFT0A * cos({harmonic} * (fPhi-fPsiFT0A))", inplace=True)
+        print(f"fV{harmonic}TPCl")
+        complete_df.eval(f"fV{harmonic}TPCl = fQTPCl * cos({harmonic} * (fPhi-fPsiTPCl))", inplace=True)
+        print(f"fV{harmonic}TPCr")
+        complete_df.eval(f"fV{harmonic}TPCr = fQTPCr * cos({harmonic} * (fPhi-fPsiTPCr))", inplace=True)
+        print(f"fV{harmonic}TPC")
+        complete_df.eval(f"fV{harmonic}TPC = fQTPC * cos({harmonic} * (fPhi-fPsiTPC))", inplace=True)
     else:
         print("Using Event Plane method")
-        print("fV2FT0C")
-        complete_df.eval("fV2FT0C = cos(2 * (fPhi-fPsiFT0C))", inplace=True)
-        print("fV2FT0A")
-        complete_df.eval("fV2FT0A = cos(2 * (fPhi-fPsiFT0A))", inplace=True)
-        print("fV2TPCl")
-        complete_df.eval("fV2TPCl = cos(2 * (fPhi-fPsiTPCl))", inplace=True)
-        print("fV2TPCr")
-        complete_df.eval("fV2TPCr = cos(2 * (fPhi-fPsiTPCr))", inplace=True)
-        print("fV2TPC")
-        complete_df.eval("fV2TPC = cos(2 * (fPhi-fPsiTPC))", inplace=True)
+        print(f"fV{harmonic}FT0C")
+        complete_df.eval(f"fV{harmonic}FT0C = cos({harmonic} * (fPhi-fPsiFT0C))", inplace=True)
+        print(f"fV{harmonic}FT0A")
+        complete_df.eval(f"fV{harmonic}FT0A = cos({harmonic} * (fPhi-fPsiFT0A))", inplace=True)
+        print(f"fV{harmonic}TPCl")
+        complete_df.eval(f"fV{harmonic}TPCl = cos({harmonic} * (fPhi-fPsiTPCl))", inplace=True)
+        print(f"fV{harmonic}TPCr")
+        complete_df.eval(f"fV{harmonic}TPCr = cos({harmonic} * (fPhi-fPsiTPCr))", inplace=True)
+        print(f"fV{harmonic}TPC")
+        complete_df.eval(f"fV{harmonic}TPC = cos({harmonic} * (fPhi-fPsiTPC))", inplace=True)
 
 
-def redefineColumnsLight(complete_df, charge=2):
+def redefineColumnsLight(complete_df, charge=2, harmonic=2):
     print("Redefining columns")
     print("fPt")
     complete_df["fPt"] = charge * complete_df["fPt"]
     print("fP")
     complete_df.eval("fP = fPt * sinh(fEta)", inplace=True)
     print("fPhi")
-    complete_df["fPhi"] = getPhiInRange_vectorized(complete_df["fPhi"])
+    complete_df["fPhi"] = getPhiInRange_vectorized(complete_df["fPhi"], harmonic)
     print("fCosLambda")
     complete_df.eval("fCosLambda = 1 / cosh(fEta)", inplace=True)
     print("fAvgItsClusSize")
@@ -605,7 +608,7 @@ def passBarlow(def_val, varied_val, def_err, varied_err, n_sigma=1):
     denominator = abs(def_err - varied_err)
     if denominator < 1.0e-5:
         return True
-    return (numerator / denominator) < n_sigma
+    return (numerator / denominator) > n_sigma
 
 
 def get_condition(val, conditions):

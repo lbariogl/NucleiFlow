@@ -46,7 +46,7 @@ output_dir = "../results_phi_studies"
 os.makedirs(output_dir, exist_ok=True)
 
 # create output file
-output_file = ROOT.TFile(f"{output_dir}/phi_studies.root", "recreate")
+output_file = ROOT.TFile(f"{output_dir}/phi_studies/phi_studies.root", "recreate")
 print(f"Output file: {output_file.GetName()}")
 
 # get resolutions
@@ -135,9 +135,6 @@ for i_cent, cent in enumerate(centrality_classes):
     hV2syst.SetDirectory(0)
     vV2syst.append(hV2syst)
 
-# Crea un file ROOT per i canvas
-output_root = ROOT.TFile("phi_studies.root", "RECREATE")
-
 vV2fromFit = []
 vV4fromFit = []
 vSigmaFromFit = []
@@ -151,7 +148,11 @@ dummy_hist_v2only = ROOT.TH1F("dummy_hist_v2only", "", 1, 0, 1)
 dummy_hist_v2only.SetLineColor(ROOT.kRed)
 dummy_hist_v2only.SetLineWidth(2)
 
+cPhiWithPred_list = []
+
 for i_cent, cent in enumerate(centrality_classes):
+
+    cPhiWithPred_list.append([])
 
     cent_dir = output_file.mkdir(f"cent_{cent[0]}_{cent[1]}")
 
@@ -200,6 +201,8 @@ for i_cent, cent in enumerate(centrality_classes):
     for i_pt in range(0, n_pt_bins):
 
         bin_centre = (pt_bins[i_cent][i_pt] + pt_bins[i_cent][i_pt + 1]) / 2
+        bin_left = pt_bins[i_cent][i_pt]
+        bin_right = pt_bins[i_cent][i_pt + 1]
 
         hPhiMinusPsi_name = f"{cent[0]}_{cent[1]}/FT0C/hPhiMinusPsi_FT0C_cent_{cent[0]}_{cent[1]}_pt_{i_pt}"
         print(f"Getting histogram: {hPhiMinusPsi_name}")
@@ -335,7 +338,7 @@ for i_cent, cent in enumerate(centrality_classes):
         legFit.SetTextColor(1)
         legFit.SetBorderSize(0)
         # Add entries to the legend
-        legFit.AddEntry(hPhiMinusPsi, "^{3}He", "PE")
+        legFit.AddEntry(hPhiMinusPsi, r"{}^{3}#bar{He}", "PE")
         legFit.AddEntry(
             dummy_hist_v2only,
             "#it{A} [1 + 2#it{B} e^{-2#sigma^{2}}cos(2#it{#phi})]",
@@ -356,6 +359,7 @@ for i_cent, cent in enumerate(centrality_classes):
         legFit.Draw()
 
         # Salva il canvas nel file ROOT
+        cent_dir.cd()
         c.Write()
 
         # Salva il canvas come PDF nella cartella
@@ -370,6 +374,125 @@ for i_cent, cent in enumerate(centrality_classes):
         vV4fromFit[i_cent].SetBinError(i_pt + 1, v4raw_err)
         vSigmaFromFit[i_cent].SetBinContent(i_pt + 1, sigma.getVal())
         vSigmaFromFit[i_cent].SetBinError(i_pt + 1, sigma.getError())
+
+        # Draw theoretical model prediction as an orange band if available
+        pred_file = ROOT.TFile(
+            "../theoretical_models/Predictions_august2025.root", "READ"
+        )
+        pred_graph_name = (
+            f"hPredPhi_pt_{bin_left:.1f}_{bin_right:.1f}_{cent[0]}{cent[1]}"
+        )
+        hPred = pred_file.Get(pred_graph_name)
+        hPred.SetDirectory(0)
+        hPredClone = hPred.Clone(
+            f"hPredClone_{bin_left}_{bin_right}_{cent[0]}{cent[1]}"
+        )
+
+        # Fold hPredClone from [0,2pi] to [0,pi]
+        n_bins = hPredClone.GetNbinsX()
+        x_min = hPredClone.GetXaxis().GetXmin()
+        x_max = hPredClone.GetXaxis().GetXmax()
+        pi = np.pi
+        # Only fold if the range is [0,2pi] or similar
+        if x_max > pi + 0.1:
+            # Create a new histogram with half the bins, range [0,pi]
+            n_bins_folded = int(n_bins // 2)
+            hPredFolded = ROOT.TH1D(
+                f"hPredFolded_{bin_left}_{bin_right}_{cent[0]}{cent[1]}",
+                hPredClone.GetTitle(),
+                n_bins_folded,
+                0,
+                pi,
+            )
+            orange = ROOT.TColor.GetColor("#ff9900")
+            hPredFolded.SetLineColor(orange)
+            hPredFolded.SetLineWidth(2)
+            hPredFolded.SetFillColor(orange)
+            hPredFolded.SetFillStyle(3001)
+            for i in range(1, n_bins + 1):
+                x = hPredClone.GetBinCenter(i)
+                y = hPredClone.GetBinContent(i)
+                err = hPredClone.GetBinError(i)
+                if x <= pi:
+                    bin_fold = hPredFolded.FindBin(x)
+                    hPredFolded.SetBinContent(
+                        bin_fold, hPredFolded.GetBinContent(bin_fold) + y
+                    )
+                    hPredFolded.SetBinError(
+                        bin_fold,
+                        np.sqrt(err**2),
+                    )
+                else:
+                    x_fold = 2 * pi - x
+                    bin_fold = hPredFolded.FindBin(x_fold)
+                    hPredFolded.SetBinContent(
+                        bin_fold, hPredFolded.GetBinContent(bin_fold) + y
+                    )
+                    hPredFolded.SetBinError(
+                        bin_fold,
+                        np.sqrt(hPredFolded.GetBinError(bin_fold) ** 2 + err**2),
+                    )
+
+        hPredFolded.Scale(1.0 / hPredFolded.Integral("width"))
+        hPhiMinusPsiClone = hPhiMinusPsi.Clone(
+            f"hPhiMinusPsiClone_{bin_left}_{bin_right}_{cent[0]}{cent[1]}"
+        )
+        hPhiMinusPsiClone.Scale(1.0 / hPhiMinusPsiClone.Integral("width"))
+
+        # --- New canvas: hPhiMinusPsi (PE) and hPredClone (E3) ---
+
+        cPred = ROOT.TCanvas(
+            f"cPhiWithPred_pt_{bin_left}_{bin_right}_{cent[0]}{cent[1]}",
+            canvas_title,
+            800,
+            600,
+        )
+
+        # Draw prediction band first for proper layering
+        hPredFolded.Draw("E3")
+        hPhiMinusPsiClone.Draw("PE SAME")
+
+        # Add TPaveText with ALICE, centrality, and pt info
+        pave_pred = ROOT.TPaveText(0.39, 0.73, 0.68, 0.87, "NDC")
+        pave_pred.SetFillColor(0)
+        pave_pred.SetBorderSize(0)
+        pave_pred.SetTextFont(42)
+        pave_pred.SetTextSize(0.035)
+        pave_pred.AddText("ALICE")
+        pave_pred.AddText(f"Pb-Pb {cent[0]}-{cent[1]}%")
+        pave_pred.AddText(f"{pt_low:.2f} < #it{{p}}_{{T}} < {pt_high:.2f} GeV/#it{{c}}")
+        pave_pred.Draw()
+
+        # Legend for this canvas
+        legPred = ROOT.TLegend(0.40, 0.59, 0.63, 0.73)
+        legPred.SetFillColor(0)
+        legPred.SetFillStyle(0)
+        legPred.SetTextSize(0.04)
+        legPred.SetTextFont(42)
+        legPred.SetTextColor(1)
+        legPred.SetBorderSize(0)
+        legPred.AddEntry(hPhiMinusPsi, r"{}^{3}#bar{He}", "PE")
+        legPred.AddEntry(hPredFolded, "Theory prediction", "F")
+        legPred.Draw()
+
+        # Save the canvas in the output file and as PDF
+        cent_dir.cd()
+        hPredFolded.Write()
+
+        cPred.Write()
+        pdf_path_pred = os.path.join(
+            cent_plot_dir,
+            f"cPhiWithPred_pt_{bin_left}_{bin_right}_{cent[0]}{cent[1]}.pdf",
+        )
+        cPred.SaveAs(pdf_path_pred)
+
+        if i_cent == 0 and i_pt == 0:
+            cPred.SaveAs(f"{output_dir}/cPhiWithPred_all.pdf[")
+        cPred.SaveAs(f"{output_dir}/cPhiWithPred_all.pdf")
+        if i_cent == len(centrality_classes) - 1 and i_pt == n_pt_bins - 1:
+            cPred.SaveAs(f"{output_dir}/cPhiWithPred_all.pdf]")
+
+        pred_file.Close()
 
         # compute v4 from v2
         hCos4PhiMinusPsi_name = f"{cent[0]}_{cent[1]}/FT0C/hCos4PhiMinusPsi_FT0C_cent_{cent[0]}_{cent[1]}_pt_{i_pt}"

@@ -36,7 +36,7 @@ cent_colours = config["cent_colours"]
 
 input_file = ROOT.TFile(input_file_name)
 input_file_separated_syst = ROOT.TFile(input_file_name[:-5] + "_separated.root")
-output_file_name = config["output_dir_name"] + "final_august2025.root"
+output_file_name = config["output_dir_name"] + "final_november2025.root"
 output_file = ROOT.TFile(output_file_name, "recreate")
 output_dir_name = config["output_dir_name"]
 
@@ -273,7 +273,7 @@ def draw_comparison_with_models(
 ):
     cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
     x_limits = [11.0, 11.0, 11.0, 9.0, 9.0]
-    y_limits = [0.30, 0.50, 0.60, 0.80, 1.00]
+    y_limits = [0.30, 0.60, 0.70, 0.80, 1.00]
 
     cV2comp = ROOT.TCanvas(f"cV2comp_{cent_name}", f"cV2comp_{cent_name}", 800, 600)
     framecomp = cV2comp.DrawFrame(
@@ -301,7 +301,8 @@ def draw_comparison_with_models(
         f"{centrality_classes[i_cent][0]}-{centrality_classes[i_cent][1]}% FT0C centrality"
     )
 
-    legend_comp = ROOT.TLegend(0.55, 0.23, 0.87, 0.4, "", "brNDC")
+    legend_comp = ROOT.TLegend(0.55, 0.20, 0.87, 0.4, "", "brNDC")
+    legend_comp.SetTextSize(0.03)
     legend_comp.SetBorderSize(0)
 
     gPredHelium3Coal[i_cent].Draw("E3same][")
@@ -344,57 +345,49 @@ def draw_comparison_with_models(
 
 # Get predictions for coalescence
 
-gPredHelium3Coal = []
-gPredProton = []
-coalescence_theory_file = ROOT.TFile("../theoretical_models/Predictions.root")
-predictions = [
-    ("gPredHelium3_0_10", "gPredProton_0_10", ROOT.kCyan + 2),
-    ("gPredHelium3_10_20", "gPredProton_10_20", ROOT.kSpring - 9),
-    ("gPredHelium3_20_30", "gPredProton_20_30", ROOT.kOrange + 1),
-    ("gPredHelium3_30_40", "gPredProton_30_40", ROOT.kOrange + 1),
-    ("gPredHelium3_40_60", "gPredProton_40_60", ROOT.kOrange + 1),
-]
-
-# Define complementary colors for protons
 complementary_colors = [
-    ROOT.kMagenta + 2,  # Complementary to Cyan
-    ROOT.kTeal - 7,  # Complementary to Spring
-    ROOT.kBlue + 1,  # Complementary to Orange
-    ROOT.kBlue + 1,  # Complementary to Orange
-    ROOT.kBlue + 1,  # Complementary to Orange
+    ROOT.kOrange + 7,  # Complementary to 633 (kRed+1)
+    ROOT.kSpring - 1,  # Complementary to 797 (kAzure+7)
+    ROOT.kViolet + 6,  # Complementary to 418 (kGreen+2)
+    ROOT.kYellow + 2,  # Complementary to 862 (kBlue+2)
+    ROOT.kPink - 3,  # Complementary to 874 (kTeal+4)
 ]
 
-
-for (helium_name, proton_name, helium_color), proton_color in zip(
-    predictions, complementary_colors
-):
-    # Load helium predictions
-    helium_graph = coalescence_theory_file.Get(helium_name)
-    helium_graph.SetFillStyle(1001)
-    helium_graph.SetFillColorAlpha(helium_color, 0.6)
-    gPredHelium3Coal.append(helium_graph)
-
-    # Load proton predictions
-    proton_graph = coalescence_theory_file.Get(proton_name)
-    proton_graph.SetFillStyle(1001)
-    proton_graph.SetFillColorAlpha(proton_color, 0.6)  # Assign complementary color
-    gPredProton.append(proton_graph)
-
-# Get predictions for SHM
+gPredHelium3Coal = []
 gPredHelium3shm = []
-shm_theory_file = ROOT.TFile("../theoretical_models/Predictions_august2025.root")
-predictions = [
-    "gPredHelium3_0_10",
-    "gPredHelium3_10_20",
-    "gPredHelium3_20_30",
-    "gPredHelium3_30_40",
-    "gPredHelium3_40_60",
+theory_file = ROOT.TFile("../theoretical_models/Predictions_october2025.root")
+
+predictions_coal = [
+    "gPredCoal_0_10",
+    "gPredCoal_10_20",
+    "gPredCoal_20_30",
+    "gPredCoal_30_40",
+    "gPredCoal_40_60",
 ]
 
-for i_cent, pred_name in enumerate(predictions):
-    graph = shm_theory_file.Get(pred_name)
+for i_cent, pred_name in enumerate(predictions_coal):
+    graph = theory_file.Get(pred_name)
     graph.SetFillStyle(1001)
-    graph.SetFillColorAlpha(complementary_colors[i_cent], 0.6)
+    graph.SetFillColorAlpha(cent_colours[i_cent], 0.6)
+    graph.SetLineColor(cent_colours[i_cent])
+    graph.SetMarkerColor(cent_colours[i_cent])
+    gPredHelium3Coal.append(graph)
+
+
+predictions_shm = [
+    "gPredTherm_0_10",
+    "gPredTherm_10_20",
+    "gPredTherm_20_30",
+    "gPredTherm_30_40",
+    "gPredTherm_40_60",
+]
+
+for i_cent, pred_name in enumerate(predictions_shm):
+    graph = theory_file.Get(pred_name)
+    graph.SetFillStyle(3144)
+    graph.SetFillColorAlpha(cent_colours[i_cent], 0.6)
+    graph.SetLineColor(cent_colours[i_cent])
+    graph.SetMarkerColor(cent_colours[i_cent])
     gPredHelium3shm.append(graph)
 
 # Open a single PDF file for all model comparison canvases
@@ -417,92 +410,81 @@ for i_cent in range(n_cent):
         is_last_canvas=(i_cent == n_cent - 1),  # Close the PDF on the last canvas
     )
 
-
-def draw_predictions_helium_protons(
-    i_cent,
-    centrality_classes,
-    gPredHelium3,
-    gPredProton,
-    output_dir_plots_name,
-    multi_page_pdf_path=None,  # Add argument for multi-page PDF
-    is_first_canvas=False,  # Add argument to handle opening the PDF
-    is_last_canvas=False,  # Add argument to handle opening the PDF
-):
-    cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
-    x_limits = [3.67, 3.67, 3.67, 3.0, 3.0]  # Adjusted for helium scaling
-    y_limits = [0.30, 0.50, 0.60, 0.80, 1.00]
-
-    cPred = ROOT.TCanvas(f"cPred_{cent_name}", f"cPred_{cent_name}", 800, 600)
-    framePred = cPred.DrawFrame(
-        0.5,
-        -0.07,
-        x_limits[i_cent],
-        y_limits[i_cent],
-        r";#it{p}_{T}/A (GeV/#it{c}); v_{2}{EP}",
+predictions_coal_legend = []
+predictions_term_legend = []
+for i_cent in range(n_cent):
+    predictions_coal_legend.append(
+        gPredHelium3Coal[i_cent].Clone(f"gPredHelium3Coal_legend_{i_cent}")
     )
-    cPred.SetBottomMargin(0.13)
-    cPred.SetLeftMargin(0.13)
-    cPred.SetBorderSize(0)
-
-    info_panel_pred = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, "NDC")
-    info_panel_pred.SetBorderSize(0)
-    info_panel_pred.SetFillStyle(0)
-    info_panel_pred.SetTextAlign(12)
-    info_panel_pred.SetTextFont(42)
-    info_panel_pred.SetTextSize(0.04)
-    info_panel_pred.AddText(r"ALICE")
-    info_panel_pred.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
-    info_panel_pred.AddText(
-        f"{centrality_classes[i_cent][0]}-{centrality_classes[i_cent][1]}% FT0C centrality"
+    predictions_coal_legend[i_cent].SetFillColor(ROOT.kGray + 2)
+    predictions_coal_legend[i_cent].SetLineColor(ROOT.kGray + 2)
+    predictions_coal_legend[i_cent].SetMarkerColor(ROOT.kGray + 2)
+    predictions_term_legend.append(
+        gPredHelium3shm[i_cent].Clone(f"gPredHelium3shm_legend_{i_cent}")
     )
+    predictions_term_legend[i_cent].SetFillColor(ROOT.kGray + 2)
+    predictions_term_legend[i_cent].SetLineColor(ROOT.kGray + 2)
+    predictions_term_legend[i_cent].SetMarkerColor(ROOT.kGray + 2)
+# make camvas with data and predictions for centrality 10-20 and 40-60
+cV2_final = ROOT.TCanvas("cV2_final ", "cV2_final", 800, 600)
+frame_final = cV2_final.DrawFrame(
+    1.7,
+    -0.1,
+    12.0,
+    1.1,
+    r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{" + method_label + r", |#Delta#eta| > 1.3}",
+)
+cV2_final.SetBottomMargin(0.13)
+cV2_final.SetLeftMargin(0.13)
+cV2_final.SetBorderSize(0)
 
-    legend_pred = ROOT.TLegend(0.69, 0.20, 0.91, 0.29, "", "brNDC")
-    legend_pred.SetBorderSize(0)
+gPredHelium3Coal[1].Draw("E3same][")
+gPredHelium3shm[1].Draw("E3same][")
+stat_list[1].Draw("PEX0 SAME")
+syst_list[1].Draw("PE2 SAME")
 
-    # Scale helium x-coordinates by dividing by 3
-    gHeliumScaled = gPredHelium3[i_cent].Clone(f"gHeliumScaled_{cent_name}")
-    for i in range(gHeliumScaled.GetN()):
-        x = gHeliumScaled.GetPointX(i)
-        y = gHeliumScaled.GetPointY(i)
-        gHeliumScaled.SetPoint(i, x / 3.0, y)
+gPredHelium3Coal[4].Draw("E3same][")
+gPredHelium3shm[4].Draw("E3same][")
+stat_list[4].Draw("PEX0 SAME")
+syst_list[4].Draw("PE2 SAME")
 
-    gHeliumScaled.Draw("E3same][")
-    gPredProton[i_cent].Draw("E3same][")
+info_panel_final = ROOT.TPaveText(0.17, 0.70, 0.37, 0.86, "NDC")
+info_panel_final.SetBorderSize(0)
+info_panel_final.SetFillStyle(0)
+info_panel_final.SetTextAlign(12)
+info_panel_final.SetTextFont(42)
+info_panel_final.SetTextSize(0.04)
+info_panel_final.AddText(r"ALICE")
+info_panel_final.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
+info_panel_final.AddText(r"{}^{3}#bar{He}, |#eta| < 0.8")
+info_panel_final.Draw()
 
-    legend_pred.AddEntry(gHeliumScaled, r"{}^{3}#bar{He}", "F")
-    legend_pred.AddEntry(gPredProton[i_cent], r"Proton", "F")
+legend_final_data = ROOT.TLegend(0.17, 0.507, 0.357, 0.69, "FT0C centrality", "brNDC")
+legend_final_data.SetTextSize(0.04)
+legend_final_data.SetTextFont(42)
+legend_final_data.SetBorderSize(0)
 
-    info_panel_pred.Draw()
-    legend_pred.Draw()
+legend_final_data.AddEntry(stat_list[1], r"10-20%", "PF")
+legend_final_data.AddEntry(stat_list[4], r"40-60%", "PF")
+legend_final_data.Draw()
 
-    # Save individual canvas
-    cPred.SaveAs(f"{output_dir_plots_name}{cPred.GetName()}_pred.pdf")
-    output_file.cd()
-    cPred.Write()
-
-    # Append to multi-page PDF if path is provided
-    if multi_page_pdf_path:
-        if is_first_canvas:
-            cPred.Print(multi_page_pdf_path + "[")  # Open the PDF
-        cPred.Print(multi_page_pdf_path)  # Append the canvas
-        if is_last_canvas:
-            cPred.Print(multi_page_pdf_path + "]")
-
-    return cPred
-
-
-# Create a multi-page PDF for helium and proton predictions
-output_pdf_predictions = f"{output_dir_plots_name}helium_proton_predictions.pdf"
-
-
-for i_cent in range(5):
-    draw_predictions_helium_protons(
-        i_cent,
-        centrality_classes,
-        gPredHelium3Coal,
-        gPredProton,
-        output_dir_plots_name,
-        multi_page_pdf_path=output_pdf_predictions,  # Pass the multi-page PDF path
-        is_first_canvas=(i_cent == 0),  # Open the PDF on the first canvas
-        is_last_canvas=(i_cent == 4),  # Close the PDF on the last canvas
-    )
+legend_final_predictions = ROOT.TLegend(
+    0.652882, 0.186087, 0.869674, 0.332174, "", "brNDC"
+)
+legend_final_predictions.SetTextSize(0.04)
+legend_final_predictions.SetTextFont(42)
+legend_final_predictions.SetBorderSize(0)
+legend_final_predictions.AddEntry(
+    predictions_coal_legend[1],
+    r"#splitline{MUSIC + UrQMD +}{+ Coalescence}",
+    "F",
+)
+legend_final_predictions.AddEntry(
+    predictions_term_legend[1],
+    r"MUSIC + UrQMD",
+    "F",
+)
+legend_final_predictions.Draw()
+output_file.cd()
+cV2_final.Write()
+cV2_final.SaveAs(f"{output_dir_plots_name}{cV2_final.GetName()}.pdf")

@@ -1,8 +1,8 @@
-input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D_alternative.root"
+input_file_name: "/data/lbariogl/flow/LHC23_PbPb_pass4_new/AO2D.root"
 
-input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass5_QC/v2/AnalysisResults.root"
+input_file_AR_name: "/data/lbariogl/flow/LHC23_PbPb_pass5/flow2/AnalysisResults.root"
 
-resolution_file_name: "../results_pass5_new_cent_SP/resolution_Qvec.root"
+resolution_file_name: "../results_pass5_alternative_new_cent_SP/resolution_Qvec.root"
 
 output_dir_name: "../results_pass5_alternative_new_cent_SP/"
 output_file_name: "flow.root"

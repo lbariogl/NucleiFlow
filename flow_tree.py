@@ -210,6 +210,7 @@ for i_cent in range(n_cent_classes):
     default_values.append(flow_maker.getFlowValues())
 
 # Systematic uncertainties
+# Systematic uncertainties
 if do_syst:
 
     print("** Starting systematic variations **")
@@ -301,11 +302,11 @@ if do_syst:
                 ROOT.TH1F(
                     f"hV{harmonic}syst_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
                     ";v_{%d}" % harmonic,
-                    20,
+                    400,
                     default_values[i_cent][i_pt][0]
-                    - 3 * default_values[i_cent][i_pt][1],
+                    - 0.2,
                     default_values[i_cent][i_pt][0]
-                    + 3 * default_values[i_cent][i_pt][1],
+                    + 0.2,
                 )
             )
 
@@ -321,6 +322,13 @@ if do_syst:
             flow_maker_syst.cent_limits = centrality_classes[i_cent]
             flow_maker_syst.resolution = resolutions[i_cent]
             flow_maker_syst.ref_detector = reference_flow_detector
+
+            if useSP:
+                flow_maker_syst.v2_bin_limits = [-10.0, 10.0]
+                flow_maker_syst.n_v2_bins = 100
+                flow_maker_syst.v2_axis_label = r"Q cos(%d(#phi - #Psi_{%d}))" % (harmonic, harmonic)
+            else:
+                flow_maker_syst.v2_axis_label = r"cos(%d(#phi - #Psi_{%d}))" % (harmonic, harmonic)
 
             complete_selection_suffix = f"_sel{i_complete_selection}"
             trial_strings.append("----------------------------------")
@@ -366,6 +374,8 @@ if do_syst:
                     else:
                         print("    Rejected for Barlow")
                 # print(f'pt_bin: {i_pt} -> v2: {flow_values[i_pt][0]} +- {flow_values[i_pt][1]}')
+                else:
+                    histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
             print("----------------------------------")
 
             del flow_maker_syst
@@ -374,69 +384,137 @@ if do_syst:
         output_file.cd(
             f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
         )
-        for i_pt in range(0, n_pt_bins):
 
-            utils.setHistStyle(histo_v2_syst[i_pt], ROOT.kRed + 1)
-            # create canvas with the central value
-            histo_name = histo_v2_syst[i_pt].GetName()
+        # --------------------------------------------------
+        # Define the name of the final multipage PDF
+        # --------------------------------------------------
+        multipage_pdf = (
+            f"{cent_plots_dir_names[i_cent]}/"
+            f"flow_syst_cent_{centrality_classes[i_cent][0]}_"
+            f"{centrality_classes[i_cent][1]}.pdf"
+        )
+
+        # --------------------------------------------------
+        # Create the multipage A4 canvas (landscape)
+        # --------------------------------------------------
+        canvas = ROOT.TCanvas("canvas_multipage", "canvas_multipage", 842, 595)
+        canvas.Divide(3, 2)
+
+        # Open the multipage PDF
+        canvas.Print(f"{multipage_pdf}[", "pdf")
+
+        pad_idx = 1  # Pad counter (1 → 6)
+
+        # --------------------------------------------------
+        # Loop over pT bins
+        # --------------------------------------------------
+        for i_pt in range(n_pt_bins):
+
+            # --------------------------------------------------
+            # Create single-pT canvas (individual output)
+            # --------------------------------------------------
+            histo = histo_v2_syst[i_pt]
+            utils.setHistStyle(histo, ROOT.kRed + 1)
+
+            histo_name = histo.GetName()
             canvas_syst_name = histo_name.replace("h", "c", 1)
+
             canvas_syst = ROOT.TCanvas(canvas_syst_name, canvas_syst_name, 800, 600)
             canvas_syst.SetBottomMargin(0.13)
             canvas_syst.SetLeftMargin(0.13)
 
+            # Central value vertical line
             std_line = ROOT.TLine(
                 default_values[i_cent][i_pt][0],
-                0,
+                0.0,
                 default_values[i_cent][i_pt][0],
-                1.05 * histo_v2_syst[i_pt].GetMaximum(),
+                1.05 * histo.GetMaximum(),
             )
             std_line.SetLineColor(ROOT.kAzure + 2)
             std_line.SetLineWidth(2)
-            # create box for statistical uncertainty
+
+            # Statistical uncertainty box
             std_errorbox = ROOT.TBox(
                 default_values[i_cent][i_pt][0] - default_values[i_cent][i_pt][1],
-                0,
+                0.0,
                 default_values[i_cent][i_pt][0] + default_values[i_cent][i_pt][1],
-                1.05 * histo_v2_syst[i_pt].GetMaximum(),
+                1.05 * histo.GetMaximum(),
             )
             std_errorbox.SetFillColorAlpha(ROOT.kAzure + 1, 0.5)
             std_errorbox.SetLineWidth(0)
 
-            info_panel = ROOT.TPaveText(0.6, 0.6, 0.8, 0.82, "NDC")
+            # Information panel
+            info_panel = ROOT.TPaveText(0.15, 0.70, 0.85, 0.88, "NDC")
             info_panel.SetBorderSize(0)
             info_panel.SetFillStyle(0)
             info_panel.SetTextAlign(12)
             info_panel.SetTextFont(42)
+            info_panel.SetTextSize(0.04)
+
             info_panel.AddText(r"PbPb, #sqrt{#it{s}_{nn}} = 5.36 TeV")
             info_panel.AddText(
-                f"{centrality_classes[i_cent][0]} - {centrality_classes[i_cent][1]} % {cent_detector_label}"
+                f"{centrality_classes[i_cent][0]} - "
+                f"{centrality_classes[i_cent][1]} % {cent_detector_label}"
             )
-            pt_label = (
-                f"{pt_bins[i_cent][i_pt]:.1f}"
-                + r" #leq #it{p}_{T} < "
-                + f"{pt_bins[i_cent][i_pt+1]:.1f}"
-                + r" GeV/#it{c}"
+            info_panel.AddText(
+                f"{pt_bins[i_cent][i_pt]:.1f} "
+                r"#leq #it{p}_{T} < "
+                f"{pt_bins[i_cent][i_pt + 1]:.1f} GeV/#it{{c}}"
             )
-            info_panel.AddText(pt_label)
 
+            # --------------------------------------------------
+            # Draw on single-pT canvas
+            # --------------------------------------------------
             canvas_syst.cd()
-            histo_v2_syst[i_pt].Draw("histo")
-            std_errorbox.Draw()
-            std_line.Draw()
+            histo.Draw("histo")
+            std_errorbox.Draw("same")
+            std_line.Draw("same")
             info_panel.Draw()
 
-            histo_v2_syst[i_pt].Write()
+            # Save individual outputs
+            histo.Write()
             canvas_syst.Write()
             canvas_syst.SaveAs(
                 f"{cent_plots_dir_names[i_cent]}/{canvas_syst.GetName()}.pdf"
             )
+
+            # --------------------------------------------------
+            # Draw the same content on the multipage canvas pad
+            # --------------------------------------------------
+            canvas.cd(pad_idx)
+
+            histo.DrawClone("histo")
+
+            std_errorbox.Clone(f"std_errorbox_clone_{i_pt}").Draw("same")
+            std_line.Clone(f"std_line_clone_{i_pt}").Draw("same")
+            info_panel.Clone(f"info_panel_clone_{i_pt}").Draw("same")
+
+            pad_idx += 1
+
+            # --------------------------------------------------
+            # Print page after 6 pads or at last histogram
+            # --------------------------------------------------
+            if pad_idx == 7 or i_pt == n_pt_bins - 1:
+                canvas.Print(multipage_pdf, "pdf")
+
+                # IMPORTANT: clear pads, NOT the canvas
+                for ipad in range(1, 7):
+                    pad = canvas.cd(ipad)
+                    pad.Clear()
+
+                pad_idx = 1
+
+        # --------------------------------------------------
+        # Close the multipage PDF
+        # --------------------------------------------------
+        canvas.Print(f"{multipage_pdf}]", "pdf")
 
 
 # Final plots
 
 print("Making final plots")
 cV2 = ROOT.TCanvas(f"cV{harmonic}", f"cV{harmonic}", 800, 600)
-frame = cV2.DrawFrame(1.7, -0.1, 12.0, 1.1, r";#it{p}_{T} (GeV/#it{c}); v_{%d}" % harmonic)
+frame = cV2.DrawFrame(1.7, -0.1, 8.5, 0.28, r";#it{p}_{T} (GeV/#it{c}); v_{%d}" % harmonic)
 cV2.cd()
 legend = ROOT.TLegend(0.66, 0.62, 0.92, 0.85, "FT0C centrality", "brNDC")
 legend.SetBorderSize(0)

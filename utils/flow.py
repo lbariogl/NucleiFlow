@@ -94,12 +94,6 @@ class FlowMaker:
 
         self.n_pt_bins = len(self.pt_bins) - 1
 
-        if self.ptdep_selection_dict:
-            for i in range(0, self.n_pt_bins):
-                bin_centre = (self.pt_bins[i + 1] + self.pt_bins[i]) / 2
-                condition = utils.get_condition(bin_centre, self.ptdep_selection_dict)
-                self.ptdep_selection_string.append(condition)
-
         pt_bins_arr = np.array(self.pt_bins, dtype=np.float64)
 
         # plots vs Pt

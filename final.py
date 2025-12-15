@@ -488,3 +488,140 @@ legend_final_predictions.Draw()
 output_file.cd()
 cV2_final.Write()
 cV2_final.SaveAs(f"{output_dir_plots_name}{cV2_final.GetName()}.pdf")
+
+def draw_comparison_with_published_20_30(
+    i_cent,
+    centrality_classes,
+    stat_list,
+    syst_list,
+    gPredHelium3Coal,
+    gPredHelium3shm,
+    output_dir_plots_name,
+    output_file,
+    published_path=None,
+):
+    """Draw comparison for centrality 20-30 including published hHe_2040 and gSyst2040.
+
+    This function is separate and does not modify existing functions.
+    """
+    cent_name = f"cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}"
+    c = ROOT.TCanvas(f"cV2comp_published_{cent_name}", f"cV2comp_published_{cent_name}", 800, 600)
+    x_limits = [11.0, 11.0, 11.0, 9.0, 9.0]
+    y_limits = [0.30, 0.60, 0.70, 0.80, 1.00]
+    frame = c.DrawFrame(
+        1.7,
+        -0.07,
+        x_limits[i_cent],
+        y_limits[i_cent],
+        r";#it{p}_{T} (GeV/#it{c}); #it{v}_{2}{"
+        + method_label
+        + r", |#Delta#eta| > 1.3}",
+    )
+    c.SetBottomMargin(0.13)
+    c.SetLeftMargin(0.13)
+    c.SetBorderSize(0)
+
+    info = ROOT.TPaveText(0.17, 0.67, 0.37, 0.83, "NDC")
+    info.SetBorderSize(0)
+    info.SetFillStyle(0)
+    info.SetTextAlign(12)
+    info.SetTextFont(42)
+    info.SetTextSize(0.04)
+    info.AddText(r"ALICE")
+    info.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV")
+    info.AddText(f"{centrality_classes[i_cent][0]}-{centrality_classes[i_cent][1]}% FT0C centrality")
+
+    legend = ROOT.TLegend(0.55, 0.20, 0.87, 0.4, "", "brNDC")
+    legend.SetTextSize(0.03)
+    legend.SetBorderSize(0)
+
+    # draw theory bands and data first
+    gPredHelium3Coal[i_cent].Draw("E3same][")
+    gPredHelium3shm[i_cent].Draw("E3same][")
+    stat_list[i_cent].Draw("PEX0 SAME")
+    syst_list[i_cent].Draw("PE2 SAME")
+
+    legend.AddEntry(stat_list[i_cent], r"{}^{3}#bar{He}, |#eta| < 0.8", "PF")
+    legend.AddEntry(
+        gPredHelium3Coal[i_cent], r"#splitline{MUSIC + UrQMD +}{+ Coalescence}", "F",
+    )
+    legend.AddEntry(gPredHelium3shm[i_cent], r"MUSIC + UrQMD", "F")
+
+    # published file: default path if not provided
+    if published_path is None:
+        published_path = os.path.expanduser("~/flow_analysis/theoretical_models/published.root")
+
+    pub_file = None
+    try:
+        pub_file = ROOT.TFile.Open(published_path)
+    except Exception:
+        pub_file = None
+
+    if pub_file and not pub_file.IsZombie():
+        hHeStatOld = pub_file.Get("hHe_2040")
+        gSyst = pub_file.Get("gSyst2040")
+        if hHeStatOld:
+            hHeStatOld.SetDirectory(0)
+            hHeStatOld.SetLineColor(ROOT.kGray + 2)
+            hHeStatOld.SetMarkerColor(ROOT.kGray + 2)
+            hHeStatOld.SetMarkerStyle(21)
+            hHeStatOld.SetFillStyle(0)
+            hHeStatOld.Draw("PEX0 SAME")
+            legend.AddEntry(hHeStatOld, "Run 2: 20-40%", "PF")
+        else:
+            print(f"draw_comparison_with_published_20_30: hHe_2040 not found in {published_path}")
+        if gSyst:
+            # Draw the TGraphErrors directly with markers and error bars.
+            try:
+                gSyst.SetMarkerStyle(21)
+            except Exception:
+                pass
+            try:
+                gSyst.SetMarkerColor(ROOT.kGray + 2)
+                gSyst.SetLineColor(ROOT.kGray + 2)
+            except Exception:
+                pass
+            # Draw with error bars (P with Z option to show errors nicely)
+            gSyst.Draw("PE2 same")
+        else:
+            print(f"draw_comparison_with_published_20_30: gSyst2040 not found in {published_path}")
+    else:
+        print(f"draw_comparison_with_published_20_30: could not open published file: {published_path}")
+
+    info.Draw()
+    legend.Draw()
+
+    bottom = ROOT.TPaveText(0.4, 0.02, 0.6, 0.06, "NDC")
+    bottom.SetBorderSize(0)
+    bottom.SetFillStyle(0)
+    bottom.SetTextAlign(22)
+    bottom.SetTextFont(42)
+    bottom.SetTextSize(0.03)
+    bottom.AddText("w/ everything")
+    bottom.Draw()
+
+    # Save
+    c.SaveAs(f"{output_dir_plots_name}{c.GetName()}_published.pdf")
+    print(f"Saved comparison with published to {output_dir_plots_name}{c.GetName()}_published.pdf")
+
+    output_file.cd()
+    c.Write()
+    return c
+
+
+# Call the published comparison function only for centrality index 2 (20-30)
+if n_cent > 2:
+    i_cent_call = 2
+    print(f"Invoking published comparison function for i_cent={i_cent_call} ({centrality_classes[i_cent_call][0]}-{centrality_classes[i_cent_call][1]})")
+    draw_comparison_with_published_20_30(
+        i_cent_call,
+        centrality_classes,
+        stat_list,
+        syst_list,
+        gPredHelium3Coal,
+        gPredHelium3shm,
+        output_dir_plots_name,
+        output_file,
+    )
+else:
+    print("Cannot invoke published comparison: need at least 3 centrality classes (index 2)")

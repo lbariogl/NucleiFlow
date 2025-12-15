@@ -31,7 +31,6 @@ input_file = ROOT.TFile(input_file_AR_name)
 
 ref_names = ["FT0C", "FT0A", "TPCl", "TPCr", "TPC"]
 
-<<<<<<< HEAD
 use_EP_tables = True
 if "harmonic" in config.keys():
     harmonic = config["harmonic"]
@@ -44,10 +43,6 @@ if "task_name" in config.keys():
 else:
     task_name = "flow-qc"
     print("** No task name provided, using default: flow-qc **")
-=======
-use_EP_tables = False
-harmonic = 2
->>>>>>> 8864e2c (Update with new models)
 
 hSP_dict_EP = {}
 hProfile_dict_EP = {}

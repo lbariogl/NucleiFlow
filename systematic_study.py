@@ -318,6 +318,8 @@ for i_cent in range(n_cent_classes):
                         histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
                     else:
                         print("    Rejected for Barlow")
+                else:
+                    histo_v2_syst[i_pt].Fill(flow_values[i_pt][0])
 
             histo = copy.deepcopy(flow_maker_syst.hV2vsPt)
 
@@ -350,11 +352,11 @@ for i_cent in range(n_cent_classes):
                 ROOT.TH1F(
                     f"hV{harmonic}syst_{var}_cent_{centrality_classes[i_cent][0]}_{centrality_classes[i_cent][1]}_pt{i_pt}",
                     ";v_{{harmonic}}",
-                    20,
-                    default_v2_values[i_cent][i_pt][0]
-                    - 3 * default_v2_values[i_cent][i_pt][1],
-                    default_v2_values[i_cent][i_pt][0]
-                    + 3 * default_v2_values[i_cent][i_pt][1],
+                    400,
+                    default_values[i_cent][i_pt][0]
+                    - 0.2,
+                    default_values[i_cent][i_pt][0]
+                    + 0.2,
                 )
             )
 

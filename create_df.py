@@ -65,4 +65,6 @@ utils.redefineColumns(
 
 complete_df.query(mandatory_selections, inplace=True)
 
+print(f"** DataFrame created with {len(complete_df)} entries **")
 complete_df.to_csv(df_output_name, index=False)
+print(f"** DataFrame saved to {df_output_name} **")

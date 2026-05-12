@@ -384,7 +384,7 @@ predictions_shm = [
 
 for i_cent, pred_name in enumerate(predictions_shm):
     graph = theory_file.Get(pred_name)
-    graph.SetFillStyle(3144)
+    graph.SetFillStyle(3001)
     graph.SetFillColorAlpha(cent_colours[i_cent], 0.6)
     graph.SetLineColor(cent_colours[i_cent])
     graph.SetMarkerColor(cent_colours[i_cent])

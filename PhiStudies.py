@@ -296,9 +296,9 @@ for i_cent, cent in enumerate(centrality_classes):
         base_func.plotOn(frame, ROOT.RooFit.LineColor(ROOT.kBlue))
         base_func_reduced.plotOn(frame, ROOT.RooFit.LineColor(ROOT.kRed))
 
-        frame.GetXaxis().SetTitle("#phi - #Psi_{2}")
+        frame.GetXaxis().SetTitle("#varphi - #Psi_{2}")
         nbins = hPhiMinusPsi.GetNbinsX()
-        frame.GetYaxis().SetTitle(f"Entries / (#pi/{nbins})")
+        frame.GetYaxis().SetTitle(f"Entries")# / (#pi/{nbins})")
 
         # Trova min e max dei punti (con errore) nel frame
         # Trova min e max dei punti (con errore) da hPhiMinusPsi
@@ -319,7 +319,7 @@ for i_cent, cent in enumerate(centrality_classes):
         # Titolo con centralità e intervallo di pt
         pt_low = pt_bins[i_cent][i_pt]
         pt_high = pt_bins[i_cent][i_pt + 1]
-        canvas_title = f"Centrality: {cent[0]}-{cent[1]}%, {pt_low:.2f} #leq #it{{p}}_{{T}} < {pt_high:.2f} GeV/c"
+        canvas_title = f"{pt_low:.2f} #leq #it{{p}}_{{T}} < {pt_high:.2f} GeV/#it{{c}}"
 
         c = ROOT.TCanvas(
             f"cPhiMinusPsiFT0C_{cent[0]}_{cent[1]}_pt{i_pt}",
@@ -330,7 +330,17 @@ for i_cent, cent in enumerate(centrality_classes):
         frame.SetTitle(canvas_title)
         frame.Draw()
 
-        legFit = ROOT.TLegend(0.35, 0.51, 0.65, 0.85)
+        info_panel_total = ROOT.TPaveText(0.35, 0.74, 0.36, 0.86, "NDC")
+        info_panel_total.SetBorderSize(0)
+        info_panel_total.SetFillStyle(0)
+        info_panel_total.SetTextAlign(12)
+        info_panel_total.SetTextFont(42)
+        info_panel_total.SetTextSize(0.04)
+        info_panel_total.AddText(r"ALICE")
+        info_panel_total.AddText(r"Pb#minusPb, #sqrt{#it{s}_{NN}} = 5.36 TeV, "+f"{cent[0]}-{cent[1]}%")
+        info_panel_total.Draw()
+
+        legFit = ROOT.TLegend(0.35, 0.36, 0.66, 0.70)
         legFit.SetFillColor(0)
         legFit.SetFillStyle(0)
         legFit.SetTextSize(0.04)
@@ -341,18 +351,18 @@ for i_cent, cent in enumerate(centrality_classes):
         legFit.AddEntry(hPhiMinusPsi, r"{}^{3}#bar{He}", "PE")
         legFit.AddEntry(
             dummy_hist_v2only,
-            "#it{A} [1 + 2#it{B} e^{-2#sigma^{2}}cos(2#it{#phi})]",
+            "#it{A} [1 + 2#it{B} e^{-2#sigma^{2}}cos(2#it{#varphi})]",
             "L",
         )
         legFit.AddEntry(0, f"#chi^{{2}}/ndf = {chi2_reduced:.1f}/{ndf_reduced}", "")
         legFit.AddEntry(
             dummy_hist,
-            "#it{A} [1 + 2#it{B} e^{-2#sigma^{2}}cos(2#it{#phi}) + ",
+            "#it{A} [1 + 2#it{B} e^{-2#sigma^{2}}cos(2#it{#varphi}) + ",
             "L",
         )
         legFit.AddEntry(
             0,
-            "+ 4#it{C} e^{-8#sigma^{2}}cos(4#it{#phi})]",
+            "+ 4#it{C} e^{-8#sigma^{2}}cos(4#it{#varphi})]",
             "",
         )
         legFit.AddEntry(0, f"#chi^{{2}}/ndf = {chi2:.1f}/{ndf}", "")

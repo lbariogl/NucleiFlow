@@ -63,7 +63,7 @@ cent_detector_label: "FT0C"
 reference_flow_detector: "FT0C"
 resolution_flow_detectors: ["FT0A", "TPC"]
 
-use_Barlow: False
+use_Barlow: True
 
 # p_train: [-321.34, 0.6539, 1.591, 0.8225, 2.363]
 p_train: [-449.90,

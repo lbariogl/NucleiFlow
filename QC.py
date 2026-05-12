@@ -36,7 +36,7 @@ output_file_name = config["output_file_name_qc"]
 nuclei_tree_name = config["nuclei_tree_name"]
 ep_tree_name = config["ep_tree_name"]
 
-if "useSP" in config .keys():
+if "useSP" in config.keys():
     useSP = config["useSP"]
 else:
     useSP = True
@@ -76,7 +76,7 @@ resolution_train = config["resolution_train"]
 n_sigma_plot = config["n_sigma_plot"]
 
 # harmonic parameter
-if "harmonic" in config .keys():
+if "harmonic" in config.keys():
     harmonic = config["harmonic"]
 else:
     harmonic = 2
@@ -142,7 +142,7 @@ cNsigmaITSvsP.Write()
 complete_df.query("fNsigmaITS3HeMinusOffset > 0", inplace=True)
 
 
-# fill hNsigmaITSvsP before ITS-cluster size selection after selection
+# fill hNsigmaITSvsP after ITS-cluster size selection
 hNsigmaITSvsPafterSel = ROOT.TH2F(
     "hNsigmaITSvsPafterSel",
     r"; #it{p} (GeV/#it{c}); n#sigma_{ITS}",
@@ -154,8 +154,21 @@ hNsigmaITSvsPafterSel = ROOT.TH2F(
     5.0,
 )
 
-for p, n_sigma_its in zip(complete_df["fP"], complete_df["fNsigmaITS3He"]):
+# fill hNsigmaITSvsP after ITS-cluster size selection
+hNsigmaITSvsNsigmaTPC = ROOT.TH2F(
+    "hNsigmaITSvsNsigmaTPC",
+    r"; n#sigma_{ITS}; n#sigma_{TPC}",
+    500,
+    -5.0,
+    5.0,
+    100,
+    -5.0,
+    5.0,
+)
+
+for p, n_sigma_its, n_sigma_tpc in zip(complete_df["fP"], complete_df["fNsigmaITS3He"], complete_df["fNsigmaTPC3He"]):
     hNsigmaITSvsPafterSel.Fill(p, n_sigma_its)
+    hNsigmaITSvsNsigmaTPC.Fill(n_sigma_its, n_sigma_tpc)
 
 cNsigmaITSvsPafterSel = ROOT.TCanvas(
     "cNsigmaITSvsPafterSel", "cNsigmaITSvsPafterSel", 800, 600
@@ -163,9 +176,17 @@ cNsigmaITSvsPafterSel = ROOT.TCanvas(
 hNsigmaITSvsPafterSel.Draw("colz")
 cNsigmaITSvsPafterSel.SaveAs(f"{output_dir_name}/qc_plots/cNsigmaITSvsPafterSel.pdf")
 
+cNsigmaITSvsNsigmaTPC = ROOT.TCanvas(
+    "cNsigmaITSvsNsigmaTPC", "cNsigmaITSvsNsigmaTPC", 800, 600
+)
+hNsigmaITSvsNsigmaTPC.Draw("colz")
+cNsigmaITSvsNsigmaTPC.SaveAs(f"{output_dir_name}/qc_plots/cNsigmaITSvsNsigmaTPC.pdf")
+
 output_file.cd()
 hNsigmaITSvsPafterSel.Write()
 cNsigmaITSvsPafterSel.Write()
+hNsigmaITSvsNsigmaTPC.Write()
+cNsigmaITSvsNsigmaTPC.Write()
 
 hEta = ROOT.TH1F("hEta", ";#eta;", 200, -1.0, 1.0)
 utils.setHistStyle(hEta, ROOT.kRed + 2)
@@ -345,7 +366,7 @@ for det in detectors:
             hQVsCent.Fill((cent[0] + cent[1]) / 2.0, q)
     output_file.cd(f"{det}")
     hQVsCent.Write()
-        
+
 for i_cent, cent in enumerate(centrality_classes):
     cent_seleration = f"fCentFT0C > {cent[0]} and fCentFT0C < {cent[1]}"
     cent_dir = output_file.mkdir(f"{cent[0]}_{cent[1]}")
@@ -445,7 +466,9 @@ for i_cent, cent in enumerate(centrality_classes):
             )
             utils.setHistStyle(hSinPhiMinusPsi, ROOT.kRed + 2)
 
-            hCos2PhiMinusPsi_formatted_title = f";cos({harmonic}(#phi - #Psi_{{{det}}}); counts"
+            hCos2PhiMinusPsi_formatted_title = (
+                f";cos({harmonic}(#phi - #Psi_{{{det}}}); counts"
+            )
             hCos2PhiMinusPsi = ROOT.TH1F(
                 f"hCos{harmonic}PhiMinusPsi_{det}_cent_{cent[0]}_{cent[1]}_pt_{i_pt}",
                 hCos2PhiMinusPsi_formatted_title,
@@ -455,7 +478,9 @@ for i_cent, cent in enumerate(centrality_classes):
             )
             utils.setHistStyle(hCos2PhiMinusPsi, ROOT.kRed + 2)
 
-            hSin2PhiMinusPsi_formatted_title = f";sin({harmonic}(#phi - #Psi_{{{det}}}); counts"
+            hSin2PhiMinusPsi_formatted_title = (
+                f";sin({harmonic}(#phi - #Psi_{{{det}}}); counts"
+            )
             hSin2PhiMinusPsi = ROOT.TH1F(
                 f"hSin{harmonic}PhiMinusPsi_{det}_cent_{cent[0]}_{cent[1]}_pt_{i_pt}",
                 hSin2PhiMinusPsi_formatted_title,
@@ -626,7 +651,10 @@ for i_cent, cent in enumerate(centrality_classes):
 
 for det in detectors:
     cSinPhiMinusPsiVsPt[det] = ROOT.TCanvas(
-        f"cCos{harmonic}PhiMinusPsiVsPt_{det}", f"cCos{harmonic}PhiMinusPsiVsPt_{det}", 800, 600
+        f"cCos{harmonic}PhiMinusPsiVsPt_{det}",
+        f"cCos{harmonic}PhiMinusPsiVsPt_{det}",
+        800,
+        600,
     )
     cSinLegend = ROOT.TLegend(0.40, 0.22, 0.70, 0.45, det, "brNDC")
     cSinPhiMinusPsiVsPt[det].DrawFrame(
@@ -649,7 +677,10 @@ for det in detectors:
     cSinPhiMinusPsiVsPt[det].Write()
 
     cCos2PhiMinusPsiVsPt[det] = ROOT.TCanvas(
-        f"cCos{harmonic}PhiMinusPsiVsPt_{det}", f"cCos{harmonic}PhiMinusPsiVsPt_{det}", 800, 600
+        f"cCos{harmonic}PhiMinusPsiVsPt_{det}",
+        f"cCos{harmonic}PhiMinusPsiVsPt_{det}",
+        800,
+        600,
     )
     cCos2Legend = ROOT.TLegend(0.40, 0.22, 0.70, 0.45, det, "brNDC")
     cCos2PhiMinusPsiVsPt[det].DrawFrame(
@@ -672,7 +703,10 @@ for det in detectors:
     cCos2PhiMinusPsiVsPt[det].Write()
 
     cSin2PhiMinusPsiVsPt[det] = ROOT.TCanvas(
-        f"cSin{harmonic}PhiMinusPsiVsPt_{det}", f"cSin{harmonic}PhiMinusPsiVsPt_{det}", 800, 600
+        f"cSin{harmonic}PhiMinusPsiVsPt_{det}",
+        f"cSin{harmonic}PhiMinusPsiVsPt_{det}",
+        800,
+        600,
     )
     cSin2Legend = ROOT.TLegend(0.40, 0.22, 0.70, 0.45, det, "brNDC")
     cSin2PhiMinusPsiVsPt[det].DrawFrame(
